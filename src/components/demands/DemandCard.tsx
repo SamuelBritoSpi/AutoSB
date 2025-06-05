@@ -18,7 +18,7 @@ interface DemandCardProps {
 
 const priorityIcons: Record<Demand['priority'], React.ReactElement> = {
   alta: <AlertTriangle className="h-5 w-5 text-red-500 mr-1" />,
-  media: <AlertTriangle className="h-5 w-5 text-yellow-500 mr-1" />, // Using AlertTriangle for medium as well for consistency, color differentiates
+  media: <AlertTriangle className="h-5 w-5 text-yellow-500 mr-1" />,
   baixa: <ArrowDownCircle className="h-5 w-5 text-green-500 mr-1" />,
 };
 
@@ -46,7 +46,7 @@ export default function DemandCard({ demand, onUpdateStatus, onDelete, onEdit }:
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="font-headline text-xl mb-1">{demand.description.substring(0,50)}{demand.description.length > 50 ? '...' : ''}</CardTitle>
+          <CardTitle className="font-headline text-xl mb-1">{demand.title.substring(0,50)}{demand.title.length > 50 ? '...' : ''}</CardTitle>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="p-1 h-auto">

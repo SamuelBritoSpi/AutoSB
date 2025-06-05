@@ -17,6 +17,7 @@ import { CalendarIcon, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const demandSchema = z.object({
+  title: z.string().min(1, { message: "Título é obrigatório." }),
   description: z.string().min(1, { message: "Descrição é obrigatória." }),
   priority: z.enum(['alta', 'media', 'baixa'], { message: "Prioridade é obrigatória." }),
   dueDate: z.date({ required_error: "Data de entrega é obrigatória." }),
@@ -36,10 +37,12 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
   const form = useForm<DemandFormValues>({
     resolver: zodResolver(demandSchema),
     defaultValues: existingDemand ? {
+      title: existingDemand.title,
       description: existingDemand.description,
       priority: existingDemand.priority,
       dueDate: parseISO(existingDemand.dueDate),
     } : {
+      title: '',
       description: '',
       priority: 'media',
       dueDate: new Date(),
@@ -49,6 +52,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
   const onSubmit = (values: DemandFormValues) => {
     const demandData = {
       id: existingDemand ? existingDemand.id : crypto.randomUUID(),
+      title: values.title,
       description: values.description,
       priority: values.priority as DemandPriority,
       dueDate: values.dueDate.toISOString(),
@@ -61,7 +65,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
     } else {
       onAddDemand(demandData);
       toast({ title: "Demanda Adicionada", description: "Nova demanda registrada com sucesso." });
-      form.reset({ description: '', priority: 'media', dueDate: new Date() });
+      form.reset({ title: '', description: '', priority: 'media', dueDate: new Date() });
     }
     if (onClose) onClose();
   };
@@ -69,6 +73,19 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow">
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Título da Demanda</FormLabel>
+              <FormControl>
+                <Input placeholder="Digite o título da demanda" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="description"

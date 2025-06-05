@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import AppHeader from '@/components/AppHeader';
 
 export const metadata: Metadata = {
-  title: 'GestãoFérias',
+  title: 'AutoSB',
   description: 'Sistema para controle de demandas e férias',
 };
 

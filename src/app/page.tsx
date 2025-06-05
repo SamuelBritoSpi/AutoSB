@@ -13,8 +13,8 @@ import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { BarChart, CalendarCheck, ListChecks } from 'lucide-react';
 
-const DEMANDS_STORAGE_KEY = 'gestaoFerias_demands';
-const VACATIONS_STORAGE_KEY = 'gestaoFerias_vacations';
+const DEMANDS_STORAGE_KEY = 'autoSb_demands';
+const VACATIONS_STORAGE_KEY = 'autoSb_vacations';
 
 export default function GestaoFeriasPage() {
   const [demands, setDemands] = useState<Demand[]>([]);
@@ -87,7 +87,7 @@ export default function GestaoFeriasPage() {
       employeeName: vacation.employeeName,
       projectDueDate: format(parseISO(targetDemand.dueDate), 'yyyy-MM-dd'),
       projectPriority: targetDemand.priority, // Assuming DemandPriority matches AI enum
-      projectDescription: targetDemand.description,
+      projectDescription: targetDemand.description, // Consider if title should be part of AI input
     };
 
     try {
@@ -95,7 +95,7 @@ export default function GestaoFeriasPage() {
       setVacations(prevVacations => 
         prevVacations.map(v => 
           v.id === vacation.id 
-            ? { ...v, conflictCheckResult: { ...result, checkedAgainstDemandId: demandId, checkedDemandDescription: targetDemand.description } } 
+            ? { ...v, conflictCheckResult: { ...result, checkedAgainstDemandId: demandId, checkedDemandDescription: targetDemand.title } } // Using title here
             : v
         )
       );

@@ -3,6 +3,7 @@ export type DemandStatus = 'a-fazer' | 'em-progresso' | 'concluida';
 
 export interface Demand {
   id: string;
+  title: string; // Novo campo para o título da demanda
   description: string;
   priority: DemandPriority;
   dueDate: string; // ISO string for date
