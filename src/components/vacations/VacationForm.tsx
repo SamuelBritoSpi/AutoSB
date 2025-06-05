@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { CalendarIcon, PlusCircle } from 'lucide-react';
+import { CalendarIcon, PlusCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const vacationSchema = z.object({
@@ -66,7 +66,7 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow mb-6">
         <FormField
           control={form.control}
           name="employeeName"
@@ -151,14 +151,21 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
             )}
           />
         </div>
-        <Button type="submit" className="w-full md:w-auto">
-          <PlusCircle className="mr-2 h-4 w-4" /> {existingVacation ? 'Atualizar Férias' : 'Registrar Férias'}
-        </Button>
-        {existingVacation && onClose && (
-          <Button type="button" variant="outline" onClick={onClose} className="w-full md:w-auto ml-2">
-            Cancelar
+        <div className="flex gap-2">
+          <Button type="submit" className="w-full md:w-auto">
+            <PlusCircle className="mr-2 h-4 w-4" /> {existingVacation ? 'Atualizar Férias' : 'Registrar Férias'}
           </Button>
-        )}
+          {onClose && !existingVacation && (
+            <Button type="button" variant="outline" onClick={onClose} className="w-full md:w-auto">
+               <X className="mr-2 h-4 w-4" /> Cancelar
+            </Button>
+          )}
+          {existingVacation && onClose && (
+            <Button type="button" variant="outline" onClick={onClose} className="w-full md:w-auto">
+              Cancelar
+            </Button>
+          )}
+        </div>
       </form>
     </Form>
   );

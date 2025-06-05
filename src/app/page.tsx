@@ -12,8 +12,9 @@ import { vacationConflictDetection } from '@/ai/flows/vacation-conflict-detectio
 import type { VacationConflictDetectionInput } from '@/ai/flows/vacation-conflict-detection';
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck } from 'lucide-react';
-import AppHeader from '@/components/AppHeader'; // Import AppHeader
+import { ListChecks, CalendarCheck, PlusCircle } from 'lucide-react';
+import AppHeader from '@/components/AppHeader'; 
+import { Button } from '@/components/ui/button';
 
 const DEMANDS_STORAGE_KEY = 'autoSb_demands';
 const VACATIONS_STORAGE_KEY = 'autoSb_vacations';
@@ -23,6 +24,8 @@ export default function GestaoFeriasPage() {
   const [vacations, setVacations] = useState<Vacation[]>([]);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("demands");
+  const [showDemandForm, setShowDemandForm] = useState(false);
+  const [showVacationForm, setShowVacationForm] = useState(false);
 
   useEffect(() => {
     const storedDemands = localStorage.getItem(DEMANDS_STORAGE_KEY);
@@ -57,6 +60,7 @@ export default function GestaoFeriasPage() {
 
   const handleAddDemand = (newDemand: Demand) => {
     setDemands(prev => [newDemand, ...prev]);
+    setShowDemandForm(false); // Oculta o formulário após adicionar
   };
 
   const handleUpdateDemand = (updatedDemand: Demand) => {
@@ -75,6 +79,7 @@ export default function GestaoFeriasPage() {
 
   const handleAddVacation = (newVacation: Vacation) => {
     setVacations(prev => [newVacation, ...prev]);
+    setShowVacationForm(false); // Oculta o formulário após adicionar
   };
   
   const handleUpdateVacation = (updatedVacation: Vacation) => {
@@ -146,11 +151,9 @@ export default function GestaoFeriasPage() {
             if (typeof content === 'string') {
               const parsedData = JSON.parse(content);
               if (parsedData && Array.isArray(parsedData.demands) && Array.isArray(parsedData.vacations)) {
-                // Basic validation for demands
                 const validDemands = parsedData.demands.filter((d: any) => 
                   d.id && d.title && d.description && d.priority && d.dueDate && d.status
                 );
-                // Basic validation for vacations
                 const validVacations = parsedData.vacations.filter((v: any) =>
                   v.id && v.employeeName && v.startDate && v.endDate
                 );
@@ -175,7 +178,7 @@ export default function GestaoFeriasPage() {
   return (
     <>
       <AppHeader onExport={handleExportData} onImport={handleImportData} />
-      <div className="w-full space-y-8 mt-0"> {/* Removed mt-8 to be flush with header if desired, or adjust */}
+      <div className="w-full space-y-8 mt-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 md:w-1/2 mx-auto">
             <TabsTrigger value="demands">
@@ -187,9 +190,19 @@ export default function GestaoFeriasPage() {
           </TabsList>
 
           <TabsContent value="demands" className="space-y-6 mt-6">
-            <section aria-labelledby="demands-form-title">
-              <h2 id="demands-form-title" className="text-2xl font-headline font-semibold mb-4 text-primary">Registrar Nova Demanda</h2>
-              <DemandForm onAddDemand={handleAddDemand} />
+            <section aria-labelledby="demands-form-section-title">
+              <div className="flex justify-between items-center mb-4">
+                <h2 id="demands-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Nova Demanda</h2>
+                <Button variant="outline" onClick={() => setShowDemandForm(!showDemandForm)}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> {showDemandForm ? 'Ocultar Formulário' : 'Adicionar Demanda'}
+                </Button>
+              </div>
+              {showDemandForm && (
+                <DemandForm 
+                  onAddDemand={handleAddDemand} 
+                  onClose={() => setShowDemandForm(false)} 
+                />
+              )}
             </section>
             <section aria-labelledby="demands-list-title">
               <h2 id="demands-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Demandas</h2>
@@ -203,9 +216,19 @@ export default function GestaoFeriasPage() {
           </TabsContent>
 
           <TabsContent value="vacations" className="space-y-6 mt-6">
-            <section aria-labelledby="vacations-form-title">
-              <h2 id="vacations-form-title" className="text-2xl font-headline font-semibold mb-4 text-primary">Registrar Novas Férias</h2>
-              <VacationForm onAddVacation={handleAddVacation} />
+            <section aria-labelledby="vacations-form-section-title">
+               <div className="flex justify-between items-center mb-4">
+                <h2 id="vacations-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novas Férias</h2>
+                <Button variant="outline" onClick={() => setShowVacationForm(!showVacationForm)}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> {showVacationForm ? 'Ocultar Formulário' : 'Adicionar Férias'}
+                </Button>
+              </div>
+              {showVacationForm && (
+                <VacationForm 
+                  onAddVacation={handleAddVacation} 
+                  onClose={() => setShowVacationForm(false)} 
+                />
+              )}
             </section>
             <section aria-labelledby="vacations-list-title">
               <h2 id="vacations-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Calendário de Férias</h2>

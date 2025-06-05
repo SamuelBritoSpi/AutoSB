@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { CalendarIcon, PlusCircle } from 'lucide-react';
+import { CalendarIcon, PlusCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const demandSchema = z.object({
@@ -27,9 +27,9 @@ type DemandFormValues = z.infer<typeof demandSchema>;
 
 interface DemandFormProps {
   onAddDemand: (demand: Demand) => void;
-  existingDemand?: Demand | null; // For editing
+  existingDemand?: Demand | null; 
   onUpdateDemand?: (demand: Demand) => void;
-  onClose?: () => void; // For closing a dialog if used for editing
+  onClose?: () => void; 
 }
 
 export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand, onClose }: DemandFormProps) {
@@ -72,7 +72,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow mb-6">
         <FormField
           control={form.control}
           name="title"
@@ -148,7 +148,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} // Disable past dates
+                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} 
                       initialFocus
                     />
                   </PopoverContent>
@@ -158,14 +158,21 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
             )}
           />
         </div>
-        <Button type="submit" className="w-full md:w-auto">
-          <PlusCircle className="mr-2 h-4 w-4" /> {existingDemand ? 'Atualizar Demanda' : 'Adicionar Demanda'}
-        </Button>
-         {existingDemand && onClose && (
-          <Button type="button" variant="outline" onClick={onClose} className="w-full md:w-auto ml-2">
-            Cancelar
+        <div className="flex gap-2">
+          <Button type="submit" className="w-full md:w-auto">
+            <PlusCircle className="mr-2 h-4 w-4" /> {existingDemand ? 'Atualizar Demanda' : 'Adicionar Demanda'}
           </Button>
-        )}
+          {onClose && !existingDemand && ( // Mostra 'Cancelar' apenas para o formulário de adicionar novo, não para editar em dialog
+            <Button type="button" variant="outline" onClick={onClose} className="w-full md:w-auto">
+              <X className="mr-2 h-4 w-4" /> Cancelar
+            </Button>
+          )}
+           {existingDemand && onClose && ( // Botão de cancelar para modo de edição (em dialog)
+            <Button type="button" variant="outline" onClick={onClose} className="w-full md:w-auto">
+              Cancelar
+            </Button>
+          )}
+        </div>
       </form>
     </Form>
   );
