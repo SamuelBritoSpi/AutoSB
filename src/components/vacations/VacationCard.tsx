@@ -1,13 +1,12 @@
 "use client";
 
-import type { Vacation, Demand } from '@/lib/types';
+import type { Vacation } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { User, CalendarRange, AlertOctagon, Edit, Trash2, BrainCircuit } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface VacationCardProps {
@@ -37,7 +36,7 @@ export default function VacationCard({ vacation, onDelete, onEdit, onCheckConfli
               <DropdownMenuItem onClick={() => onEdit(vacation)}>
                 <Edit className="mr-2 h-4 w-4" /> Editar
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDelete(vacation.id)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+              <DropdownMenuItem onClick={() => onDelete(vacation.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                 <Trash2 className="mr-2 h-4 w-4" /> Excluir
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -52,10 +51,10 @@ export default function VacationCard({ vacation, onDelete, onEdit, onCheckConfli
         {conflictResult && (
           <>
             <Separator className="my-3" />
-            <div className={`p-3 rounded-md ${conflictResult.conflictDetected ? 'bg-destructive/10 border-destructive/50 border' : 'bg-green-500/10 border-green-500/50 border'}`}>
+            <div className={`p-3 rounded-md ${conflictResult.conflictDetected ? 'bg-destructive/10 border-destructive/50 border' : 'bg-[hsl(var(--status-success))]/10 border-[hsl(var(--status-success))]/50 border'}`}>
               <div className="flex items-center mb-1">
-                <AlertOctagon className={`h-5 w-5 mr-2 ${conflictResult.conflictDetected ? 'text-destructive' : 'text-green-600'}`} />
-                <p className={`font-semibold ${conflictResult.conflictDetected ? 'text-destructive' : 'text-green-700'}`}>
+                <AlertOctagon className={`h-5 w-5 mr-2 ${conflictResult.conflictDetected ? 'text-destructive' : 'text-[hsl(var(--status-success))]'}`} />
+                <p className={`font-semibold ${conflictResult.conflictDetected ? 'text-destructive' : 'text-[hsl(var(--status-success))]'}`}>
                   {conflictResult.conflictDetected ? "Conflito Detectado" : "Sem Conflitos Detectados"}
                 </p>
               </div>

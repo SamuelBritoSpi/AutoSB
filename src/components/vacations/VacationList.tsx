@@ -5,15 +5,19 @@ import VacationCard from './VacationCard';
 import { CalendarDays, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import React, { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import VacationForm from './VacationForm';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { format, parseISO } from 'date-fns';
+
 
 interface VacationListProps {
   vacations: Vacation[];
-  demands: Demand[]; // Needed for conflict checking
+  demands: Demand[]; 
   onDeleteVacation: (id: string) => void;
   onUpdateVacation: (vacation: Vacation) => void;
-  onCheckConflict: (vacation: Vacation, demandId: string) => Promise<void>; // Updated to accept demandId
+  onCheckConflict: (vacation: Vacation, demandId: string) => Promise<void>;
 }
 
 export default function VacationList({ vacations, demands, onDeleteVacation, onUpdateVacation, onCheckConflict }: VacationListProps) {
@@ -38,7 +42,7 @@ export default function VacationList({ vacations, demands, onDeleteVacation, onU
   
   const openConflictCheckDialog = (vacation: Vacation) => {
     setConflictCheckVacation(vacation);
-    setSelectedDemandIdForConflict(null); // Reset selection
+    setSelectedDemandIdForConflict(null); 
     setIsConflictCheckDialogOpen(true);
   };
 
@@ -56,6 +60,11 @@ export default function VacationList({ vacations, demands, onDeleteVacation, onU
       .filter(v => v.employeeName.toLowerCase().includes(searchTerm.toLowerCase()))
       .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   }, [vacations, searchTerm]);
+
+  // Sort demands by due date for the select dropdown
+  const sortedDemands = useMemo(() => {
+    return [...demands].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+  }, [demands]);
 
   return (
     <div className="space-y-6">
@@ -101,7 +110,7 @@ export default function VacationList({ vacations, demands, onDeleteVacation, onU
               existingVacation={editingVacation}
               onUpdateVacation={onUpdateVacation}
               onClose={closeEditDialog}
-              onAddVacation={()=>{}} // Not used in edit mode
+              onAddVacation={()=>{}} 
             />
           </DialogContent>
         </Dialog>
@@ -109,34 +118,38 @@ export default function VacationList({ vacations, demands, onDeleteVacation, onU
 
       {isConflictCheckDialogOpen && conflictCheckVacation && (
         <Dialog open={isConflictCheckDialogOpen} onOpenChange={setIsConflictCheckDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Verificar Conflito de Férias</DialogTitle>
+              <DialogDescription>
+                Selecione uma demanda para verificar se as férias de <strong>{conflictCheckVacation.employeeName}</strong> ({format(parseISO(conflictCheckVacation.startDate), "dd/MM/yy")} - {format(parseISO(conflictCheckVacation.endDate), "dd/MM/yy")}) entram em conflito.
+              </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
-              <p>Funcionário: <strong>{conflictCheckVacation.employeeName}</strong></p>
-              <p>Período: <strong>{format(parseISO(conflictCheckVacation.startDate), "dd/MM/yy")} - {format(parseISO(conflictCheckVacation.endDate), "dd/MM/yy")}</strong></p>
               <div>
-                <label htmlFor="demandSelect" className="block text-sm font-medium text-gray-700 mb-1">
-                  Selecionar Demanda para Verificação:
+                <label htmlFor="demandSelect" className="block text-sm font-medium text-foreground mb-1">
+                  Selecionar Demanda:
                 </label>
                 <Select onValueChange={setSelectedDemandIdForConflict} value={selectedDemandIdForConflict || ""}>
-                    <SelectTrigger id="demandSelect">
+                    <SelectTrigger id="demandSelect" className="w-full">
                         <SelectValue placeholder="Escolha uma demanda" />
                     </SelectTrigger>
                     <SelectContent>
-                        {demands.length > 0 ? demands.map(demand => (
+                        {sortedDemands.length > 0 ? sortedDemands.map(demand => (
                             <SelectItem key={demand.id} value={demand.id}>
-                                {demand.description.substring(0,30)}{demand.description.length > 30 ? '...' : ''} (Entrega: {format(parseISO(demand.dueDate), "dd/MM/yy")})
+                                {demand.title.substring(0,35)}{demand.title.length > 35 ? '...' : ''} (Entrega: {format(parseISO(demand.dueDate), "dd/MM/yy")})
                             </SelectItem>
                         )) : <SelectItem value="no-demands" disabled>Nenhuma demanda disponível</SelectItem>}
                     </SelectContent>
                 </Select>
               </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsConflictCheckDialogOpen(false)}>Cancelar</Button>
               <Button onClick={handleRunConflictCheck} disabled={!selectedDemandIdForConflict || isCheckingConflict || demands.length === 0}>
                 {isCheckingConflict ? "Verificando..." : "Verificar Conflito"}
               </Button>
-            </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}

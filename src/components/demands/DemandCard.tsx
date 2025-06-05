@@ -17,9 +17,9 @@ interface DemandCardProps {
 }
 
 const priorityIcons: Record<Demand['priority'], React.ReactElement> = {
-  alta: <AlertTriangle className="h-5 w-5 text-red-500 mr-1" />,
-  media: <AlertTriangle className="h-5 w-5 text-yellow-500 mr-1" />,
-  baixa: <ArrowDownCircle className="h-5 w-5 text-green-500 mr-1" />,
+  alta: <AlertTriangle className="h-5 w-5 text-destructive mr-1" />,
+  media: <AlertTriangle className="h-5 w-5 text-[hsl(var(--status-warning))] mr-1" />,
+  baixa: <ArrowDownCircle className="h-5 w-5 text-[hsl(var(--status-success))] mr-1" />,
 };
 
 const priorityText: Record<Demand['priority'], string> = {
@@ -29,9 +29,9 @@ const priorityText: Record<Demand['priority'], string> = {
 };
 
 const statusIcons: Record<DemandStatus, React.ReactElement> = {
-  'a-fazer': <Circle className="h-5 w-5 text-gray-500 mr-2" />,
-  'em-progresso': <PlayCircle className="h-5 w-5 text-blue-500 mr-2" />,
-  'concluida': <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />,
+  'a-fazer': <Circle className="h-5 w-5 text-muted-foreground mr-2" />,
+  'em-progresso': <PlayCircle className="h-5 w-5 text-[hsl(var(--status-info))] mr-2" />,
+  'concluida': <CheckCircle2 className="h-5 w-5 text-[hsl(var(--status-success))] mr-2" />,
 };
 
 const statusText: Record<DemandStatus, string> = {
@@ -57,7 +57,7 @@ export default function DemandCard({ demand, onUpdateStatus, onDelete, onEdit }:
               <DropdownMenuItem onClick={() => onEdit(demand)}>
                 <Edit className="mr-2 h-4 w-4" /> Editar
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDelete(demand.id)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+              <DropdownMenuItem onClick={() => onDelete(demand.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                 <Trash2 className="mr-2 h-4 w-4" /> Excluir
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -11,7 +12,8 @@ import { vacationConflictDetection } from '@/ai/flows/vacation-conflict-detectio
 import type { VacationConflictDetectionInput } from '@/ai/flows/vacation-conflict-detection';
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { BarChart, CalendarCheck, ListChecks } from 'lucide-react';
+import { ListChecks, CalendarCheck } from 'lucide-react';
+import AppHeader from '@/components/AppHeader'; // Import AppHeader
 
 const DEMANDS_STORAGE_KEY = 'autoSb_demands';
 const VACATIONS_STORAGE_KEY = 'autoSb_vacations';
@@ -22,19 +24,29 @@ export default function GestaoFeriasPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("demands");
 
-  // Load data from localStorage on initial render
   useEffect(() => {
     const storedDemands = localStorage.getItem(DEMANDS_STORAGE_KEY);
     if (storedDemands) {
-      setDemands(JSON.parse(storedDemands));
+      try {
+        const parsedDemands = JSON.parse(storedDemands);
+        if(Array.isArray(parsedDemands)) setDemands(parsedDemands);
+      } catch (e) {
+        console.error("Failed to parse demands from localStorage", e);
+        setDemands([]);
+      }
     }
     const storedVacations = localStorage.getItem(VACATIONS_STORAGE_KEY);
     if (storedVacations) {
-      setVacations(JSON.parse(storedVacations));
+      try {
+        const parsedVacations = JSON.parse(storedVacations);
+        if(Array.isArray(parsedVacations)) setVacations(parsedVacations);
+      } catch (e) {
+        console.error("Failed to parse vacations from localStorage", e);
+        setVacations([]);
+      }
     }
   }, []);
 
-  // Save data to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem(DEMANDS_STORAGE_KEY, JSON.stringify(demands));
   }, [demands]);
@@ -86,8 +98,8 @@ export default function GestaoFeriasPage() {
       vacationEndDate: format(parseISO(vacation.endDate), 'yyyy-MM-dd'),
       employeeName: vacation.employeeName,
       projectDueDate: format(parseISO(targetDemand.dueDate), 'yyyy-MM-dd'),
-      projectPriority: targetDemand.priority, // Assuming DemandPriority matches AI enum
-      projectDescription: targetDemand.description, // Consider if title should be part of AI input
+      projectPriority: targetDemand.priority,
+      projectDescription: targetDemand.description,
     };
 
     try {
@@ -95,7 +107,7 @@ export default function GestaoFeriasPage() {
       setVacations(prevVacations => 
         prevVacations.map(v => 
           v.id === vacation.id 
-            ? { ...v, conflictCheckResult: { ...result, checkedAgainstDemandId: demandId, checkedDemandDescription: targetDemand.title } } // Using title here
+            ? { ...v, conflictCheckResult: { ...result, checkedAgainstDemandId: demandId, checkedDemandDescription: targetDemand.title } }
             : v
         )
       );
@@ -110,52 +122,104 @@ export default function GestaoFeriasPage() {
     }
   }, [demands, toast]);
 
+  const handleExportData = () => {
+    const dataToExport = { demands, vacations };
+    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(dataToExport, null, 2))}`;
+    const link = document.createElement("a");
+    link.href = jsonString;
+    link.download = "autoSb_data.json";
+    link.click();
+    toast({ title: "Dados Exportados", description: "Seus dados foram exportados como autoSb_data.json." });
+  };
+
+  const handleImportData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const content = e.target?.result;
+            if (typeof content === 'string') {
+              const parsedData = JSON.parse(content);
+              if (parsedData && Array.isArray(parsedData.demands) && Array.isArray(parsedData.vacations)) {
+                // Basic validation for demands
+                const validDemands = parsedData.demands.filter((d: any) => 
+                  d.id && d.title && d.description && d.priority && d.dueDate && d.status
+                );
+                // Basic validation for vacations
+                const validVacations = parsedData.vacations.filter((v: any) =>
+                  v.id && v.employeeName && v.startDate && v.endDate
+                );
+                setDemands(validDemands);
+                setVacations(validVacations);
+                toast({ title: "Dados Importados", description: "Seus dados foram importados com sucesso." });
+              } else {
+                toast({ title: "Erro na Importação", description: "Formato de arquivo inválido. Certifique-se de que o JSON contém 'demands' e 'vacations' como arrays.", variant: "destructive" });
+              }
+            }
+          } catch (error) {
+            toast({ title: "Erro na Importação", description: "Não foi possível ler o arquivo JSON.", variant: "destructive" });
+            console.error("Import error:", error);
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
+  };
 
   return (
-    <div className="w-full space-y-8">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-1/2 mx-auto">
-          <TabsTrigger value="demands">
-            <ListChecks className="mr-2 h-5 w-5" /> Demandas
-          </TabsTrigger>
-          <TabsTrigger value="vacations">
-            <CalendarCheck className="mr-2 h-5 w-5" /> Férias
-          </TabsTrigger>
-        </TabsList>
+    <>
+      <AppHeader onExport={handleExportData} onImport={handleImportData} />
+      <div className="w-full space-y-8 mt-0"> {/* Removed mt-8 to be flush with header if desired, or adjust */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 md:w-1/2 mx-auto">
+            <TabsTrigger value="demands">
+              <ListChecks className="mr-2 h-5 w-5" /> Demandas
+            </TabsTrigger>
+            <TabsTrigger value="vacations">
+              <CalendarCheck className="mr-2 h-5 w-5" /> Férias
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="demands" className="space-y-6 mt-6">
-          <section aria-labelledby="demands-form-title">
-            <h2 id="demands-form-title" className="text-2xl font-headline font-semibold mb-4 text-primary">Registrar Nova Demanda</h2>
-            <DemandForm onAddDemand={handleAddDemand} />
-          </section>
-          <section aria-labelledby="demands-list-title">
-            <h2 id="demands-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Demandas</h2>
-            <DemandList 
-              demands={demands} 
-              onUpdateStatus={handleUpdateDemandStatus} 
-              onDeleteDemand={handleDeleteDemand}
-              onUpdateDemand={handleUpdateDemand}
-            />
-          </section>
-        </TabsContent>
+          <TabsContent value="demands" className="space-y-6 mt-6">
+            <section aria-labelledby="demands-form-title">
+              <h2 id="demands-form-title" className="text-2xl font-headline font-semibold mb-4 text-primary">Registrar Nova Demanda</h2>
+              <DemandForm onAddDemand={handleAddDemand} />
+            </section>
+            <section aria-labelledby="demands-list-title">
+              <h2 id="demands-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Demandas</h2>
+              <DemandList 
+                demands={demands} 
+                onUpdateStatus={handleUpdateDemandStatus} 
+                onDeleteDemand={handleDeleteDemand}
+                onUpdateDemand={handleUpdateDemand}
+              />
+            </section>
+          </TabsContent>
 
-        <TabsContent value="vacations" className="space-y-6 mt-6">
-          <section aria-labelledby="vacations-form-title">
-            <h2 id="vacations-form-title" className="text-2xl font-headline font-semibold mb-4 text-primary">Registrar Novas Férias</h2>
-            <VacationForm onAddVacation={handleAddVacation} />
-          </section>
-          <section aria-labelledby="vacations-list-title">
-            <h2 id="vacations-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Calendário de Férias</h2>
-            <VacationList 
-              vacations={vacations} 
-              demands={demands}
-              onDeleteVacation={handleDeleteVacation}
-              onUpdateVacation={handleUpdateVacation}
-              onCheckConflict={handleCheckConflict}
-            />
-          </section>
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="vacations" className="space-y-6 mt-6">
+            <section aria-labelledby="vacations-form-title">
+              <h2 id="vacations-form-title" className="text-2xl font-headline font-semibold mb-4 text-primary">Registrar Novas Férias</h2>
+              <VacationForm onAddVacation={handleAddVacation} />
+            </section>
+            <section aria-labelledby="vacations-list-title">
+              <h2 id="vacations-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Calendário de Férias</h2>
+              <VacationList 
+                vacations={vacations} 
+                demands={demands}
+                onDeleteVacation={handleDeleteVacation}
+                onUpdateVacation={handleUpdateVacation}
+                onCheckConflict={handleCheckConflict}
+              />
+            </section>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </>
   );
 }

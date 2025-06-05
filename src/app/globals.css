@@ -37,8 +37,14 @@
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
+    --chart-4: 43 74% 66%; /* Orange-Yellowish, can be used for medium priority */
     --chart-5: 27 87% 67%;
+    
+    --status-success: 134 61% 41%; /* Green */
+    --status-warning: 45 93% 47%;  /* Yellow / Orange */
+    --status-info: 207 90% 54%;    /* Blue */
+
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -81,8 +87,13 @@
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
+    --chart-4: 43 70% 56%;
     --chart-5: 340 75% 55%;
+
+    --status-success: 134 51% 51%;
+    --status-warning: 45 83% 57%;
+    --status-info: 207 80% 64%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
