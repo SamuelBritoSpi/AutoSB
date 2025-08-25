@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, PlusCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -138,13 +139,14 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
                           !field.value && "text-muted-foreground"
                         )}
                       >
-                        {field.value ? format(field.value, "PPP") : <span>Escolha uma data</span>}
+                        {field.value ? format(field.value, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
+                      locale={ptBR}
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
