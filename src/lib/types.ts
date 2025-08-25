@@ -1,3 +1,4 @@
+
 export type DemandPriority = 'alta' | 'media' | 'baixa';
 export type DemandStatus = 'a-fazer' | 'em-progresso' | 'concluida';
 
@@ -32,4 +33,5 @@ export interface MedicalCertificate {
   days: number;
   isHalfDay: boolean; // para atestados de meio turno
   originalReceived: boolean; // para controle do recebimento do atestado original
+  fileDataUri: string | null; // Base64 encoded file
 }

@@ -194,6 +194,7 @@ export default function GestaoFeriasPage() {
                  if (Array.isArray(parsedData.certificates)) {
                   const validCertificates = parsedData.certificates.filter((cert: any) =>
                     cert.id && cert.employeeId && cert.certificateDate && cert.days !== undefined
+                    // fileDataUri is optional
                   );
                   setCertificates(validCertificates);
                 }

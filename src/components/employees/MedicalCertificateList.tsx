@@ -1,10 +1,11 @@
+
 "use client";
 
 import type { Employee, MedicalCertificate } from '@/lib/types';
 import MedicalCertificateForm from './MedicalCertificateForm';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, FileImage } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import React, { useMemo } from 'react';
@@ -37,6 +38,13 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
     }
   }
 
+  const openAttachment = (dataUri: string) => {
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.write(`<img src="${dataUri}" style="width:100%;">`);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Alert variant={getAlertVariant()}>
@@ -68,6 +76,7 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
                 <TableHead>Data</TableHead>
                 <TableHead>Dias</TableHead>
                 <TableHead>Original</TableHead>
+                <TableHead>Anexo</TableHead>
                 <TableHead className="text-right">Ação</TableHead>
               </TableRow>
             </TableHeader>
@@ -80,6 +89,15 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
                       {cert.isHalfDay ? <Badge variant="secondary">Meio Turno</Badge> : `${cert.days} dia(s)`}
                     </TableCell>
                     <TableCell>{cert.originalReceived ? 'Sim' : 'Não'}</TableCell>
+                    <TableCell>
+                      {cert.fileDataUri ? (
+                        <Button variant="outline" size="icon" onClick={() => openAttachment(cert.fileDataUri!)}>
+                           <FileImage className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        'Não'
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => onDeleteCertificate(cert.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -89,7 +107,7 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">Nenhum atestado registrado.</TableCell>
+                  <TableCell colSpan={5} className="h-24 text-center">Nenhum atestado registrado.</TableCell>
                 </TableRow>
               )}
             </TableBody>

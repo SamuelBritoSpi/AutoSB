@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { MedicalCertificate } from '@/lib/types';
@@ -12,14 +13,23 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { CalendarIcon, PlusCircle } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Paperclip } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRef } from 'react';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
 
 const certificateSchema = z.object({
   certificateDate: z.date({ required_error: "Data do atestado é obrigatória." }),
   days: z.coerce.number().min(0, "Número de dias deve ser positivo."),
   isHalfDay: z.boolean().default(false),
   originalReceived: z.boolean().default(false),
+  file: z.any()
+    .optional()
+    .refine((file) => !file || file.size <= MAX_FILE_SIZE, `Tamanho máximo do arquivo é 5MB.`)
+    .refine((file) => !file || ACCEPTED_IMAGE_TYPES.includes(file.type), "Apenas formatos .jpg, .jpeg, .png e .webp são aceitos."),
 }).refine(data => !data.isHalfDay || (data.days <= 1 && data.days > 0), {
     message: "Atestado de meio turno deve ser de no máximo 1 dia.",
     path: ['days'],
@@ -38,6 +48,7 @@ interface MedicalCertificateFormProps {
 
 export default function MedicalCertificateForm({ employeeId, onAddCertificate }: MedicalCertificateFormProps) {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const form = useForm<CertificateFormValues>({
     resolver: zodResolver(certificateSchema),
     defaultValues: {
@@ -49,18 +60,34 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
   });
 
   const onSubmit = (values: CertificateFormValues) => {
-    const certificateData: MedicalCertificate = {
-      id: crypto.randomUUID(),
-      employeeId,
-      certificateDate: values.certificateDate.toISOString(),
-      days: values.isHalfDay ? 0.5 : values.days,
-      isHalfDay: values.isHalfDay,
-      originalReceived: values.originalReceived,
+    const processSubmit = (fileDataUri: string | null) => {
+      const certificateData: MedicalCertificate = {
+        id: crypto.randomUUID(),
+        employeeId,
+        certificateDate: values.certificateDate.toISOString(),
+        days: values.isHalfDay ? 0.5 : values.days,
+        isHalfDay: values.isHalfDay,
+        originalReceived: values.originalReceived,
+        fileDataUri: fileDataUri,
+      };
+      
+      onAddCertificate(certificateData);
+      toast({ title: "Atestado Adicionado", description: "Novo atestado registrado com sucesso." });
+      form.reset();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     };
     
-    onAddCertificate(certificateData);
-    toast({ title: "Atestado Adicionado", description: "Novo atestado registrado com sucesso." });
-    form.reset();
+    if (values.file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        processSubmit(e.target?.result as string);
+      };
+      reader.readAsDataURL(values.file);
+    } else {
+      processSubmit(null);
+    }
   };
 
   return (
@@ -159,6 +186,26 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
                 )}
             />
         </div>
+         <FormField
+          control={form.control}
+          name="file"
+          render={({ field: { onChange, value, ...rest } }) => (
+            <FormItem>
+              <FormLabel>Anexar Atestado (Imagem)</FormLabel>
+              <FormControl>
+                 <Input 
+                   type="file" 
+                   accept="image/*"
+                   onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)} 
+                   className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                   ref={fileInputRef}
+                   {...rest}
+                  />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <Button type="submit" className="w-full">
           <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Atestado
         </Button>
