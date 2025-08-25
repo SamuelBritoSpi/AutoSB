@@ -1,32 +1,50 @@
 "use client";
 
-import type { Employee } from '@/lib/types';
+import type { Employee, MedicalCertificate } from '@/lib/types';
 import EmployeeCard from './EmployeeCard';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import EmployeeForm from './EmployeeForm';
+import MedicalCertificateList from './MedicalCertificateList';
+import { Button } from '../ui/button';
 
 interface EmployeeListProps {
   employees: Employee[];
+  certificates: MedicalCertificate[];
   onDeleteEmployee: (id: string) => void;
   onUpdateEmployee: (employee: Employee) => void;
+  onAddCertificate: (certificate: MedicalCertificate) => void;
+  onDeleteCertificate: (id: string) => void;
 }
 
-export default function EmployeeList({ employees, onDeleteEmployee, onUpdateEmployee }: EmployeeListProps) {
+export default function EmployeeList({ 
+  employees, 
+  certificates,
+  onDeleteEmployee, 
+  onUpdateEmployee,
+  onAddCertificate,
+  onDeleteCertificate
+}: EmployeeListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [managingCertificatesFor, setManagingCertificatesFor] = useState<Employee | null>(null);
 
   const handleEdit = (employee: Employee) => {
     setEditingEmployee(employee);
-    setIsEditDialogOpen(true);
   };
 
   const closeEditDialog = () => {
-    setIsEditDialogOpen(false);
     setEditingEmployee(null);
+  };
+  
+  const handleManageCertificates = (employee: Employee) => {
+    setManagingCertificatesFor(employee);
+  };
+
+  const closeCertificateManager = () => {
+    setManagingCertificatesFor(null);
   };
 
   const filteredEmployees = useMemo(() => {
@@ -57,28 +75,48 @@ export default function EmployeeList({ employees, onDeleteEmployee, onUpdateEmpl
             <EmployeeCard
               key={employee.id}
               employee={employee}
+              certificates={certificates.filter(c => c.employeeId === employee.id)}
               onDelete={onDeleteEmployee}
               onEdit={handleEdit}
+              onManageCertificates={handleManageCertificates}
             />
           ))}
         </div>
       )}
 
-      {editingEmployee && (
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Editar Funcionário</DialogTitle>
-            </DialogHeader>
+      {/* Edit Employee Dialog */}
+      <Dialog open={!!editingEmployee} onOpenChange={(isOpen) => !isOpen && closeEditDialog()}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Editar Funcionário</DialogTitle>
+          </DialogHeader>
+          {editingEmployee && (
             <EmployeeForm
               existingEmployee={editingEmployee}
               onUpdateEmployee={onUpdateEmployee}
               onClose={closeEditDialog}
               onAddEmployee={() => {}}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Manage Certificates Dialog */}
+      <Dialog open={!!managingCertificatesFor} onOpenChange={(isOpen) => !isOpen && closeCertificateManager()}>
+          <DialogContent className="sm:max-w-[800px]">
+              <DialogHeader>
+                  <DialogTitle>Gerenciar Atestados de {managingCertificatesFor?.name}</DialogTitle>
+              </DialogHeader>
+              {managingCertificatesFor && (
+                  <MedicalCertificateList
+                      employee={managingCertificatesFor}
+                      certificates={certificates.filter(c => c.employeeId === managingCertificatesFor.id)}
+                      onAddCertificate={onAddCertificate}
+                      onDeleteCertificate={onDeleteCertificate}
+                  />
+              )}
           </DialogContent>
-        </Dialog>
-      )}
+      </Dialog>
     </div>
   );
 }

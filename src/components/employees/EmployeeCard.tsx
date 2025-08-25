@@ -1,16 +1,20 @@
 "use client";
 
-import type { Employee } from '@/lib/types';
+import type { Employee, MedicalCertificate } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { User, FileText, Edit, Trash2 } from 'lucide-react';
+import { User, FileText, Edit, Trash2, Menu, Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useMemo } from 'react';
+import { analyzeCertificates } from '@/lib/certificate-logic';
 
 interface EmployeeCardProps {
   employee: Employee;
+  certificates: MedicalCertificate[];
   onDelete: (id: string) => void;
   onEdit: (employee: Employee) => void;
+  onManageCertificates: (employee: Employee) => void;
 }
 
 const contractTypeMap: Record<Employee['contractType'], string> = {
@@ -25,7 +29,9 @@ const contractTypeVariant: Record<Employee['contractType'], "default" | "seconda
     terceirizado: 'outline'
 };
 
-export default function EmployeeCard({ employee, onDelete, onEdit }: EmployeeCardProps) {
+export default function EmployeeCard({ employee, certificates, onDelete, onEdit, onManageCertificates }: EmployeeCardProps) {
+  const analysis = useMemo(() => analyzeCertificates(certificates, employee.contractType), [certificates, employee.contractType]);
+
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <CardHeader>
@@ -36,16 +42,16 @@ export default function EmployeeCard({ employee, onDelete, onEdit }: EmployeeCar
           </CardTitle>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="p-1 h-auto">
-                <Edit className="h-4 w-4 text-muted-foreground" />
+              <Button variant="ghost" size="icon" className="p-1 h-auto w-auto">
+                <Menu className="h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit(employee)}>
-                <Edit className="mr-2 h-4 w-4" /> Editar
+                <Edit className="mr-2 h-4 w-4" /> Editar Funcionário
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onDelete(employee.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                <Trash2 className="mr-2 h-4 w-4" /> Excluir Funcionário
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -56,12 +62,22 @@ export default function EmployeeCard({ employee, onDelete, onEdit }: EmployeeCar
             </Badge>
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow">
-        {/* Futuro espaço para resumo de atestados */}
-        <div className="text-sm text-muted-foreground italic">
-            <p>Atestados serão gerenciados aqui.</p>
+      <CardContent className="flex-grow space-y-2">
+        <div className="text-sm">
+            <p className='font-semibold'>Resumo dos Atestados (60 dias):</p>
+            <p className="text-muted-foreground">
+                Dias Acumulados: <span className="font-bold">{analysis.totalDaysInWindow}</span>
+            </p>
+             <p className={`font-bold ${analysis.status === 'Normal' ? 'text-green-600' : 'text-red-600'}`}>
+                Status: {analysis.status}
+            </p>
         </div>
       </CardContent>
+      <CardFooter>
+        <Button onClick={() => onManageCertificates(employee)} className='w-full'>
+            <Activity className="mr-2 h-4 w-4" /> Gerenciar Atestados
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

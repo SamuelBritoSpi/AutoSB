@@ -10,7 +10,7 @@ import VacationList from '@/components/vacations/VacationList';
 import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeList from '@/components/employees/EmployeeList';
 
-import type { Demand, Vacation, DemandStatus, Employee } from '@/lib/types';
+import type { Demand, Vacation, DemandStatus, Employee, MedicalCertificate } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ListChecks, CalendarCheck, PlusCircle, Users } from 'lucide-react';
 import AppHeader from '@/components/AppHeader'; 
@@ -19,11 +19,15 @@ import { Button } from '@/components/ui/button';
 const DEMANDS_STORAGE_KEY = 'autoSb_demands';
 const VACATIONS_STORAGE_KEY = 'autoSb_vacations';
 const EMPLOYEES_STORAGE_KEY = 'autoSb_employees';
+const CERTIFICATES_STORAGE_KEY = 'autoSb_certificates';
+
 
 export default function GestaoFeriasPage() {
   const [demands, setDemands] = useState<Demand[]>([]);
   const [vacations, setVacations] = useState<Vacation[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [certificates, setCertificates] = useState<MedicalCertificate[]>([]);
+
 
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("demands");
@@ -62,6 +66,16 @@ export default function GestaoFeriasPage() {
         setEmployees([]);
       }
     }
+    const storedCertificates = localStorage.getItem(CERTIFICATES_STORAGE_KEY);
+    if (storedCertificates) {
+        try {
+            const parsed = JSON.parse(storedCertificates);
+            if(Array.isArray(parsed)) setCertificates(parsed);
+        } catch (e) {
+            console.error("Failed to parse certificates from localStorage", e);
+            setCertificates([]);
+        }
+    }
   }, []);
 
   useEffect(() => {
@@ -75,6 +89,10 @@ export default function GestaoFeriasPage() {
   useEffect(() => {
     localStorage.setItem(EMPLOYEES_STORAGE_KEY, JSON.stringify(employees));
   }, [employees]);
+
+  useEffect(() => {
+    localStorage.setItem(CERTIFICATES_STORAGE_KEY, JSON.stringify(certificates));
+  }, [certificates]);
 
   const handleAddDemand = (newDemand: Demand) => {
     setDemands(prev => [newDemand, ...prev]);
@@ -123,8 +141,16 @@ export default function GestaoFeriasPage() {
     toast({ title: "Funcionário Excluído", description: "O registro do funcionário foi removido." });
   };
 
+  const handleAddCertificate = (newCertificate: MedicalCertificate) => {
+    setCertificates(prev => [newCertificate, ...prev]);
+  };
+  const handleDeleteCertificate = (id: string) => {
+    setCertificates(prev => prev.filter(c => c.id !== id));
+    toast({ title: "Atestado Excluído", description: "O registro do atestado foi removido." });
+  };
+
   const handleExportData = () => {
-    const dataToExport = { demands, vacations, employees };
+    const dataToExport = { demands, vacations, employees, certificates };
     const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(dataToExport, null, 2))}`;
     const link = document.createElement("a");
     link.href = jsonString;
@@ -164,6 +190,12 @@ export default function GestaoFeriasPage() {
                     emp.id && emp.name && emp.contractType
                   );
                   setEmployees(validEmployees);
+                }
+                 if (Array.isArray(parsedData.certificates)) {
+                  const validCertificates = parsedData.certificates.filter((cert: any) =>
+                    cert.id && cert.employeeId && cert.certificateDate && cert.days !== undefined
+                  );
+                  setCertificates(validCertificates);
                 }
                 toast({ title: "Dados Importados", description: "Seus dados foram importados com sucesso." });
               } else {
@@ -269,8 +301,11 @@ export default function GestaoFeriasPage() {
               <h2 id="employees-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Funcionários</h2>
               <EmployeeList 
                 employees={employees}
+                certificates={certificates}
                 onDeleteEmployee={handleDeleteEmployee}
                 onUpdateEmployee={handleUpdateEmployee}
+                onAddCertificate={handleAddCertificate}
+                onDeleteCertificate={handleDeleteCertificate}
               />
             </section>
           </TabsContent>
