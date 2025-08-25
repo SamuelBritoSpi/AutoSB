@@ -11,11 +11,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { CalendarIcon, PlusCircle, Paperclip } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Paperclip, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import CertificateScanner from './CertificateScanner';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -26,6 +28,7 @@ const certificateSchema = z.object({
   days: z.coerce.number().min(0, "Número de dias deve ser positivo."),
   isHalfDay: z.boolean().default(false),
   originalReceived: z.boolean().default(false),
+  // file is now optional in the schema, we handle it separately
   file: z.any()
     .optional()
     .refine((file) => !file || file.size <= MAX_FILE_SIZE, `Tamanho máximo do arquivo é 5MB.`)
@@ -49,6 +52,9 @@ interface MedicalCertificateFormProps {
 export default function MedicalCertificateForm({ employeeId, onAddCertificate }: MedicalCertificateFormProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  
   const form = useForm<CertificateFormValues>({
     resolver: zodResolver(certificateSchema),
     defaultValues: {
@@ -58,6 +64,8 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
       originalReceived: false,
     },
   });
+  
+  const attachedFileName = form.watch('file')?.name || (scannedImageUri ? 'imagem_escaneada.jpg' : '');
 
   const onSubmit = (values: CertificateFormValues) => {
     const processSubmit = (fileDataUri: string | null) => {
@@ -74,12 +82,15 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
       onAddCertificate(certificateData);
       toast({ title: "Atestado Adicionado", description: "Novo atestado registrado com sucesso." });
       form.reset();
+      setScannedImageUri(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     };
     
-    if (values.file) {
+    if (scannedImageUri) {
+      processSubmit(scannedImageUri);
+    } else if (values.file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         processSubmit(e.target?.result as string);
@@ -89,6 +100,13 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
       processSubmit(null);
     }
   };
+
+  const handleCapture = (imageUri: string) => {
+    setScannedImageUri(imageUri);
+    form.setValue('file', null); // Clear file input if scan is used
+    setIsScannerOpen(false);
+    toast({ title: "Imagem Capturada", description: "A imagem do atestado foi capturada com sucesso." });
+  }
 
   return (
     <Form {...form}>
@@ -186,26 +204,53 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
                 )}
             />
         </div>
-         <FormField
-          control={form.control}
-          name="file"
-          render={({ field: { onChange, value, ...rest } }) => (
-            <FormItem>
-              <FormLabel>Anexar Atestado (Imagem)</FormLabel>
-              <FormControl>
-                 <Input 
-                   type="file" 
-                   accept="image/*"
-                   onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)} 
-                   className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                   ref={fileInputRef}
-                   {...rest}
-                  />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        
+        <FormItem>
+          <FormLabel>Anexar Atestado</FormLabel>
+          <div className="flex flex-col sm:flex-row gap-2 items-center">
+            <FormControl>
+                <FormField
+                  control={form.control}
+                  name="file"
+                  render={({ field: { onChange, ...rest } }) => (
+                     <Input 
+                       type="file" 
+                       accept="image/*"
+                       onChange={(e) => {
+                         onChange(e.target.files ? e.target.files[0] : null);
+                         setScannedImageUri(null); // Clear scanned image if file is selected
+                       }}
+                       className="hidden"
+                       ref={fileInputRef}
+                       id="file-upload"
+                       {...rest}
+                      />
+                  )}
+                />
+            </FormControl>
+            <Button type="button" variant="outline" className="w-full" onClick={() => document.getElementById('file-upload')?.click()}>
+              <Paperclip className="mr-2 h-4 w-4" /> Anexar Arquivo
+            </Button>
+            
+            <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
+              <DialogTrigger asChild>
+                <Button type="button" variant="outline" className="w-full">
+                  <Camera className="mr-2 h-4 w-4" /> Escanear Atestado
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Escanear Atestado Médico</DialogTitle>
+                </DialogHeader>
+                <CertificateScanner onCapture={handleCapture} />
+              </DialogContent>
+            </Dialog>
+            
+          </div>
+          {attachedFileName && <FormMessage className="text-muted-foreground mt-2">Arquivo selecionado: {attachedFileName}</FormMessage>}
+          <FormMessage />
+        </FormItem>
+
         <Button type="submit" className="w-full">
           <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Atestado
         </Button>
