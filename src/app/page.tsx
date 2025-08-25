@@ -7,22 +7,29 @@ import DemandForm from '@/components/demands/DemandForm';
 import DemandList from '@/components/demands/DemandList';
 import VacationForm from '@/components/vacations/VacationForm';
 import VacationList from '@/components/vacations/VacationList';
-import type { Demand, Vacation, DemandStatus } from '@/lib/types';
+import EmployeeForm from '@/components/employees/EmployeeForm';
+import EmployeeList from '@/components/employees/EmployeeList';
+
+import type { Demand, Vacation, DemandStatus, Employee } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users } from 'lucide-react';
 import AppHeader from '@/components/AppHeader'; 
 import { Button } from '@/components/ui/button';
 
 const DEMANDS_STORAGE_KEY = 'autoSb_demands';
 const VACATIONS_STORAGE_KEY = 'autoSb_vacations';
+const EMPLOYEES_STORAGE_KEY = 'autoSb_employees';
 
 export default function GestaoFeriasPage() {
   const [demands, setDemands] = useState<Demand[]>([]);
   const [vacations, setVacations] = useState<Vacation[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("demands");
   const [showDemandForm, setShowDemandForm] = useState(false);
   const [showVacationForm, setShowVacationForm] = useState(false);
+  const [showEmployeeForm, setShowEmployeeForm] = useState(false);
 
   useEffect(() => {
     const storedDemands = localStorage.getItem(DEMANDS_STORAGE_KEY);
@@ -45,6 +52,16 @@ export default function GestaoFeriasPage() {
         setVacations([]);
       }
     }
+    const storedEmployees = localStorage.getItem(EMPLOYEES_STORAGE_KEY);
+    if (storedEmployees) {
+      try {
+        const parsedEmployees = JSON.parse(storedEmployees);
+        if(Array.isArray(parsedEmployees)) setEmployees(parsedEmployees);
+      } catch (e) {
+        console.error("Failed to parse employees from localStorage", e);
+        setEmployees([]);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -55,9 +72,13 @@ export default function GestaoFeriasPage() {
     localStorage.setItem(VACATIONS_STORAGE_KEY, JSON.stringify(vacations));
   }, [vacations]);
 
+  useEffect(() => {
+    localStorage.setItem(EMPLOYEES_STORAGE_KEY, JSON.stringify(employees));
+  }, [employees]);
+
   const handleAddDemand = (newDemand: Demand) => {
     setDemands(prev => [newDemand, ...prev]);
-    setShowDemandForm(false); // Oculta o formulário após adicionar
+    setShowDemandForm(false);
   };
 
   const handleUpdateDemand = (updatedDemand: Demand) => {
@@ -76,7 +97,7 @@ export default function GestaoFeriasPage() {
 
   const handleAddVacation = (newVacation: Vacation) => {
     setVacations(prev => [newVacation, ...prev]);
-    setShowVacationForm(false); // Oculta o formulário após adicionar
+    setShowVacationForm(false);
   };
   
   const handleUpdateVacation = (updatedVacation: Vacation) => {
@@ -88,8 +109,22 @@ export default function GestaoFeriasPage() {
     toast({ title: "Férias Excluídas", description: "O registro de férias foi removido." });
   };
 
+  const handleAddEmployee = (newEmployee: Employee) => {
+    setEmployees(prev => [newEmployee, ...prev]);
+    setShowEmployeeForm(false);
+  };
+
+  const handleUpdateEmployee = (updatedEmployee: Employee) => {
+    setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
+  };
+
+  const handleDeleteEmployee = (id: string) => {
+    setEmployees(prev => prev.filter(e => e.id !== id));
+    toast({ title: "Funcionário Excluído", description: "O registro do funcionário foi removido." });
+  };
+
   const handleExportData = () => {
-    const dataToExport = { demands, vacations };
+    const dataToExport = { demands, vacations, employees };
     const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(dataToExport, null, 2))}`;
     const link = document.createElement("a");
     link.href = jsonString;
@@ -111,18 +146,28 @@ export default function GestaoFeriasPage() {
             const content = e.target?.result;
             if (typeof content === 'string') {
               const parsedData = JSON.parse(content);
-              if (parsedData && Array.isArray(parsedData.demands) && Array.isArray(parsedData.vacations)) {
-                const validDemands = parsedData.demands.filter((d: any) => 
-                  d.id && d.title && d.description && d.priority && d.dueDate && d.status
-                );
-                const validVacations = parsedData.vacations.filter((v: any) =>
-                  v.id && v.employeeName && v.startDate && v.endDate
-                );
-                setDemands(validDemands);
-                setVacations(validVacations);
+              if (parsedData) {
+                if (Array.isArray(parsedData.demands)) {
+                  const validDemands = parsedData.demands.filter((d: any) => 
+                    d.id && d.title && d.description && d.priority && d.dueDate && d.status
+                  );
+                  setDemands(validDemands);
+                }
+                 if (Array.isArray(parsedData.vacations)) {
+                  const validVacations = parsedData.vacations.filter((v: any) =>
+                    v.id && v.employeeName && v.startDate && v.endDate
+                  );
+                  setVacations(validVacations);
+                }
+                if (Array.isArray(parsedData.employees)) {
+                  const validEmployees = parsedData.employees.filter((emp: any) =>
+                    emp.id && emp.name && emp.contractType
+                  );
+                  setEmployees(validEmployees);
+                }
                 toast({ title: "Dados Importados", description: "Seus dados foram importados com sucesso." });
               } else {
-                toast({ title: "Erro na Importação", description: "Formato de arquivo inválido. Certifique-se de que o JSON contém 'demands' e 'vacations' como arrays.", variant: "destructive" });
+                toast({ title: "Erro na Importação", description: "Formato de arquivo inválido.", variant: "destructive" });
               }
             }
           } catch (error) {
@@ -141,12 +186,15 @@ export default function GestaoFeriasPage() {
       <AppHeader onExport={handleExportData} onImport={handleImportData} />
       <div className="w-full space-y-8 mt-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:w-1/2 mx-auto">
+          <TabsList className="grid w-full grid-cols-3 md:w-2/3 mx-auto">
             <TabsTrigger value="demands">
               <ListChecks className="mr-2 h-5 w-5" /> Demandas
             </TabsTrigger>
             <TabsTrigger value="vacations">
               <CalendarCheck className="mr-2 h-5 w-5" /> Férias
+            </TabsTrigger>
+             <TabsTrigger value="employees">
+              <Users className="mr-2 h-5 w-5" /> Funcionários
             </TabsTrigger>
           </TabsList>
 
@@ -198,6 +246,31 @@ export default function GestaoFeriasPage() {
                 demands={demands}
                 onDeleteVacation={handleDeleteVacation}
                 onUpdateVacation={handleUpdateVacation}
+              />
+            </section>
+          </TabsContent>
+
+          <TabsContent value="employees" className="space-y-6 mt-6">
+            <section aria-labelledby="employees-form-section-title">
+               <div className="flex justify-between items-center mb-4">
+                <h2 id="employees-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novo Funcionário</h2>
+                <Button variant="outline" onClick={() => setShowEmployeeForm(!showEmployeeForm)}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> {showEmployeeForm ? 'Ocultar Formulário' : 'Adicionar Funcionário'}
+                </Button>
+              </div>
+              {showEmployeeForm && (
+                <EmployeeForm 
+                  onAddEmployee={handleAddEmployee} 
+                  onClose={() => setShowEmployeeForm(false)} 
+                />
+              )}
+            </section>
+            <section aria-labelledby="employees-list-title">
+              <h2 id="employees-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Funcionários</h2>
+              <EmployeeList 
+                employees={employees}
+                onDeleteEmployee={handleDeleteEmployee}
+                onUpdateEmployee={handleUpdateEmployee}
               />
             </section>
           </TabsContent>
