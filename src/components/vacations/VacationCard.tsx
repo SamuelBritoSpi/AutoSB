@@ -3,21 +3,18 @@
 import type { Vacation } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { User, CalendarRange, AlertOctagon, Edit, Trash2, BrainCircuit } from 'lucide-react';
+import { User, CalendarRange, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface VacationCardProps {
   vacation: Vacation;
   onDelete: (id: string) => void;
   onEdit: (vacation: Vacation) => void;
-  onCheckConflict: (vacation: Vacation) => void;
 }
 
-export default function VacationCard({ vacation, onDelete, onEdit, onCheckConflict }: VacationCardProps) {
-  const conflictResult = vacation.conflictCheckResult;
+export default function VacationCard({ vacation, onDelete, onEdit }: VacationCardProps) {
 
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -48,31 +45,10 @@ export default function VacationCard({ vacation, onDelete, onEdit, onCheckConfli
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {conflictResult && (
-          <>
-            <Separator className="my-3" />
-            <div className={`p-3 rounded-md ${conflictResult.conflictDetected ? 'bg-destructive/10 border-destructive/50 border' : 'bg-[hsl(var(--status-success))]/10 border-[hsl(var(--status-success))]/50 border'}`}>
-              <div className="flex items-center mb-1">
-                <AlertOctagon className={`h-5 w-5 mr-2 ${conflictResult.conflictDetected ? 'text-destructive' : 'text-[hsl(var(--status-success))]'}`} />
-                <p className={`font-semibold ${conflictResult.conflictDetected ? 'text-destructive' : 'text-[hsl(var(--status-success))]'}`}>
-                  {conflictResult.conflictDetected ? "Conflito Detectado" : "Sem Conflitos Detectados"}
-                </p>
-              </div>
-              <p className="text-sm text-muted-foreground">{conflictResult.conflictDetails}</p>
-              {conflictResult.checkedDemandDescription && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Verificado contra: {conflictResult.checkedDemandDescription.substring(0,50)}{conflictResult.checkedDemandDescription.length > 50 ? "..." : ""}
-                </p>
-              )}
-            </div>
-          </>
-        )}
+        {/* Conteúdo do cartão de férias, se houver mais algum. */}
       </CardContent>
-      <CardFooter className="flex justify-end">
-        <Button variant="outline" size="sm" onClick={() => onCheckConflict(vacation)}>
-          <BrainCircuit className="h-4 w-4 mr-2" />
-          Verificar Conflito
-        </Button>
+      <CardFooter>
+        {/* Rodapé do cartão de férias, se necessário */}
       </CardFooter>
     </Card>
   );

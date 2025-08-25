@@ -15,16 +15,4 @@ export interface Vacation {
   employeeName: string;
   startDate: string; // ISO string for date
   endDate: string; // ISO string for date
-  conflictCheckResult?: {
-    conflictDetected: boolean;
-    conflictDetails: string;
-    checkedAgainstDemandId?: string;
-    checkedDemandDescription?: string;
-  };
-}
-
-// For AI interaction
-export interface AIConflictCheckResult {
-  conflictDetected: boolean;
-  conflictDetails: string;
 }

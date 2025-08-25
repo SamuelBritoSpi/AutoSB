@@ -7,10 +7,7 @@ import DemandForm from '@/components/demands/DemandForm';
 import DemandList from '@/components/demands/DemandList';
 import VacationForm from '@/components/vacations/VacationForm';
 import VacationList from '@/components/vacations/VacationList';
-import type { Demand, Vacation, DemandStatus, AIConflictCheckResult } from '@/lib/types';
-import { vacationConflictDetection } from '@/ai/flows/vacation-conflict-detection';
-import type { VacationConflictDetectionInput } from '@/ai/flows/vacation-conflict-detection';
-import { format, parseISO } from 'date-fns';
+import type { Demand, Vacation, DemandStatus } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ListChecks, CalendarCheck, PlusCircle } from 'lucide-react';
 import AppHeader from '@/components/AppHeader'; 
@@ -90,42 +87,6 @@ export default function GestaoFeriasPage() {
     setVacations(prev => prev.filter(v => v.id !== id));
     toast({ title: "Férias Excluídas", description: "O registro de férias foi removido." });
   };
-
-  const handleCheckConflict = useCallback(async (vacation: Vacation, demandId: string) => {
-    const targetDemand = demands.find(d => d.id === demandId);
-    if (!targetDemand) {
-      toast({ title: "Erro", description: "Demanda selecionada não encontrada.", variant: "destructive" });
-      return;
-    }
-
-    const aiInput: VacationConflictDetectionInput = {
-      vacationStartDate: format(parseISO(vacation.startDate), 'yyyy-MM-dd'),
-      vacationEndDate: format(parseISO(vacation.endDate), 'yyyy-MM-dd'),
-      employeeName: vacation.employeeName,
-      projectDueDate: format(parseISO(targetDemand.dueDate), 'yyyy-MM-dd'),
-      projectPriority: targetDemand.priority,
-      projectDescription: targetDemand.description,
-    };
-
-    try {
-      const result: AIConflictCheckResult = await vacationConflictDetection(aiInput);
-      setVacations(prevVacations => 
-        prevVacations.map(v => 
-          v.id === vacation.id 
-            ? { ...v, conflictCheckResult: { ...result, checkedAgainstDemandId: demandId, checkedDemandDescription: targetDemand.title } }
-            : v
-        )
-      );
-      toast({
-        title: result.conflictDetected ? "Conflito Detectado!" : "Sem Conflitos",
-        description: result.conflictDetails || (result.conflictDetected ? "Um conflito foi encontrado." : "Nenhum conflito encontrado com a demanda selecionada."),
-        variant: result.conflictDetected ? "destructive" : "default",
-      });
-    } catch (error) {
-      console.error("AI Conflict Check Error:", error);
-      toast({ title: "Erro na Verificação", description: "Não foi possível verificar o conflito.", variant: "destructive" });
-    }
-  }, [demands, toast]);
 
   const handleExportData = () => {
     const dataToExport = { demands, vacations };
@@ -237,7 +198,6 @@ export default function GestaoFeriasPage() {
                 demands={demands}
                 onDeleteVacation={handleDeleteVacation}
                 onUpdateVacation={handleUpdateVacation}
-                onCheckConflict={handleCheckConflict}
               />
             </section>
           </TabsContent>
