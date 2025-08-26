@@ -66,7 +66,7 @@ export default function GestaoFeriasPage() {
       }
     }
     loadData();
-  }, []);
+  }, [toast]);
 
   const handleAddDemand = async (newDemand: Demand) => {
     try {
