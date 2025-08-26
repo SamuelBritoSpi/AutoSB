@@ -94,6 +94,28 @@ async function remove(storeName: string, id: string): Promise<void> {
   });
 }
 
+async function clearStore(storeName: string): Promise<void> {
+    const store = await getStore(storeName, 'readwrite');
+    return new Promise((resolve, reject) => {
+        const request = store.clear();
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve();
+    });
+}
+
+export async function clearAllData(): Promise<void> {
+    const db = await initDB();
+    const transaction = db.transaction(Object.values(STORES), 'readwrite');
+    await Promise.all(Object.values(STORES).map(storeName => {
+        return new Promise<void>((resolve, reject) => {
+            const request = transaction.objectStore(storeName).clear();
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }));
+}
+
+
 // --- Demands ---
 export const getDemands = () => getAll<Demand>(STORES.demands);
 export const addDemand = (demand: Demand) => add(STORES.demands, demand);
@@ -117,3 +139,43 @@ export const getCertificates = () => getAll<MedicalCertificate>(STORES.certifica
 export const addCertificate = (certificate: MedicalCertificate) => add(STORES.certificates, certificate);
 export const updateCertificate = (certificate: MedicalCertificate) => update(STORES.certificates, certificate);
 export const deleteCertificate = (id: string) => remove(STORES.certificates, id);
+
+// --- Import/Export ---
+interface AllData {
+    demands: Demand[];
+    vacations: Vacation[];
+    employees: Employee[];
+    certificates: MedicalCertificate[];
+}
+
+export async function getAllData(): Promise<AllData> {
+    const [demands, vacations, employees, certificates] = await Promise.all([
+        getDemands(),
+        getVacations(),
+        getEmployees(),
+        getCertificates()
+    ]);
+    return { demands, vacations, employees, certificates };
+}
+
+export async function importData(data: AllData): Promise<void> {
+    const db = await initDB();
+    const transaction = db.transaction(Object.values(STORES), 'readwrite');
+
+    // Clear existing data
+    await Promise.all(Object.values(STORES).map(storeName => {
+        return new Promise<void>((resolve, reject) => {
+            const request = transaction.objectStore(storeName).clear();
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }));
+
+    // Add new data
+    await Promise.all([
+        ...data.demands.map(d => add(STORES.demands, d)),
+        ...data.vacations.map(v => add(STORES.vacations, v)),
+        ...data.employees.map(e => add(STORES.employees, e)),
+        ...data.certificates.map(c => add(STORES.certificates, c)),
+    ]);
+}

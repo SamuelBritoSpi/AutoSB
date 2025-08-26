@@ -30,7 +30,10 @@ import {
   deleteEmployee as deleteDbEmployee,
   addCertificate,
   getCertificates,
-  deleteCertificate as deleteDbCertificate
+  deleteCertificate as deleteDbCertificate,
+  clearAllData,
+  getAllData,
+  importData
 } from '@/lib/idb';
 
 
@@ -46,8 +49,7 @@ export default function GestaoFeriasPage() {
   const [showVacationForm, setShowVacationForm] = useState(false);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
 
-  useEffect(() => {
-    async function loadData() {
+  async function loadAllData() {
       try {
         const [loadedDemands, loadedVacations, loadedEmployees, loadedCertificates] = await Promise.all([
           getDemands(),
@@ -59,13 +61,20 @@ export default function GestaoFeriasPage() {
         setVacations(loadedVacations);
         setEmployees(loadedEmployees);
         setCertificates(loadedCertificates);
-        toast({ title: 'Dados Carregados', description: 'Seus dados locais foram carregados com sucesso.'});
+        return true;
       } catch (error) {
         console.error("Failed to load data from IndexedDB", error);
         toast({ variant: 'destructive', title: 'Erro ao Carregar Dados', description: 'Não foi possível carregar os dados do banco de dados local.' });
+        return false;
       }
-    }
-    loadData();
+  }
+
+  useEffect(() => {
+    loadAllData().then(success => {
+      if(success) {
+         toast({ title: 'Dados Carregados', description: 'Seus dados locais foram carregados com sucesso.'});
+      }
+    })
   }, [toast]);
 
   const handleAddDemand = async (newDemand: Demand) => {
@@ -200,9 +209,66 @@ export default function GestaoFeriasPage() {
     }
   };
 
+  const handleExportData = async () => {
+    try {
+      const allData = await getAllData();
+      const jsonString = JSON.stringify(allData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `autosb_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast({ title: "Dados Exportados", description: "Seu backup foi criado com sucesso." });
+    } catch (error) {
+      console.error("Failed to export data:", error);
+      toast({ variant: 'destructive', title: 'Erro ao Exportar', description: 'Não foi possível exportar seus dados.' });
+    }
+  };
+
+  const handleImportData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const content = event.target?.result;
+          if (typeof content !== 'string') {
+            throw new Error("Invalid file content");
+          }
+          const data = JSON.parse(content);
+          
+          // Simple validation
+          if (!data.demands || !data.vacations || !data.employees || !data.certificates) {
+             throw new Error("Arquivo de backup inválido ou corrompido.");
+          }
+
+          await importData(data);
+          await loadAllData(); // Reload data from DB into state
+          
+          toast({ title: "Dados Importados", description: "Seu backup foi restaurado com sucesso." });
+
+        } catch (error) {
+          console.error("Failed to import data:", error);
+          toast({ variant: 'destructive', title: 'Erro ao Importar', description: (error as Error).message || 'O arquivo selecionado não é um backup válido.' });
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
   return (
     <>
-      <AppHeader />
+      <AppHeader onImport={handleImportData} onExport={handleExportData} />
       <div className="w-full space-y-8 mt-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3 md:w-2/3 mx-auto">
