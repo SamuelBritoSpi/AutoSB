@@ -15,6 +15,24 @@ import { useToast } from '@/hooks/use-toast';
 import { ListChecks, CalendarCheck, PlusCircle, Users } from 'lucide-react';
 import AppHeader from '@/components/AppHeader'; 
 import { Button } from '@/components/ui/button';
+import { 
+  addDemand, 
+  getDemands, 
+  updateDemand as updateDbDemand, 
+  deleteDemand as deleteDbDemand,
+  addVacation,
+  getVacations,
+  updateVacation as updateDbVacation,
+  deleteVacation as deleteDbVacation,
+  addEmployee,
+  getEmployees,
+  updateEmployee as updateDbEmployee,
+  deleteEmployee as deleteDbEmployee,
+  addCertificate,
+  getCertificates,
+  deleteCertificate as deleteDbCertificate
+} from '@/lib/idb';
+
 
 export default function GestaoFeriasPage() {
   const [demands, setDemands] = useState<Demand[]>([]);
@@ -29,63 +47,157 @@ export default function GestaoFeriasPage() {
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
 
   useEffect(() => {
-    // A lógica de carregamento de dados será substituída pelo IndexedDB
+    async function loadData() {
+      try {
+        const [loadedDemands, loadedVacations, loadedEmployees, loadedCertificates] = await Promise.all([
+          getDemands(),
+          getVacations(),
+          getEmployees(),
+          getCertificates()
+        ]);
+        setDemands(loadedDemands);
+        setVacations(loadedVacations);
+        setEmployees(loadedEmployees);
+        setCertificates(loadedCertificates);
+        toast({ title: 'Dados Carregados', description: 'Seus dados locais foram carregados com sucesso.'});
+      } catch (error) {
+        console.error("Failed to load data from IndexedDB", error);
+        toast({ variant: 'destructive', title: 'Erro ao Carregar Dados', description: 'Não foi possível carregar os dados do banco de dados local.' });
+      }
+    }
+    loadData();
   }, []);
 
-  const handleAddDemand = (newDemand: Demand) => {
-    setDemands(prev => [newDemand, ...prev]);
-    setShowDemandForm(false);
+  const handleAddDemand = async (newDemand: Demand) => {
+    try {
+      await addDemand(newDemand);
+      setDemands(prev => [newDemand, ...prev]);
+      setShowDemandForm(false);
+    } catch (error) {
+       console.error("Failed to add demand:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar a demanda.' });
+    }
   };
 
-  const handleUpdateDemand = (updatedDemand: Demand) => {
-    setDemands(prev => prev.map(d => d.id === updatedDemand.id ? updatedDemand : d));
+  const handleUpdateDemand = async (updatedDemand: Demand) => {
+    try {
+      await updateDbDemand(updatedDemand);
+      setDemands(prev => prev.map(d => d.id === updatedDemand.id ? updatedDemand : d));
+    } catch (error) {
+       console.error("Failed to update demand:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível atualizar a demanda.' });
+    }
   };
 
-  const handleDeleteDemand = (id: string) => {
-    setDemands(prev => prev.filter(d => d.id !== id));
-    toast({ title: "Demanda Excluída", description: "A demanda foi removida." });
+  const handleDeleteDemand = async (id: string) => {
+    try {
+      await deleteDbDemand(id);
+      setDemands(prev => prev.filter(d => d.id !== id));
+      toast({ title: "Demanda Excluída", description: "A demanda foi removida." });
+    } catch (error) {
+       console.error("Failed to delete demand:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível excluir a demanda.' });
+    }
   };
 
-  const handleUpdateDemandStatus = (id: string, status: DemandStatus) => {
-    setDemands(prev => prev.map(d => d.id === id ? { ...d, status } : d));
-    toast({ title: "Status Atualizado", description: `Status da demanda alterado para ${status}.`});
+  const handleUpdateDemandStatus = async (id: string, status: DemandStatus) => {
+    const demandToUpdate = demands.find(d => d.id === id);
+    if(demandToUpdate) {
+      const updatedDemand = { ...demandToUpdate, status };
+      await handleUpdateDemand(updatedDemand);
+      toast({ title: "Status Atualizado", description: `Status da demanda alterado para ${status}.`});
+    }
   };
 
-  const handleAddVacation = (newVacation: Vacation) => {
-    setVacations(prev => [newVacation, ...prev]);
-    setShowVacationForm(false);
+  const handleAddVacation = async (newVacation: Vacation) => {
+    try {
+      await addVacation(newVacation);
+      setVacations(prev => [newVacation, ...prev]);
+      setShowVacationForm(false);
+    } catch (error) {
+       console.error("Failed to add vacation:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar as férias.' });
+    }
   };
   
-  const handleUpdateVacation = (updatedVacation: Vacation) => {
-    setVacations(prev => prev.map(v => v.id === updatedVacation.id ? updatedVacation : v));
+  const handleUpdateVacation = async (updatedVacation: Vacation) => {
+    try {
+      await updateDbVacation(updatedVacation);
+      setVacations(prev => prev.map(v => v.id === updatedVacation.id ? updatedVacation : v));
+    } catch (error) {
+       console.error("Failed to update vacation:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível atualizar as férias.' });
+    }
   };
 
-  const handleDeleteVacation = (id: string) => {
-    setVacations(prev => prev.filter(v => v.id !== id));
-    toast({ title: "Férias Excluídas", description: "O registro de férias foi removido." });
+  const handleDeleteVacation = async (id: string) => {
+    try {
+      await deleteDbVacation(id);
+      setVacations(prev => prev.filter(v => v.id !== id));
+      toast({ title: "Férias Excluídas", description: "O registro de férias foi removido." });
+    } catch (error) {
+       console.error("Failed to delete vacation:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível excluir as férias.' });
+    }
   };
 
-  const handleAddEmployee = (newEmployee: Employee) => {
-    setEmployees(prev => [newEmployee, ...prev]);
-    setShowEmployeeForm(false);
+  const handleAddEmployee = async (newEmployee: Employee) => {
+    try {
+      await addEmployee(newEmployee);
+      setEmployees(prev => [newEmployee, ...prev]);
+      setShowEmployeeForm(false);
+    } catch (error) {
+       console.error("Failed to add employee:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar o funcionário.' });
+    }
   };
 
-  const handleUpdateEmployee = (updatedEmployee: Employee) => {
-    setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
+  const handleUpdateEmployee = async (updatedEmployee: Employee) => {
+    try {
+      await updateDbEmployee(updatedEmployee);
+      setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
+    } catch (error) {
+       console.error("Failed to update employee:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível atualizar o funcionário.' });
+    }
   };
 
-  const handleDeleteEmployee = (id: string) => {
-    setEmployees(prev => prev.filter(e => e.id !== id));
-    toast({ title: "Funcionário Excluído", description: "O registro do funcionário foi removido." });
+  const handleDeleteEmployee = async (id: string) => {
+    try {
+      await deleteDbEmployee(id);
+      // Also delete related certificates
+      const relatedCertificates = certificates.filter(c => c.employeeId === id);
+      for (const cert of relatedCertificates) {
+        await deleteDbCertificate(cert.id);
+      }
+      setEmployees(prev => prev.filter(e => e.id !== id));
+      setCertificates(prev => prev.filter(c => c.employeeId !== id));
+      toast({ title: "Funcionário Excluído", description: "O registro do funcionário e seus atestados foram removidos." });
+    } catch (error) {
+      console.error("Failed to delete employee:", error);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível excluir o funcionário.' });
+    }
   };
 
-  const handleAddCertificate = (newCertificate: MedicalCertificate) => {
-    setCertificates(prev => [newCertificate, ...prev]);
+  const handleAddCertificate = async (newCertificate: MedicalCertificate) => {
+    try {
+      await addCertificate(newCertificate);
+      setCertificates(prev => [newCertificate, ...prev]);
+    } catch (error) {
+       console.error("Failed to add certificate:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar o atestado.' });
+    }
   };
   
-  const handleDeleteCertificate = (id: string) => {
-    setCertificates(prev => prev.filter(c => c.id !== id));
-    toast({ title: "Atestado Excluído", description: "O registro do atestado foi removido." });
+  const handleDeleteCertificate = async (id: string) => {
+    try {
+      await deleteDbCertificate(id);
+      setCertificates(prev => prev.filter(c => c.id !== id));
+      toast({ title: "Atestado Excluído", description: "O registro do atestado foi removido." });
+    } catch (error) {
+       console.error("Failed to delete certificate:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível excluir o atestado.' });
+    }
   };
 
   return (
