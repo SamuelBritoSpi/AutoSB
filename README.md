@@ -80,3 +80,5 @@ Se você quiser modificar o código e ver as alterações em tempo real, use o s
     ```
 3.  **Acesse a aplicação**:
     - Abra seu navegador e acesse [http://localhost:3000](http://localhost:3000).
+
+**Importante:** Após finalizar suas modificações no código, você **deve rodar o comando `npm run export` novamente** para atualizar a versão final na pasta `out` com as suas alterações.
