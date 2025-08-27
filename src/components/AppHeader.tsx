@@ -2,6 +2,7 @@
 
 import { Briefcase, Upload, Download } from 'lucide-react';
 import { Button } from './ui/button';
+import { ThemeToggle } from './ThemeToggle';
 
 interface AppHeaderProps {
   onImport: () => void;
@@ -24,6 +25,7 @@ export default function AppHeader({ onImport, onExport }: AppHeaderProps) {
            <Button variant="secondary" size="sm" onClick={onExport}>
              <Download className="mr-2 h-4 w-4" /> Exportar
            </Button>
+           <ThemeToggle />
         </div>
       </div>
     </header>

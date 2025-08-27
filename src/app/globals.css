@@ -56,43 +56,46 @@
   }
 
   .dark {
-    --background: 222 47% 11%; /* Dark blue-gray */
-    --foreground: 0 0% 98%; /* Whiteish */
-
-    --card: 222 47% 15%; /* Slightly lighter dark blue-gray */
-    --card-foreground: 0 0% 98%;
-
-    --popover: 222 47% 11%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 231 48% 58%; /* Lighter Deep Blue for dark mode */
-    --primary-foreground: 0 0% 9%; /* Dark text on lighter primary */
-
-    --secondary: 232 47% 25%; /* Darker lavender */
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 222 47% 20%;
-    --muted-foreground: 220 10% 65%;
-
-    --accent: 232 47% 60%; /* Brighter Lavender for dark mode */
-    --accent-foreground: 0 0% 9%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 222 47% 25%;
-    --input: 222 47% 25%;
-    --ring: 231 48% 58%; /* Lighter primary for rings */
+    --background: 224 71% 4%; /* Very Dark Blue */
+    --foreground: 210 40% 98%; /* Light Gray */
+  
+    --card: 224 71% 9%; /* Darker Blue */
+    --card-foreground: 210 40% 98%;
+  
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 40% 98%;
+  
+    --primary: 262 88% 66%; /* Bright Neon Purple/Blue */
+    --primary-foreground: 210 40% 98%;
+  
+    --secondary: 217 33% 17%; /* Dark Slate Blue */
+    --secondary-foreground: 210 40% 98%;
+  
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 28% 63%; /* Muted Gray-Blue */
+  
+    --accent: 262 88% 66%; /* Matching neon accent */
+    --accent-foreground: 210 40% 98%;
+  
+    --destructive: 0 72% 51%; /* Bright Red */
+    --destructive-foreground: 210 40% 98%;
+  
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 262 88% 76%; /* Lighter neon for focus rings */
+  
+    --radius: 0.5rem;
     
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 43 70% 56%;
-    --chart-5: 340 75% 55%;
+    /* Neon Chart Colors */
+    --chart-1: 350 95% 65%; /* Neon Red/Pink */
+    --chart-2: 170 95% 55%; /* Neon Cyan */
+    --chart-3: 200 98% 60%; /* Neon Blue */
+    --chart-4: 50 100% 60%; /* Neon Yellow */
+    --chart-5: 280 95% 65%; /* Neon Purple */
 
-    --status-success: 134 51% 51%;
-    --status-warning: 45 83% 57%;
-    --status-info: 207 80% 64%;
+    --status-success: 130 85% 55%; /* Neon Green */
+    --status-warning: 50 100% 60%; /* Neon Yellow */
+    --status-info: 200 98% 60%;   /* Neon Blue */
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
