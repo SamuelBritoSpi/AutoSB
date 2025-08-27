@@ -1,0 +1,143 @@
+
+"use client";
+
+import { useMemo } from 'react';
+import type { Demand, Employee, MedicalCertificate } from '@/lib/types';
+import StatCard from './StatCard';
+import PriorityChart from './PriorityChart';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertCircle, AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Loader2 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { analyzeCertificates } from '@/lib/certificate-logic';
+
+interface DashboardTabProps {
+  demands: Demand[];
+  employees: Employee[];
+  certificates: MedicalCertificate[];
+}
+
+export default function DashboardTab({ demands, employees, certificates }: DashboardTabProps) {
+  const demandStats = useMemo(() => {
+    const todo = demands.filter(d => d.status === 'a-fazer').length;
+    const inProgress = demands.filter(d => d.status === 'em-progresso').length;
+    const done = demands.filter(d => d.status === 'concluida').length;
+    return { todo, inProgress, done };
+  }, [demands]);
+
+  const upcomingDemands = useMemo(() => {
+    return demands
+      .filter(d => d.status !== 'concluida' && parseISO(d.dueDate) >= new Date())
+      .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())
+      .slice(0, 5);
+  }, [demands]);
+
+  const highRiskEmployees = useMemo(() => {
+    return employees
+      .map(employee => {
+        const employeeCerts = certificates.filter(c => c.employeeId === employee.id);
+        const analysis = analyzeCertificates(employeeCerts, employee.contractType);
+        return {
+          ...employee,
+          ...analysis
+        };
+      })
+      .filter(e => e.status !== 'Normal')
+      .sort((a,b) => b.totalDaysInWindow - a.totalDaysInWindow);
+  }, [employees, certificates]);
+
+  return (
+    <div className="space-y-6">
+      {/* Cards de Estatísticas */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard title="A Fazer" value={demandStats.todo} icon={<ListTodo className="h-5 w-5 text-muted-foreground" />} />
+        <StatCard title="Em Progresso" value={demandStats.inProgress} icon={<Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />} />
+        <StatCard title="Concluídas" value={demandStats.done} icon={<CheckCircle2 className="h-5 w-5 text-muted-foreground" />} />
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+        {/* Gráfico de Prioridades */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Demandas por Prioridade</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PriorityChart demands={demands} />
+          </CardContent>
+        </Card>
+
+        {/* Próximas Entregas */}
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CalendarClock className="h-5 w-5 mr-2" />
+              Próximas Entregas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {upcomingDemands.length > 0 ? (
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Demanda</TableHead>
+                    <TableHead>Prioridade</TableHead>
+                    <TableHead>Data</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {upcomingDemands.map(demand => (
+                    <TableRow key={demand.id}>
+                        <TableCell className="font-medium">{demand.title}</TableCell>
+                        <TableCell>{demand.priority}</TableCell>
+                        <TableCell>{format(parseISO(demand.dueDate), 'dd/MM/yyyy')}</TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+                </Table>
+            ) : (
+                <p className="text-center text-muted-foreground py-4">Nenhuma demanda com prazo futuro.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+       {/* Alertas de Atestados */}
+       {highRiskEmployees.length > 0 && (
+         <Card className="border-destructive">
+            <CardHeader>
+                <CardTitle className="flex items-center text-destructive">
+                <AlertTriangle className="h-5 w-5 mr-2" />
+                Alerta de Atestados
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                    Os seguintes funcionários atingiram ou ultrapassaram o limite de dias de atestado nos últimos 60 dias.
+                </p>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Funcionário</TableHead>
+                            <TableHead>Dias Acumulados</TableHead>
+                            <TableHead>Limite</TableHead>
+                            <TableHead>Ação Recomendada</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {highRiskEmployees.map(emp => (
+                            <TableRow key={emp.id} className="bg-destructive/10">
+                                <TableCell className="font-medium">{emp.name}</TableCell>
+                                <TableCell>{emp.totalDaysInWindow}</TableCell>
+                                <TableCell>{emp.limit}</TableCell>
+                                <TableCell className="font-bold">{emp.status}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+         </Card>
+       )}
+    </div>
+  );
+}

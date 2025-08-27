@@ -9,10 +9,11 @@ import VacationForm from '@/components/vacations/VacationForm';
 import VacationList from '@/components/vacations/VacationList';
 import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeList from '@/components/employees/EmployeeList';
+import DashboardTab from '@/components/dashboard/DashboardTab';
 
 import type { Demand, Vacation, DemandStatus, Employee, MedicalCertificate } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard } from 'lucide-react';
 import AppHeader from '@/components/AppHeader'; 
 import { Button } from '@/components/ui/button';
 import { 
@@ -31,7 +32,6 @@ import {
   addCertificate,
   getCertificates,
   deleteCertificate as deleteDbCertificate,
-  clearAllData,
   getAllData,
   importData
 } from '@/lib/idb';
@@ -44,7 +44,7 @@ export default function GestaoFeriasPage() {
   const [certificates, setCertificates] = useState<MedicalCertificate[]>([]);
 
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("demands");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [showDemandForm, setShowDemandForm] = useState(false);
   const [showVacationForm, setShowVacationForm] = useState(false);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
@@ -271,7 +271,10 @@ export default function GestaoFeriasPage() {
       <AppHeader onImport={handleImportData} onExport={handleExportData} />
       <div className="w-full space-y-8 mt-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:w-2/3 mx-auto">
+          <TabsList className="grid w-full grid-cols-4 md:w-2/3 mx-auto">
+             <TabsTrigger value="dashboard">
+              <LayoutDashboard className="mr-2 h-5 w-5" /> Dashboard
+            </TabsTrigger>
             <TabsTrigger value="demands">
               <ListChecks className="mr-2 h-5 w-5" /> Demandas
             </TabsTrigger>
@@ -282,6 +285,10 @@ export default function GestaoFeriasPage() {
               <Users className="mr-2 h-5 w-5" /> Funcionários
             </TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="dashboard" className="space-y-6 mt-6">
+            <DashboardTab demands={demands} employees={employees} certificates={certificates} />
+          </TabsContent>
 
           <TabsContent value="demands" className="space-y-6 mt-6">
             <section aria-labelledby="demands-form-section-title">
