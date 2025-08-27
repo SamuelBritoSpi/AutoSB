@@ -117,3 +117,34 @@
     /* font-family is set by tailwind.config.ts */
   }
 }
+
+/* Custom styles for the calendar view */
+@layer components {
+  .day-vacation {
+    @apply bg-blue-500/80 text-white rounded-md;
+  }
+  .dark .day-vacation {
+    @apply bg-blue-400/70 text-black;
+  }
+  .day-vacation.rdp-day_today {
+    @apply !bg-blue-600;
+  }
+  .dark .day-vacation.rdp-day_today {
+      @apply !bg-blue-300;
+  }
+  
+  .day-vacation:not([aria-selected]) {
+    @apply bg-blue-500/80 text-white;
+  }
+  .dark .day-vacation:not([aria-selected]) {
+    @apply bg-blue-400/70 text-black;
+  }
+  
+  .day-deadline-dots {
+    @apply absolute bottom-1 left-1/2 -translate-x-1/2 flex space-x-1;
+  }
+  
+  .day-deadline-dot {
+    @apply w-1.5 h-1.5 rounded-full;
+  }
+}

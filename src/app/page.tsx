@@ -10,10 +10,11 @@ import VacationList from '@/components/vacations/VacationList';
 import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeList from '@/components/employees/EmployeeList';
 import DashboardTab from '@/components/dashboard/DashboardTab';
+import CalendarView from '@/components/calendar/CalendarView';
 
 import type { Demand, Vacation, DemandStatus, Employee, MedicalCertificate } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide } from 'lucide-react';
 import AppHeader from '@/components/AppHeader'; 
 import { Button } from '@/components/ui/button';
 import { 
@@ -270,9 +271,12 @@ export default function GestaoFeriasPage() {
       <AppHeader onImport={handleImportData} onExport={handleExportData} />
       <div className="w-full space-y-8 mt-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 md:w-2/3 mx-auto">
+          <TabsList className="grid w-full grid-cols-5 md:w-5/6 mx-auto">
              <TabsTrigger value="dashboard">
               <LayoutDashboard className="mr-2 h-5 w-5" /> Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="calendar">
+              <CalendarIconLucide className="mr-2 h-5 w-5" /> Calendário
             </TabsTrigger>
             <TabsTrigger value="demands">
               <ListChecks className="mr-2 h-5 w-5" /> Demandas
@@ -287,6 +291,10 @@ export default function GestaoFeriasPage() {
           
           <TabsContent value="dashboard" className="space-y-6 mt-6">
             <DashboardTab demands={demands} employees={employees} certificates={certificates} />
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6 mt-6">
+            <CalendarView demands={demands} vacations={vacations} />
           </TabsContent>
 
           <TabsContent value="demands" className="space-y-6 mt-6">
