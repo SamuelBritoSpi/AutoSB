@@ -7,7 +7,7 @@ import StatCard from './StatCard';
 import PriorityChart from './PriorityChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertCircle, AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Loader2 } from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Loader2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeCertificates } from '@/lib/certificate-logic';
@@ -90,7 +90,7 @@ export default function DashboardTab({ demands, employees, certificates }: Dashb
                     <TableRow key={demand.id}>
                         <TableCell className="font-medium">{demand.title}</TableCell>
                         <TableCell>{demand.priority}</TableCell>
-                        <TableCell>{format(parseISO(demand.dueDate), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell>{format(parseISO(demand.dueDate), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
                     </TableRow>
                     ))}
                 </TableBody>

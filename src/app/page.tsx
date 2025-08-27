@@ -246,13 +246,12 @@ export default function GestaoFeriasPage() {
           }
           const data = JSON.parse(content);
           
-          // Simple validation
           if (!data.demands || !data.vacations || !data.employees || !data.certificates) {
              throw new Error("Arquivo de backup inválido ou corrompido.");
           }
 
           await importData(data);
-          await loadAllData(); // Reload data from DB into state
+          await loadAllData(); 
           
           toast({ title: "Dados Importados", description: "Seu backup foi restaurado com sucesso." });
 
