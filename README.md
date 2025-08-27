@@ -4,7 +4,7 @@
 
 O AutoSB é uma aplicação web de página única (SPA) projetada para auxiliar na gestão de tarefas diárias, organização de férias de funcionários e, principalmente, no controle detalhado de atestados médicos, seguindo regras específicas da legislação trabalhista.
 
-Construída com foco na simplicidade e na operação local, a aplicação armazena todos os dados diretamente no navegador do usuário, garantindo privacidade e funcionamento offline.
+Construída com foco na simplicidade e na operação local, a aplicação armazena todos os dados diretamente no navegador do usuário usando a tecnologia IndexedDB, garantindo privacidade e funcionamento offline.
 
 ## Tecnologias Utilizadas
 
@@ -12,6 +12,7 @@ Construída com foco na simplicidade e na operação local, a aplicação armaze
 - **TypeScript**: Para um código mais seguro e robusto.
 - **Tailwind CSS**: Para estilização rápida e moderna.
 - **ShadCN/UI**: Componentes de UI pré-construídos e acessíveis.
+- **IndexedDB**: Para armazenamento de dados local no navegador.
 - **Zod**: Para validação de esquemas e formulários.
 - **date-fns**: Para manipulação e formatação de datas.
 
@@ -36,26 +37,46 @@ Construída com foco na simplicidade e na operação local, a aplicação armaze
     - O sistema **calcula automaticamente** a soma de dias de atestado nos últimos 60 dias.
     - Ele alerta quando o limite é atingido (10 dias para efetivos, 15 para REDA/terceirizados), indicando a necessidade de encaminhamento ao **INSS** ou **processo SEI**.
 
-### 4. Persistência e Portabilidade de Dados
-- **Armazenamento Local**: Todos os dados são salvos no `localStorage` do seu navegador. Você pode fechar e abrir a aplicação sem perder suas informações.
-- **Importar e Exportar**: Faça o backup de todos os seus dados (demandas, férias, funcionários e atestados com imagens) para um arquivo JSON. Restaure seus dados em qualquer navegador ou computador usando a função de importação.
+### 4. Persistência e Backup de Dados
+- **Armazenamento Local (IndexedDB)**: Todos os dados são salvos automaticamente no banco de dados do seu navegador. Você pode fechar e abrir a aplicação sem perder suas informações.
+- **Backup e Restauração**: Faça o backup de todos os seus dados (demandas, férias, funcionários e atestados com imagens) para um arquivo JSON. Restaure seus dados em qualquer navegador ou computador usando a função de importação.
 
-## Como Executar o Projeto
+## Como Usar Localmente (Sem Terminal)
 
-1.  **Pré-requisitos**:
-    -   Você precisa ter o [Node.js](https://nodejs.org/) (versão 18 ou superior) instalado em sua máquina.
+Para usar a aplicação como um programa local sem precisar executar `npm run dev` toda vez, siga estes passos **uma única vez**:
 
-2.  **Instale as dependências**:
-    -   Abra o terminal na pasta raiz do projeto e execute o comando:
+1.  **Abra o terminal** na pasta raiz do projeto.
+2.  **Instale as dependências** (se ainda não o fez):
     ```bash
     npm install
     ```
+3.  **Gere os arquivos da aplicação**:
+    ```bash
+    npm run export
+    ```
+    Este comando criará uma nova pasta chamada `out` no seu projeto.
 
-3.  **Inicie o servidor de desenvolvimento**:
-    -   Após a instalação, execute:
+4.  **Abra a aplicação**:
+    - Navegue até a pasta `out`.
+    - Dê um duplo-clique no arquivo `index.html`.
+    - A aplicação abrirá no seu navegador padrão.
+
+5.  **(Opcional) Crie um Atalho**:
+    - Você pode clicar com o botão direito no arquivo `index.html` e criar um atalho para a sua Área de Trabalho para facilitar o acesso.
+
+Pronto! Agora, sempre que quiser usar a aplicação, basta abrir o `index.html` ou o atalho que você criou.
+
+## Para Desenvolvedores
+
+Se você quiser modificar o código e ver as alterações em tempo real, use o servidor de desenvolvimento:
+
+1.  **Instale as dependências**:
+    ```bash
+    npm install
+    ```
+2.  **Inicie o servidor**:
     ```bash
     npm run dev
     ```
-
-4.  **Acesse a aplicação**:
-    -   Abra seu navegador e acesse [http://localhost:3000](http://localhost:3000). A aplicação estará pronta para uso.
+3.  **Acesse a aplicação**:
+    - Abra seu navegador e acesse [http://localhost:3000](http://localhost:3000).
