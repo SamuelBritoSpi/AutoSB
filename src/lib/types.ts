@@ -43,3 +43,18 @@ export interface MedicalCertificate {
   originalReceived: boolean; // para controle do recebimento do atestado original
   fileDataUri: string | null; // Base64 encoded file
 }
+
+// Tipos para Folha de Ponto
+export interface TimeSheetEntry {
+  employeeName: string;
+  date: string; // "dd/MM/yyyy"
+  entries: {
+    entry1: string; // "HH:mm"
+    exit1: string;
+    entry2: string;
+    exit2: string;
+  };
+  situation: string; // Ex: 'P', 'F', 'FE'
+  justification?: string;
+  totalHours: string; // "HH:mm"
+}

@@ -11,10 +11,12 @@ import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeList from '@/components/employees/EmployeeList';
 import DashboardTab from '@/components/dashboard/DashboardTab';
 import CalendarView from '@/components/calendar/CalendarView';
+import TimeSheetTab from '@/components/timesheet/TimeSheetTab';
+
 
 import type { Demand, Vacation, DemandStatus, Employee, MedicalCertificate } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, ClipboardClock } from 'lucide-react';
 import AppHeader from '@/components/AppHeader'; 
 import { Button } from '@/components/ui/button';
 import { 
@@ -271,7 +273,7 @@ export default function GestaoFeriasPage() {
       <AppHeader onImport={handleImportData} onExport={handleExportData} />
       <div className="w-full space-y-8 mt-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 md:w-5/6 mx-auto">
+          <TabsList className="grid w-full grid-cols-6 md:w-5/6 mx-auto">
              <TabsTrigger value="dashboard">
               <LayoutDashboard className="mr-2 h-5 w-5" /> Dashboard
             </TabsTrigger>
@@ -286,6 +288,9 @@ export default function GestaoFeriasPage() {
             </TabsTrigger>
              <TabsTrigger value="employees">
               <Users className="mr-2 h-5 w-5" /> Funcionários
+            </TabsTrigger>
+            <TabsTrigger value="timesheet">
+              <ClipboardClock className="mr-2 h-5 w-5" /> Folha de Ponto
             </TabsTrigger>
           </TabsList>
           
@@ -375,6 +380,10 @@ export default function GestaoFeriasPage() {
                 onDeleteCertificate={handleDeleteCertificate}
               />
             </section>
+          </TabsContent>
+
+          <TabsContent value="timesheet" className="space-y-6 mt-6">
+            <TimeSheetTab />
           </TabsContent>
         </Tabs>
       </div>
