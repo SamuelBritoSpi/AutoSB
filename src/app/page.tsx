@@ -16,7 +16,7 @@ import TimeSheetTab from '@/components/timesheet/TimeSheetTab';
 
 import type { Demand, Vacation, DemandStatus, Employee, MedicalCertificate } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, ClipboardClock } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, ClipboardList } from 'lucide-react';
 import AppHeader from '@/components/AppHeader'; 
 import { Button } from '@/components/ui/button';
 import { 
@@ -290,7 +290,7 @@ export default function GestaoFeriasPage() {
               <Users className="mr-2 h-5 w-5" /> Funcionários
             </TabsTrigger>
             <TabsTrigger value="timesheet">
-              <ClipboardClock className="mr-2 h-5 w-5" /> Folha de Ponto
+              <ClipboardList className="mr-2 h-5 w-5" /> Folha de Ponto
             </TabsTrigger>
           </TabsList>
           
