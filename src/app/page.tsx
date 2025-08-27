@@ -115,7 +115,7 @@ export default function GestaoFeriasPage() {
     if(demandToUpdate) {
       const updatedDemand = { ...demandToUpdate, status };
       await handleUpdateDemand(updatedDemand);
-      toast({ title: "Status Atualizado", description: `Status da demanda alterado para ${status}.`});
+      toast({ title: "Status Atualizado", description: `Status da demanda alterado.`});
     }
   };
 

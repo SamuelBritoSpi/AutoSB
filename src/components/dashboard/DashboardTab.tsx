@@ -7,7 +7,7 @@ import StatCard from './StatCard';
 import PriorityChart from './PriorityChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Loader2 } from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Mailbox, Hourglass } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeCertificates } from '@/lib/certificate-logic';
@@ -20,15 +20,15 @@ interface DashboardTabProps {
 
 export default function DashboardTab({ demands, employees, certificates }: DashboardTabProps) {
   const demandStats = useMemo(() => {
-    const todo = demands.filter(d => d.status === 'a-fazer').length;
-    const inProgress = demands.filter(d => d.status === 'em-progresso').length;
-    const done = demands.filter(d => d.status === 'concluida').length;
-    return { todo, inProgress, done };
+    const newDemands = demands.filter(d => d.status === 'recebido' || d.status === 'em-analise').length;
+    const waiting = demands.filter(d => d.status.startsWith('aguardando')).length;
+    const done = demands.filter(d => d.status === 'finalizado').length;
+    return { newDemands, waiting, done };
   }, [demands]);
 
   const upcomingDemands = useMemo(() => {
     return demands
-      .filter(d => d.status !== 'concluida' && parseISO(d.dueDate) >= new Date())
+      .filter(d => d.status !== 'finalizado' && parseISO(d.dueDate) >= new Date())
       .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())
       .slice(0, 5);
   }, [demands]);
@@ -51,9 +51,9 @@ export default function DashboardTab({ demands, employees, certificates }: Dashb
     <div className="space-y-6">
       {/* Cards de Estatísticas */}
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="A Fazer" value={demandStats.todo} icon={<ListTodo className="h-5 w-5 text-muted-foreground" />} />
-        <StatCard title="Em Progresso" value={demandStats.inProgress} icon={<Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />} />
-        <StatCard title="Concluídas" value={demandStats.done} icon={<CheckCircle2 className="h-5 w-5 text-muted-foreground" />} />
+        <StatCard title="Novas / Em Análise" value={demandStats.newDemands} icon={<Mailbox className="h-5 w-5 text-muted-foreground" />} />
+        <StatCard title="Aguardando Resposta" value={demandStats.waiting} icon={<Hourglass className="h-5 w-5 text-muted-foreground" />} />
+        <StatCard title="Finalizadas" value={demandStats.done} icon={<CheckCircle2 className="h-5 w-5 text-muted-foreground" />} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">

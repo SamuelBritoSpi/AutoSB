@@ -20,6 +20,18 @@ interface DemandListProps {
 type SortKey = 'dueDate' | 'priority' | 'description';
 type SortOrder = 'asc' | 'desc';
 
+const statusText: Record<DemandStatus | 'all', string> = {
+  'all': 'Todos Status',
+  'recebido': 'Recebido',
+  'em-analise': 'Em Análise',
+  'aguardando-sec': 'Aguardando SEC',
+  'aguardando-csh': 'Aguardando CSH',
+  'aguardando-confianca': 'Aguardando Confiança',
+  'aguardando-gestor': 'Aguardando Gestor',
+  'resposta-recebida': 'Resposta Recebida',
+  'finalizado': 'Finalizado'
+};
+
 export default function DemandList({ demands, onUpdateStatus, onDeleteDemand, onUpdateDemand }: DemandListProps) {
   const [sortKey, setSortKey] = useState<SortKey>('dueDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -75,14 +87,13 @@ export default function DemandList({ demands, onUpdateStatus, onDeleteDemand, on
         </div>
         <div className="flex flex-wrap gap-2">
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as DemandStatus | 'all')}>
-            <SelectTrigger className="w-full sm:w-[150px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos Status</SelectItem>
-              <SelectItem value="a-fazer">A Fazer</SelectItem>
-              <SelectItem value="em-progresso">Em Progresso</SelectItem>
-              <SelectItem value="concluida">Concluída</SelectItem>
+              {Object.entries(statusText).map(([value, text]) => (
+                <SelectItem key={value} value={value}>{text}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select value={sortKey} onValueChange={(value) => setSortKey(value as SortKey)}>

@@ -1,6 +1,14 @@
 
 export type DemandPriority = 'alta' | 'media' | 'baixa';
-export type DemandStatus = 'a-fazer' | 'em-progresso' | 'concluida';
+export type DemandStatus = 
+  | 'recebido'
+  | 'em-analise'
+  | 'aguardando-sec'
+  | 'aguardando-csh'
+  | 'aguardando-confianca'
+  | 'aguardando-gestor'
+  | 'resposta-recebida'
+  | 'finalizado';
 
 export interface Demand {
   id: string;

@@ -30,7 +30,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     const events = new Map<string, { demands: Demand[], vacations: Vacation[] }>();
 
     demands.forEach(demand => {
-      if (demand.status === 'concluida') return;
+      if (demand.status === 'finalizado') return;
       const dateKey = startOfDay(parseISO(demand.dueDate)).toISOString();
       if (!events.has(dateKey)) {
         events.set(dateKey, { demands: [], vacations: [] });

@@ -38,7 +38,7 @@ export default function PriorityChart({ demands }: PriorityChartProps) {
       baixa: 0,
     };
     demands.forEach(demand => {
-      if (demand.status !== 'concluida') {
+      if (demand.status !== 'finalizado') {
         priorityCounts[demand.priority]++;
       }
     });

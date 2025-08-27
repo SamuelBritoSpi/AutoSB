@@ -57,7 +57,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
       description: values.description,
       priority: values.priority as DemandPriority,
       dueDate: values.dueDate.toISOString(),
-      status: existingDemand ? existingDemand.status : ('a-fazer' as DemandStatus),
+      status: existingDemand ? existingDemand.status : ('recebido' as DemandStatus),
     };
 
     if (existingDemand && onUpdateDemand) {

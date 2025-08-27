@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { AlertTriangle, ArrowDownCircle, CalendarDays, CheckCircle2, ChevronDown, Circle, Edit, PlayCircle, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowDownCircle, CalendarDays, CheckCircle2, ChevronDown, Circle, Edit, PlayCircle, Trash2, Mailbox, Search, Send, UserCheck, Hourglass, Building } from 'lucide-react';
 
 interface DemandCardProps {
   demand: Demand;
@@ -28,20 +28,30 @@ const priorityText: Record<Demand['priority'], string> = {
   baixa: "Baixa",
 };
 
-const statusIcons: Record<DemandStatus, React.ReactElement> = {
-  'a-fazer': <Circle className="h-5 w-5 text-muted-foreground mr-2" />,
-  'em-progresso': <PlayCircle className="h-5 w-5 text-[hsl(var(--status-info))] mr-2" />,
-  'concluida': <CheckCircle2 className="h-5 w-5 text-[hsl(var(--status-success))] mr-2" />,
-};
-
-const statusText: Record<DemandStatus, string> = {
-  'a-fazer': "A Fazer",
-  'em-progresso': "Em Progresso",
-  'concluida': "Concluída",
+const statusInfo: Record<DemandStatus, { text: string; icon: React.ReactElement }> = {
+  'recebido': { text: 'Recebido', icon: <Mailbox className="h-5 w-5 text-muted-foreground mr-2" /> },
+  'em-analise': { text: 'Em Análise', icon: <Search className="h-5 w-5 text-blue-500 mr-2" /> },
+  'aguardando-sec': { text: 'Aguardando SEC', icon: <Hourglass className="h-5 w-5 text-amber-600 mr-2" /> },
+  'aguardando-csh': { text: 'Aguardando CSH', icon: <Hourglass className="h-5 w-5 text-amber-600 mr-2" /> },
+  'aguardando-confianca': { text: 'Aguardando Confiança', icon: <Hourglass className="h-5 w-5 text-amber-600 mr-2" /> },
+  'aguardando-gestor': { text: 'Aguardando Gestor', icon: <Hourglass className="h-5 w-5 text-amber-600 mr-2" /> },
+  'resposta-recebida': { text: 'Resposta Recebida', icon: <UserCheck className="h-5 w-5 text-purple-600 mr-2" /> },
+  'finalizado': { text: 'Finalizado', icon: <CheckCircle2 className="h-5 w-5 text-[hsl(var(--status-success))] mr-2" /> },
 };
 
 
 export default function DemandCard({ demand, onUpdateStatus, onDelete, onEdit }: DemandCardProps) {
+  const allStatuses: DemandStatus[] = [
+    'recebido',
+    'em-analise',
+    'aguardando-sec',
+    'aguardando-csh',
+    'aguardando-confianca',
+    'aguardando-gestor',
+    'resposta-recebida',
+    'finalizado'
+  ];
+
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
@@ -78,8 +88,8 @@ export default function DemandCard({ demand, onUpdateStatus, onDelete, onEdit }:
           <span>Entrega: {format(parseISO(demand.dueDate), "dd/MM/yyyy", { locale: ptBR })}</span>
         </div>
         <div className="flex items-center text-sm">
-          {statusIcons[demand.status]}
-          <span>Status: {statusText[demand.status]}</span>
+          {statusInfo[demand.status].icon}
+          <span>Status: {statusInfo[demand.status].text}</span>
         </div>
       </CardContent>
       <CardFooter className="flex justify-end">
@@ -90,9 +100,9 @@ export default function DemandCard({ demand, onUpdateStatus, onDelete, onEdit }:
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {(['a-fazer', 'em-progresso', 'concluida'] as DemandStatus[]).map((status) => (
+            {allStatuses.map((status) => (
               <DropdownMenuItem key={status} onClick={() => onUpdateStatus(demand.id, status)} disabled={demand.status === status}>
-                {statusIcons[status]} {statusText[status]}
+                {statusInfo[status].icon} {statusInfo[status].text}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
