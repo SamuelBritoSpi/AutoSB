@@ -4,6 +4,7 @@
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import type { Demand } from '@/lib/types';
+import { useTheme } from 'next-themes';
 
 interface PriorityChartProps {
   demands: Demand[];
@@ -31,6 +32,8 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 };
 
 export default function PriorityChart({ demands }: PriorityChartProps) {
+    const { resolvedTheme } = useTheme();
+
   const chartData = useMemo(() => {
     const priorityCounts: Record<Demand['priority'], number> = {
       alta: 0,
@@ -81,9 +84,10 @@ export default function PriorityChart({ demands }: PriorityChartProps) {
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border))',
                 borderRadius: 'var(--radius)',
+                color: 'hsl(var(--foreground))'
             }}
           />
-          <Legend />
+          <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
         </PieChart>
       </ResponsiveContainer>
     </div>
