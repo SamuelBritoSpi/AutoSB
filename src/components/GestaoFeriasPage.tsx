@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DemandForm from '@/components/demands/DemandForm';
 import DemandList from '@/components/demands/DemandList';
@@ -16,7 +16,6 @@ import CalendarView from '@/components/calendar/CalendarView';
 import type { Demand, Vacation, DemandStatus, Employee, MedicalCertificate } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide } from 'lucide-react';
-import AppHeader from '@/components/AppHeader'; 
 import { Button } from '@/components/ui/button';
 import { 
   addDemand, 
@@ -233,118 +232,115 @@ export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps)
   };
 
   return (
-    <>
-      <AppHeader />
-      <div className="w-full space-y-8 mt-0">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 md:w-5/6 mx-auto">
-             <TabsTrigger value="dashboard">
-              <LayoutDashboard className="mr-2 h-5 w-5" /> Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="calendar">
-              <CalendarIconLucide className="mr-2 h-5 w-5" /> Calendário
-            </TabsTrigger>
-            <TabsTrigger value="demands">
-              <ListChecks className="mr-2 h-5 w-5" /> Demandas
-            </TabsTrigger>
-            <TabsTrigger value="vacations">
-              <CalendarCheck className="mr-2 h-5 w-5" /> Férias
-            </TabsTrigger>
-             <TabsTrigger value="employees">
-              <Users className="mr-2 h-5 w-5" /> Funcionários
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="dashboard" className="space-y-6 mt-6">
-            <DashboardTab demands={demands} employees={employees} certificates={certificates} />
-          </TabsContent>
+    <div className="w-full space-y-8 mt-0">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-5 md:w-5/6 mx-auto">
+            <TabsTrigger value="dashboard">
+            <LayoutDashboard className="mr-2 h-5 w-5" /> Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="calendar">
+            <CalendarIconLucide className="mr-2 h-5 w-5" /> Calendário
+          </TabsTrigger>
+          <TabsTrigger value="demands">
+            <ListChecks className="mr-2 h-5 w-5" /> Demandas
+          </TabsTrigger>
+          <TabsTrigger value="vacations">
+            <CalendarCheck className="mr-2 h-5 w-5" /> Férias
+          </TabsTrigger>
+            <TabsTrigger value="employees">
+            <Users className="mr-2 h-5 w-5" /> Funcionários
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="dashboard" className="space-y-6 mt-6">
+          <DashboardTab demands={demands} employees={employees} certificates={certificates} />
+        </TabsContent>
 
-          <TabsContent value="calendar" className="space-y-6 mt-6">
-            <CalendarView demands={demands} vacations={vacations} />
-          </TabsContent>
+        <TabsContent value="calendar" className="space-y-6 mt-6">
+          <CalendarView demands={demands} vacations={vacations} />
+        </TabsContent>
 
-          <TabsContent value="demands" className="space-y-6 mt-6">
-            <section aria-labelledby="demands-form-section-title">
+        <TabsContent value="demands" className="space-y-6 mt-6">
+          <section aria-labelledby="demands-form-section-title">
+            <div className="flex justify-between items-center mb-4">
+              <h2 id="demands-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Nova Demanda</h2>
+              <Button variant="outline" onClick={() => setShowDemandForm(!showDemandForm)}>
+                <PlusCircle className="mr-2 h-4 w-4" /> {showDemandForm ? 'Ocultar Formulário' : 'Adicionar Demanda'}
+              </Button>
+            </div>
+            {showDemandForm && (
+              <DemandForm 
+                onAddDemand={handleAddDemand} 
+                onClose={() => setShowDemandForm(false)} 
+              />
+            )}
+          </section>
+          <section aria-labelledby="demands-list-title">
+            <h2 id="demands-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Demandas</h2>
+            <DemandList 
+              demands={demands} 
+              onUpdateStatus={handleUpdateDemandStatus} 
+              onDeleteDemand={handleDeleteDemand}
+              onUpdateDemand={handleUpdateDemand}
+            />
+          </section>
+        </TabsContent>
+
+        <TabsContent value="vacations" className="space-y-6 mt-6">
+          <section aria-labelledby="vacations-form-section-title">
               <div className="flex justify-between items-center mb-4">
-                <h2 id="demands-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Nova Demanda</h2>
-                <Button variant="outline" onClick={() => setShowDemandForm(!showDemandForm)}>
-                  <PlusCircle className="mr-2 h-4 w-4" /> {showDemandForm ? 'Ocultar Formulário' : 'Adicionar Demanda'}
-                </Button>
-              </div>
-              {showDemandForm && (
-                <DemandForm 
-                  onAddDemand={handleAddDemand} 
-                  onClose={() => setShowDemandForm(false)} 
-                />
-              )}
-            </section>
-            <section aria-labelledby="demands-list-title">
-              <h2 id="demands-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Demandas</h2>
-              <DemandList 
-                demands={demands} 
-                onUpdateStatus={handleUpdateDemandStatus} 
-                onDeleteDemand={handleDeleteDemand}
-                onUpdateDemand={handleUpdateDemand}
+              <h2 id="vacations-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novas Férias</h2>
+              <Button variant="outline" onClick={() => setShowVacationForm(!showVacationForm)}>
+                <PlusCircle className="mr-2 h-4 w-4" /> {showVacationForm ? 'Ocultar Formulário' : 'Adicionar Férias'}
+              </Button>
+            </div>
+            {showVacationForm && (
+              <VacationForm 
+                onAddVacation={handleAddVacation} 
+                onClose={() => setShowVacationForm(false)} 
               />
-            </section>
-          </TabsContent>
+            )}
+          </section>
+          <section aria-labelledby="vacations-list-title">
+            <h2 id="vacations-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Calendário de Férias</h2>
+            <VacationList 
+              vacations={vacations} 
+              demands={demands}
+              onDeleteVacation={handleDeleteVacation}
+              onUpdateVacation={handleUpdateVacation}
+            />
+          </section>
+        </TabsContent>
 
-          <TabsContent value="vacations" className="space-y-6 mt-6">
-            <section aria-labelledby="vacations-form-section-title">
-               <div className="flex justify-between items-center mb-4">
-                <h2 id="vacations-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novas Férias</h2>
-                <Button variant="outline" onClick={() => setShowVacationForm(!showVacationForm)}>
-                  <PlusCircle className="mr-2 h-4 w-4" /> {showVacationForm ? 'Ocultar Formulário' : 'Adicionar Férias'}
-                </Button>
-              </div>
-              {showVacationForm && (
-                <VacationForm 
-                  onAddVacation={handleAddVacation} 
-                  onClose={() => setShowVacationForm(false)} 
-                />
-              )}
-            </section>
-            <section aria-labelledby="vacations-list-title">
-              <h2 id="vacations-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Calendário de Férias</h2>
-              <VacationList 
-                vacations={vacations} 
-                demands={demands}
-                onDeleteVacation={handleDeleteVacation}
-                onUpdateVacation={handleUpdateVacation}
+        <TabsContent value="employees" className="space-y-6 mt-6">
+          <section aria-labelledby="employees-form-section-title">
+              <div className="flex justify-between items-center mb-4">
+              <h2 id="employees-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novo Funcionário</h2>
+              <Button variant="outline" onClick={() => setShowEmployeeForm(!showEmployeeForm)}>
+                <PlusCircle className="mr-2 h-4 w-4" /> {showEmployeeForm ? 'Ocultar Formulário' : 'Adicionar Funcionário'}
+              </Button>
+            </div>
+            {showEmployeeForm && (
+              <EmployeeForm 
+                onAddEmployee={handleAddEmployee} 
+                onClose={() => setShowEmployeeForm(false)} 
               />
-            </section>
-          </TabsContent>
+            )}
+          </section>
+          <section aria-labelledby="employees-list-title">
+            <h2 id="employees-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Funcionários</h2>
+            <EmployeeList 
+              employees={employees}
+              certificates={certificates}
+              onDeleteEmployee={handleDeleteEmployee}
+              onUpdateEmployee={handleUpdateEmployee}
+              onAddCertificate={handleAddCertificate}
+              onDeleteCertificate={handleDeleteCertificate}
+            />
+          </section>
+        </TabsContent>
 
-          <TabsContent value="employees" className="space-y-6 mt-6">
-            <section aria-labelledby="employees-form-section-title">
-               <div className="flex justify-between items-center mb-4">
-                <h2 id="employees-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novo Funcionário</h2>
-                <Button variant="outline" onClick={() => setShowEmployeeForm(!showEmployeeForm)}>
-                  <PlusCircle className="mr-2 h-4 w-4" /> {showEmployeeForm ? 'Ocultar Formulário' : 'Adicionar Funcionário'}
-                </Button>
-              </div>
-              {showEmployeeForm && (
-                <EmployeeForm 
-                  onAddEmployee={handleAddEmployee} 
-                  onClose={() => setShowEmployeeForm(false)} 
-                />
-              )}
-            </section>
-            <section aria-labelledby="employees-list-title">
-              <h2 id="employees-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Funcionários</h2>
-              <EmployeeList 
-                employees={employees}
-                certificates={certificates}
-                onDeleteEmployee={handleDeleteEmployee}
-                onUpdateEmployee={handleUpdateEmployee}
-                onAddCertificate={handleAddCertificate}
-                onDeleteCertificate={handleDeleteCertificate}
-              />
-            </section>
-          </TabsContent>
-
-        </Tabs>
-      </div>
-    </>
+      </Tabs>
+    </div>
   );
 }

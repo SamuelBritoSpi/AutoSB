@@ -1,23 +1,20 @@
-
-"use client";
 import React from 'react';
 import GestaoFeriasPage from '@/components/GestaoFeriasPage';
-import withAuth from '@/components/withAuth';
-import type { Demand, Vacation, Employee, MedicalCertificate } from '@/lib/types';
+import { getAllData } from '@/lib/idb';
+import AppHeader from '@/components/AppHeader';
 
+export const dynamic = 'force-dynamic';
 
-interface HomePageProps {
-    initialData: {
-        demands: Demand[];
-        vacations: Vacation[];
-        employees: Employee[];
-        certificates: MedicalCertificate[];
-    }
+export default async function HomePage() {
+  // Fetch data on the server side
+  const initialData = await getAllData();
+
+  return (
+    <>
+      <AppHeader />
+      <div className="flex-grow container mx-auto p-4 md:p-6">
+        <GestaoFeriasPage initialData={initialData} />
+      </div>
+    </>
+  );
 }
-
-
-function HomePage({ initialData }: HomePageProps) {
-    return <GestaoFeriasPage initialData={initialData} />;
-}
-
-export default withAuth(HomePage);

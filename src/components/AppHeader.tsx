@@ -19,6 +19,7 @@ export default function AppHeader() {
     try {
       await signOut(auth);
       toast({ title: 'Logout efetuado com sucesso!'});
+      // Redirect to login page after logout
       router.push('/login');
     } catch (error) {
       toast({ variant: 'destructive', title: 'Erro ao sair', description: 'Não foi possível fazer logout. Tente novamente.'});
