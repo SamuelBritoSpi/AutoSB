@@ -78,7 +78,7 @@ export default function GestaoFeriasPage() {
   useEffect(() => {
     loadAllData().then(success => {
       if(success) {
-         toast({ title: 'Dados Carregados', description: 'Seus dados foram carregados da nuvem com sucesso.'});
+         toast({ title: 'Dados Carregados', description: 'Informações carregadas do banco de dados na nuvem.'});
       }
     })
   }, [toast]);
@@ -276,7 +276,7 @@ export default function GestaoFeriasPage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-center">
-          <p className="text-lg font-semibold">Carregando dados da nuvem...</p>
+          <p className="text-lg font-semibold">Carregando dados...</p>
           <p className="text-muted-foreground">Por favor, aguarde.</p>
         </div>
       </div>
@@ -399,3 +399,5 @@ export default function GestaoFeriasPage() {
     </>
   );
 }
+
+    
