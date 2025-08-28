@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Employee, MedicalCertificate } from '@/lib/types';
@@ -15,7 +16,7 @@ interface EmployeeListProps {
   certificates: MedicalCertificate[];
   onDeleteEmployee: (id: string) => void;
   onUpdateEmployee: (employee: Employee) => void;
-  onAddCertificate: (certificate: MedicalCertificate) => void;
+  onAddCertificate: (certificate: Omit<MedicalCertificate, 'id'>, fileToUpload?: File | string) => void;
   onDeleteCertificate: (id: string) => void;
 }
 

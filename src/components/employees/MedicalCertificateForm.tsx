@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRef, useState } from 'react';
 import CertificateScanner from './CertificateScanner';
 import { storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -33,8 +33,8 @@ const certificateSchema = z.object({
   originalReceived: z.boolean().default(false),
   file: z.any()
     .optional()
-    .refine((files) => !files || files?.[0]?.size <= MAX_FILE_SIZE, `Tamanho máximo do arquivo é 5MB.`)
-    .refine((files) => !files || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type), "Apenas formatos .jpg, .jpeg, .png e .webp são aceitos."),
+    .refine((files) => !files || files?.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Tamanho máximo do arquivo é 5MB.`)
+    .refine((files) => !files || files?.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type), "Apenas formatos .jpg, .jpeg, .png e .webp são aceitos."),
 }).refine(data => !data.isHalfDay || (data.days <= 1 && data.days > 0), {
     message: "Atestado de meio turno deve ser de no máximo 1 dia.",
     path: ['days'],
@@ -48,7 +48,7 @@ type CertificateFormValues = z.infer<typeof certificateSchema>;
 
 interface MedicalCertificateFormProps {
   employeeId: string;
-  onAddCertificate: (certificate: Omit<MedicalCertificate, 'id'>) => void;
+  onAddCertificate: (certificate: Omit<MedicalCertificate, 'id'>, fileToUpload?: File | string) => void;
 }
 
 export default function MedicalCertificateForm({ employeeId, onAddCertificate }: MedicalCertificateFormProps) {
@@ -56,7 +56,6 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<CertificateFormValues>({
     resolver: zodResolver(certificateSchema),
@@ -70,57 +69,32 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
   
   const fileList = form.watch('file');
   const attachedFileName = fileList?.[0]?.name || (scannedImageUri ? 'imagem_escaneada.jpg' : '');
+  const isSubmitting = form.formState.isSubmitting;
 
-  const dataURLtoBlob = (dataurl: string) => {
-      let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)?.[1],
-          bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-      while(n--){
-          u8arr[n] = bstr.charCodeAt(n);
-      }
-      return new Blob([u8arr], {type:mime});
-  }
+  const onSubmit = (values: CertificateFormValues) => {
+    let fileToUpload: File | string | undefined = undefined;
 
-  const onSubmit = async (values: CertificateFormValues) => {
-    setIsSubmitting(true);
-
-    let fileToUpload: File | Blob | null = null;
     if (scannedImageUri) {
-      fileToUpload = dataURLtoBlob(scannedImageUri);
+      fileToUpload = scannedImageUri;
     } else if (values.file && values.file.length > 0) {
       fileToUpload = values.file[0];
     }
     
-    let fileURL: string | null = null;
+    const certificateData: Omit<MedicalCertificate, 'id'> = {
+      employeeId,
+      certificateDate: values.certificateDate.toISOString(),
+      days: values.isHalfDay ? 0.5 : values.days,
+      isHalfDay: values.isHalfDay,
+      originalReceived: values.originalReceived,
+      fileURL: null, // This will be updated after upload
+    };
     
-    try {
-      if (fileToUpload) {
-        const uniqueFileName = `certificate_${employeeId}_${Date.now()}`;
-        const storageRef = ref(storage, `certificates/${uniqueFileName}`);
-        const snapshot = await uploadBytes(storageRef, fileToUpload);
-        fileURL = await getDownloadURL(snapshot.ref);
-      }
-      
-      const certificateData: Omit<MedicalCertificate, 'id'> = {
-        employeeId,
-        certificateDate: values.certificateDate.toISOString(),
-        days: values.isHalfDay ? 0.5 : values.days,
-        isHalfDay: values.isHalfDay,
-        originalReceived: values.originalReceived,
-        fileURL: fileURL,
-      };
-      
-      onAddCertificate(certificateData);
-      toast({ title: "Atestado Adicionado", description: "Novo atestado registrado com sucesso." });
-      form.reset();
-      setScannedImageUri(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    } catch (error) {
-       console.error("Error during certificate submission:", error);
-       toast({ variant: 'destructive', title: "Erro no Upload", description: "Não foi possível salvar o arquivo do atestado." });
-    } finally {
-        setIsSubmitting(false);
+    onAddCertificate(certificateData, fileToUpload);
+    
+    form.reset();
+    setScannedImageUri(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
