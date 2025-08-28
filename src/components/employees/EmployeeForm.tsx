@@ -10,7 +10,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 const employeeSchema = z.object({
   name: z.string().min(1, { message: "Nome é obrigatório." }),
@@ -27,7 +26,6 @@ interface EmployeeFormProps {
 }
 
 export default function EmployeeForm({ onAddEmployee, existingEmployee, onUpdateEmployee, onClose }: EmployeeFormProps) {
-  const { toast } = useToast();
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema),
     defaultValues: existingEmployee ? {
@@ -47,14 +45,12 @@ export default function EmployeeForm({ onAddEmployee, existingEmployee, onUpdate
         contractType: values.contractType as ContractType,
       };
       onUpdateEmployee(employeeData);
-      toast({ title: "Funcionário Atualizado", description: "O registro foi atualizado com sucesso." });
     } else {
       const employeeData: Omit<Employee, 'id'> = {
         name: values.name,
         contractType: values.contractType as ContractType,
       };
       onAddEmployee(employeeData);
-      toast({ title: "Funcionário Adicionado", description: "Novo funcionário registrado com sucesso." });
       form.reset({ name: '', contractType: 'efetivo' });
     }
     if (onClose) onClose();

@@ -1,19 +1,29 @@
 
 "use client";
 
-import { Briefcase, Database, Upload, Download } from 'lucide-react';
+import { Briefcase, Database, LogOut } from 'lucide-react';
 import { Button } from './ui/button';
 import { ThemeToggle } from './ThemeToggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
-interface AppHeaderProps {
-  onImport: () => void;
-  onExport: () => void;
-}
-
-
-export default function AppHeader({ onImport, onExport }: AppHeaderProps) {
+export default function AppHeader() {
   const firebaseConsoleUrl = "https://console.firebase.google.com/project/gestofrias/storage/usage";
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: 'Logout efetuado com sucesso!'});
+      router.push('/login');
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao sair', description: 'Não foi possível fazer logout. Tente novamente.'});
+    }
+  };
 
   return (
     <header className="bg-primary text-primary-foreground shadow-md">
@@ -23,12 +33,6 @@ export default function AppHeader({ onImport, onExport }: AppHeaderProps) {
           <h1 className="text-xl font-headline font-bold">AutoSB</h1>
         </div>
         <div className="flex items-center gap-2">
-           {/* 
-            Os botões de Importar/Exportar foram removidos pois com o Firebase,
-            os dados são salvos na nuvem automaticamente. A funcionalidade
-            de importação ainda existe no código para uma possível migração
-            inicial de um backup JSON.
-           */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -45,6 +49,19 @@ export default function AppHeader({ onImport, onExport }: AppHeaderProps) {
               </Tooltip>
             </TooltipProvider>
            <ThemeToggle />
+           <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="secondary" size="icon" onClick={handleLogout}>
+                    <LogOut className="h-5 w-5" />
+                    <span className="sr-only">Sair</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Sair</p>
+                </TooltipContent>
+              </Tooltip>
+           </TooltipProvider>
         </div>
       </div>
     </header>

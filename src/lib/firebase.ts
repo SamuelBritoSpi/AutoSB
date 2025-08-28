@@ -1,7 +1,8 @@
 // @/lib/firebase.ts
 import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getFirestore, enableIndexedDbPersistence, Firestore } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -17,9 +18,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Get a Firestore instance
+// Get Firestore, Storage, and Auth instances
 const db = getFirestore(app);
 const storage = getStorage(app);
+const auth = getAuth(app);
+
 
 // Enable offline persistence
 try {
@@ -37,4 +40,4 @@ try {
 }
 
 
-export { app, db, storage };
+export { app, db, storage, auth };

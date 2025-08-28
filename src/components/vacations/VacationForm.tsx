@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, PlusCircle, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 const vacationSchema = z.object({
   employeeName: z.string().min(1, { message: "Nome do funcionário é obrigatório." }),
@@ -35,7 +34,7 @@ interface VacationFormProps {
 }
 
 export default function VacationForm({ onAddVacation, existingVacation, onUpdateVacation, onClose }: VacationFormProps) {
-  const { toast } = useToast();
+
   const form = useForm<VacationFormValues>({
     resolver: zodResolver(vacationSchema),
     defaultValues: existingVacation ? {
@@ -57,7 +56,6 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
         endDate: values.endDate.toISOString(),
       };
       onUpdateVacation(vacationData);
-      toast({ title: "Férias Atualizadas", description: "Registro de férias atualizado com sucesso." });
     } else {
        const vacationData = {
         employeeName: values.employeeName,
@@ -65,7 +63,6 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
         endDate: values.endDate.toISOString(),
       };
       onAddVacation(vacationData);
-      toast({ title: "Férias Registradas", description: "Novas férias registradas com sucesso." });
       form.reset({ employeeName: '' });
     }
     if(onClose) onClose();

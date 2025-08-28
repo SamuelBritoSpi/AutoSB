@@ -33,9 +33,7 @@ import {
   deleteEmployee as deleteDbEmployee,
   addCertificate,
   getCertificates,
-  deleteCertificate as deleteDbCertificate,
-  getAllData,
-  importData
+  deleteCertificate as deleteDbCertificate
 } from '@/lib/idb';
 
 
@@ -63,7 +61,7 @@ export default function GestaoFeriasPage() {
         setVacations(loadedVacations);
         setEmployees(loadedEmployees);
         setCertificates(loadedCertificates);
-        toast({ title: 'Dados Carregados', description: 'Informações carregadas do banco de dados na nuvem.'});
+        console.log("Dados carregados com sucesso do Firestore.");
         return true;
       } catch (error) {
         console.error("Failed to load data from Firestore", error);
@@ -123,6 +121,7 @@ export default function GestaoFeriasPage() {
       const newVacation = await addVacation(vacationData);
       setVacations(prev => [newVacation, ...prev]);
       setShowVacationForm(false);
+      toast({ title: "Férias Adicionadas", description: "Novo registro de férias criado." });
     } catch (error) {
        console.error("Failed to add vacation:", error);
        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar as férias.' });
@@ -155,6 +154,7 @@ export default function GestaoFeriasPage() {
       const newEmployee = await addEmployee(employeeData);
       setEmployees(prev => [newEmployee, ...prev]);
       setShowEmployeeForm(false);
+      toast({ title: "Funcionário Adicionado", description: "Novo funcionário registrado." });
     } catch (error) {
        console.error("Failed to add employee:", error);
        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar o funcionário.' });
@@ -209,66 +209,9 @@ export default function GestaoFeriasPage() {
     }
   };
 
-  const handleExportData = async () => {
-    try {
-      const allData = await getAllData();
-      const jsonString = JSON.stringify(allData, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `autosb_backup_${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      toast({ title: "Dados Exportados", description: "Seu backup foi criado com sucesso." });
-    } catch (error) {
-      console.error("Failed to export data:", error);
-      toast({ variant: 'destructive', title: 'Erro ao Exportar', description: 'Não foi possível exportar seus dados.' });
-    }
-  };
-
-  const handleImportData = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const content = event.target?.result;
-          if (typeof content !== 'string') {
-            throw new Error("Invalid file content");
-          }
-          const data = JSON.parse(content);
-          
-          if (!data.demands || !data.vacations || !data.employees || !data.certificates) {
-             throw new Error("Arquivo de backup inválido ou corrompido.");
-          }
-
-          await importData(data);
-          await loadAllData(); 
-          
-          toast({ title: "Dados Importados", description: "Seu backup foi restaurado com sucesso." });
-
-        } catch (error) {
-          console.error("Failed to import data:", error);
-          toast({ variant: 'destructive', title: 'Erro ao Importar', description: (error as Error).message || 'O arquivo selecionado não é um backup válido.' });
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  };
-
-
   return (
     <>
-      <AppHeader onImport={handleImportData} onExport={handleExportData} />
+      <AppHeader />
       <div className="w-full space-y-8 mt-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5 md:w-5/6 mx-auto">
