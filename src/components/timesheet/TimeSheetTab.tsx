@@ -6,33 +6,64 @@ import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UploadCloud, FileQuestion, Table as TableIcon } from 'lucide-react';
-import type { TimeSheetEntry } from '@/lib/types';
+import { UploadCloud, FileQuestion, Table as TableIcon, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
-// Função para validar se uma string é um horário no formato HH:mm
-const isTimeFormat = (value: string) => /^\d{2}:\d{2}$/.test(value.trim());
+// --- Funções de Cálculo de Horas ---
 
-// Função para extrair os 4 horários de uma célula
-const extractTimeEntries = (cellValue: string): [string, string, string, string] => {
-  if (!cellValue) return ["", "", "", ""];
-  const parts = cellValue.split(/[\s\n,;]+/).filter(Boolean).map(p => p.trim());
-  
-  return [
-    isTimeFormat(parts[0]) ? parts[0] : "",
-    isTimeFormat(parts[1]) ? parts[1] : "",
-    isTimeFormat(parts[2]) ? parts[2] : "",
-    isTimeFormat(parts[3]) ? parts[3] : "",
-  ];
+// Converte "HH:mm" para minutos totais a partir da meia-noite
+const timeToMinutes = (timeStr: string): number => {
+  if (!/^\d{2}:\d{2}$/.test(timeStr)) return 0;
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
 };
+
+// Calcula a diferença em minutos entre dois horários
+const timeDifference = (start: string, end: string): number => {
+  const startMinutes = timeToMinutes(start);
+  const endMinutes = timeToMinutes(end);
+  if (endMinutes < startMinutes) return 0; // Não lida com turnos que viram a noite
+  return endMinutes - startMinutes;
+};
+
+// Formata minutos totais de volta para "HH:mm"
+const minutesToTime = (totalMinutes: number): string => {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+};
+
+// --- Tipos de Dados ---
+interface ProcessedTimeSheet {
+    employeeName: string;
+    totalHoursWorked: string; // HH:mm
+    requiredHours: string; // Placeholder
+    balance: string; // Placeholder
+}
 
 
 export default function TimeSheetTab() {
   const { toast } = useToast();
-  const [timeSheetData, setTimeSheetData] = useState<any[]>([]);
+  const [processedData, setProcessedData] = useState<ProcessedTimeSheet[]>([]);
   const [fileName, setFileName] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Função para validar se uma string é um horário no formato HH:mm
+  const isTimeFormat = (value: string) => value && /^\d{2}:\d{2}$/.test(value.trim());
+
+  // Função para extrair os 4 horários de uma célula
+  const extractTimeEntries = (cellValue: string): [string, string, string, string] => {
+    if (!cellValue) return ["", "", "", ""];
+    const parts = cellValue.split(/[\s\n,;]+/).filter(Boolean).map(p => p.trim());
+    
+    return [
+      isTimeFormat(parts[0]) ? parts[0] : "",
+      isTimeFormat(parts[1]) ? parts[1] : "",
+      isTimeFormat(parts[2]) ? parts[2] : "",
+      isTimeFormat(parts[3]) ? parts[3] : "",
+    ];
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -44,54 +75,59 @@ export default function TimeSheetTab() {
     setFileName(file.name);
 
     Papa.parse(file, {
-      header: false, // As colunas são dinâmicas (dias do mês)
+      header: false,
       skipEmptyLines: true,
       complete: (results) => {
         try {
           const rawData = results.data as string[][];
-          console.log('Dados brutos do CSV:', rawData);
+          
+          if (rawData.length < 2) {
+              throw new Error("O arquivo CSV parece estar vazio ou não tem linhas de dados.");
+          }
 
-          // A primeira linha pode ser o cabeçalho, vamos identificá-lo
           const header = rawData[0];
-          const employeeNameColumnIndex = header.findIndex(h => h.toLowerCase().includes('funcionário') || h.toLowerCase().includes('nome'));
+          const employeeNameColumnIndex = header.findIndex(h => h && (h.toLowerCase().includes('funcionário') || h.toLowerCase().includes('nome')));
 
           if (employeeNameColumnIndex === -1) {
             throw new Error("Não foi possível encontrar a coluna com os nomes dos funcionários. Verifique o cabeçalho da planilha.");
           }
 
-          const processedData = rawData.slice(1).map(row => {
+          const data = rawData.slice(1).map(row => {
             const employeeName = row[employeeNameColumnIndex];
-            if (!employeeName) return null; // Ignora linhas sem nome de funcionário
+            if (!employeeName) return null; // Ignora linhas sem nome
 
-            const dailyEntries: Record<string, string[]> = {};
+            let totalMinutesForMonth = 0;
+
             header.forEach((day, index) => {
-              // Considera colunas que são apenas números como dias
               if (!isNaN(parseInt(day, 10)) && index > employeeNameColumnIndex) {
                  const [entry1, exit1, entry2, exit2] = extractTimeEntries(row[index] || "");
-                 dailyEntries[day] = [entry1, exit1, entry2, exit2];
+                 if (entry1 && exit1 && entry2 && exit2) {
+                    const morningMinutes = timeDifference(entry1, exit1);
+                    const afternoonMinutes = timeDifference(entry2, exit2);
+                    totalMinutesForMonth += morningMinutes + afternoonMinutes;
+                 }
               }
             });
 
             return {
               employeeName,
-              dailyEntries
+              totalHoursWorked: minutesToTime(totalMinutesForMonth),
+              requiredHours: 'A Calcular',
+              balance: 'A Calcular',
             };
-          }).filter(Boolean); // Remove linhas nulas
+          }).filter((d): d is ProcessedTimeSheet => d !== null);
 
-          console.log("Dados Processados:", processedData);
-
-          setTimeSheetData(processedData);
-
-          if (processedData.length === 0) {
-             toast({ variant: 'destructive', title: 'Nenhum dado processado', description: 'Verifique o formato do seu arquivo CSV e se ele contém dados.' });
-          } else if (results.errors.length > 0) {
-             toast({ variant: 'destructive', title: 'Erro ao ler o arquivo', description: 'Algumas linhas podem não ter sido importadas corretamente.' });
+          setProcessedData(data);
+          
+          if (data.length === 0) {
+             toast({ variant: 'destructive', title: 'Nenhum dado processado', description: 'Verifique se as linhas contêm nomes de funcionários e dados de ponto.' });
           } else {
-             toast({ title: 'Arquivo Importado!', description: `${file.name} foi lido. Agora, precisamos aplicar as regras de cálculo.` });
+             toast({ title: 'Cálculo Inicial Concluído!', description: `As horas totais trabalhadas foram calculadas para ${data.length} funcionários.` });
           }
+
         } catch (error) {
            toast({ variant: 'destructive', title: 'Erro ao Processar', description: (error as Error).message });
-           setTimeSheetData([]);
+           setProcessedData([]);
         }
       },
       error: (error) => {
@@ -114,7 +150,7 @@ export default function TimeSheetTab() {
             Importar Folha de Ponto Mensal
           </CardTitle>
           <CardDescription>
-            Exporte sua planilha do mês para o formato CSV. Em seguida, importe o arquivo aqui para que o sistema possa processar os dados.
+            Exporte sua planilha do mês para o formato CSV. O sistema irá ler o arquivo, calcular as horas e exibir um resumo.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center gap-4 text-center p-8">
@@ -132,12 +168,12 @@ export default function TimeSheetTab() {
         </CardContent>
       </Card>
       
-      {timeSheetData.length === 0 ? (
+      {processedData.length === 0 ? (
         <Alert variant="default">
             <FileQuestion className="h-4 w-4" />
             <AlertTitle>Próximos Passos</AlertTitle>
             <AlertDescription>
-              Após importar a planilha mensal, os dados processados aparecerão abaixo. O próximo passo será implementar as regras de cálculo para horas trabalhadas, horas devidas e horas excedentes.
+              Após importar sua planilha mensal, os resultados dos cálculos aparecerão aqui. O próximo passo será informar a carga horária exigida para cada funcionário para podermos calcular o saldo de horas.
             </AlertDescription>
         </Alert>
       ) : (
@@ -145,10 +181,10 @@ export default function TimeSheetTab() {
               <CardHeader>
                   <CardTitle className="flex items-center">
                     <TableIcon className="mr-2"/>
-                    Dados Importados da Planilha
+                    Resumo da Folha de Ponto
                   </CardTitle>
                   <CardDescription>
-                    Esta é uma visualização dos dados lidos. O próximo passo é aplicar as regras de cálculo.
+                    Esta é a análise inicial com base no arquivo importado.
                   </CardDescription>
               </CardHeader>
               <CardContent>
@@ -156,20 +192,29 @@ export default function TimeSheetTab() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Funcionário</TableHead>
-                            <TableHead>Registros de Ponto (Dia 1)</TableHead>
-                             <TableHead>Registros de Ponto (Dia 2)</TableHead>
+                            <TableHead>Total de Horas Trabalhadas (Mês)</TableHead>
+                            <TableHead>Carga Horária Exigida</TableHead>
+                            <TableHead>Saldo (Excedente / Faltante)</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {timeSheetData.slice(0, 5).map((data, index) => ( // Mostra apenas os 5 primeiros como exemplo
+                        {processedData.map((data, index) => (
                             <TableRow key={index}>
-                                <TableCell>{data.employeeName}</TableCell>
-                                <TableCell>{JSON.stringify(data.dailyEntries['1'] || [])}</TableCell>
-                                <TableCell>{JSON.stringify(data.dailyEntries['2'] || [])}</TableCell>
+                                <TableCell className="font-medium">{data.employeeName}</TableCell>
+                                <TableCell>{data.totalHoursWorked}</TableCell>
+                                <TableCell>{data.requiredHours}</TableCell>
+                                <TableCell>{data.balance}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                  </Table>
+                 <Alert variant="destructive" className="mt-6">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Atenção</AlertTitle>
+                    <AlertDescription>
+                        Os cálculos atuais consideram apenas dias com 4 marcações de ponto válidas. Casos como faltas, feriados, atestados ou dias com marcações incompletas ainda não foram tratados.
+                    </AlertDescription>
+                 </Alert>
               </CardContent>
           </Card>
       )}
