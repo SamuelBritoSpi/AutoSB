@@ -1,6 +1,6 @@
 // @/lib/firebase.ts
 import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence, Firestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,6 +15,24 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// Get a Firestore instance
 const db = getFirestore(app);
+
+// Enable offline persistence
+try {
+    enableIndexedDbPersistence(db)
+        .then(() => console.log("Persistência offline habilitada com sucesso."))
+        .catch((err) => {
+            if (err.code === 'failed-precondition') {
+                console.warn("Falha ao habilitar persistência offline: Múltiplas abas abertas.");
+            } else if (err.code === 'unimplemented') {
+                console.warn("Falha ao habilitar persistência offline: Navegador não suportado.");
+            }
+        });
+} catch (error) {
+    console.error("Erro ao tentar habilitar a persistência offline:", error);
+}
+
 
 export { app, db };
