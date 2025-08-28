@@ -1,3 +1,4 @@
+
 // @/lib/firebase-client.ts
 // This file is designated for client-side Firebase initialization and usage.
 // It should not be imported into server-side code (like Genkit flows or API routes).
@@ -7,6 +8,20 @@ import { getFirestore, enableIndexedDbPersistence, type Firestore } from 'fireba
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { getAuth, type Auth } from "firebase/auth";
 import { getMessaging, type Messaging } from "firebase/messaging";
+
+// Validate environment variables
+const missingVars = [
+  'NEXT_PUBLIC_FIREBASE_API_KEY',
+  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
+  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+  'NEXT_PUBLIC_FIREBASE_APP_ID',
+].filter(key => !process.env[key]);
+
+if (missingVars.length > 0 && typeof window !== 'undefined') {
+  console.error(`Firebase config is missing the following environment variables: ${missingVars.join(', ')}`);
+}
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -19,7 +34,7 @@ const firebaseConfig = {
 
 export const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
-// Singleton pattern to ensure Firebase is only initialized once
+// Singleton instances
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
@@ -28,21 +43,25 @@ let messaging: Messaging | null = null;
 
 function getFirebaseApp(): FirebaseApp {
     if (typeof window === 'undefined') {
-        // This is a safeguard, but in reality, calls should be structured
-        // to not even attempt to get the app on the server.
-        // Returning a dummy or throwing an error are options.
-        // We'll rely on correct usage within client components.
+        // This is a safeguard against server-side execution.
+        // In a properly structured Next.js app, this shouldn't be strictly necessary
+        // for client components, but it provides an extra layer of safety.
         // @ts-ignore
-        return null;
+        return null; 
     }
-    if (!getApps().length) {
-      app = initializeApp(firebaseConfig);
+    
+    if (getApps().length === 0) {
+        if (!firebaseConfig.projectId) {
+           console.error("Firebase projectId is missing. Initialization failed.");
+            // @ts-ignore
+           return null;
+        }
+        app = initializeApp(firebaseConfig);
     } else {
-      app = getApp();
+        app = getApp();
     }
     return app;
 }
-
 
 export function getAuthInstance(): Auth {
     if (!auth) {
@@ -53,7 +72,8 @@ export function getAuthInstance(): Auth {
 
 export function getDbInstance(): Firestore {
     if (!db) {
-        db = getFirestore(getFirebaseApp());
+        const firebaseApp = getFirebaseApp();
+        db = getFirestore(firebaseApp);
         enableIndexedDbPersistence(db).catch((err) => {
             if (err.code === 'failed-precondition') {
                 console.warn("Firestore persistence failed: multiple tabs open.");
@@ -76,7 +96,12 @@ export function getStorageInstance(): FirebaseStorage {
 export function getMessagingObject(): Messaging | null {
     if (typeof window !== 'undefined' && !messaging) {
       try {
-        messaging = getMessaging(getFirebaseApp());
+        const firebaseApp = getFirebaseApp();
+        if(firebaseApp) {
+            messaging = getMessaging(firebaseApp);
+        } else {
+            messaging = null;
+        }
       } catch (error) {
         console.error("Could not initialize messaging", error);
         messaging = null
