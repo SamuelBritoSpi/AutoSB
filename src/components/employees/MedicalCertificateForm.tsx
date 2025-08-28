@@ -15,10 +15,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, PlusCircle, Paperclip, Camera } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Paperclip, Camera, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRef, useState } from 'react';
 import CertificateScanner from './CertificateScanner';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -29,11 +31,10 @@ const certificateSchema = z.object({
   days: z.coerce.number().min(0, "Número de dias deve ser positivo."),
   isHalfDay: z.boolean().default(false),
   originalReceived: z.boolean().default(false),
-  // file is now optional in the schema, we handle it separately
   file: z.any()
     .optional()
-    .refine((file) => !file || file.size <= MAX_FILE_SIZE, `Tamanho máximo do arquivo é 5MB.`)
-    .refine((file) => !file || ACCEPTED_IMAGE_TYPES.includes(file.type), "Apenas formatos .jpg, .jpeg, .png e .webp são aceitos."),
+    .refine((files) => !files || files?.[0]?.size <= MAX_FILE_SIZE, `Tamanho máximo do arquivo é 5MB.`)
+    .refine((files) => !files || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type), "Apenas formatos .jpg, .jpeg, .png e .webp são aceitos."),
 }).refine(data => !data.isHalfDay || (data.days <= 1 && data.days > 0), {
     message: "Atestado de meio turno deve ser de no máximo 1 dia.",
     path: ['days'],
@@ -55,6 +56,7 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<CertificateFormValues>({
     resolver: zodResolver(certificateSchema),
@@ -66,17 +68,45 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
     },
   });
   
-  const attachedFileName = form.watch('file')?.name || (scannedImageUri ? 'imagem_escaneada.jpg' : '');
+  const fileList = form.watch('file');
+  const attachedFileName = fileList?.[0]?.name || (scannedImageUri ? 'imagem_escaneada.jpg' : '');
 
-  const onSubmit = (values: CertificateFormValues) => {
-    const processSubmit = (fileDataUri: string | null) => {
+  const dataURLtoBlob = (dataurl: string) => {
+      let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)?.[1],
+          bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+      while(n--){
+          u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], {type:mime});
+  }
+
+  const onSubmit = async (values: CertificateFormValues) => {
+    setIsSubmitting(true);
+
+    let fileToUpload: File | Blob | null = null;
+    if (scannedImageUri) {
+      fileToUpload = dataURLtoBlob(scannedImageUri);
+    } else if (values.file && values.file.length > 0) {
+      fileToUpload = values.file[0];
+    }
+    
+    let fileURL: string | null = null;
+    
+    try {
+      if (fileToUpload) {
+        const uniqueFileName = `certificate_${employeeId}_${Date.now()}`;
+        const storageRef = ref(storage, `certificates/${uniqueFileName}`);
+        const snapshot = await uploadBytes(storageRef, fileToUpload);
+        fileURL = await getDownloadURL(snapshot.ref);
+      }
+      
       const certificateData: Omit<MedicalCertificate, 'id'> = {
         employeeId,
         certificateDate: values.certificateDate.toISOString(),
         days: values.isHalfDay ? 0.5 : values.days,
         isHalfDay: values.isHalfDay,
         originalReceived: values.originalReceived,
-        fileDataUri: fileDataUri,
+        fileURL: fileURL,
       };
       
       onAddCertificate(certificateData);
@@ -86,18 +116,11 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-    };
-    
-    if (scannedImageUri) {
-      processSubmit(scannedImageUri);
-    } else if (values.file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        processSubmit(e.target?.result as string);
-      };
-      reader.readAsDataURL(values.file);
-    } else {
-      processSubmit(null);
+    } catch (error) {
+       console.error("Error during certificate submission:", error);
+       toast({ variant: 'destructive', title: "Erro no Upload", description: "Não foi possível salvar o arquivo do atestado." });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -208,35 +231,31 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
         
         <FormItem>
           <FormLabel>Anexar Atestado</FormLabel>
-          <div className="flex flex-col sm:flex-row gap-2 items-center">
-            <FormControl>
-                <FormField
-                  control={form.control}
-                  name="file"
-                  render={({ field: { onChange, ...rest } }) => (
-                     <Input 
-                       type="file" 
-                       accept="image/*"
-                       onChange={(e) => {
-                         onChange(e.target.files ? e.target.files[0] : null);
-                         setScannedImageUri(null); // Clear scanned image if file is selected
-                       }}
-                       className="hidden"
-                       ref={fileInputRef}
-                       id="file-upload"
-                       {...rest}
-                      />
-                  )}
-                />
-            </FormControl>
-            <Button type="button" variant="outline" className="w-full" onClick={() => document.getElementById('file-upload')?.click()}>
-              <Paperclip className="mr-2 h-4 w-4" /> Anexar Arquivo
-            </Button>
-            
+           <FormField
+              control={form.control}
+              name="file"
+              render={({ field }) => (
+                 <FormControl>
+                    <Input 
+                      type="file" 
+                      accept="image/*"
+                      className="cursor-pointer"
+                      ref={fileInputRef}
+                      onChange={(e) => {
+                          field.onChange(e.target.files);
+                          setScannedImageUri(null);
+                      }}
+                     />
+                 </FormControl>
+               )}
+            />
+
+          <div className="flex flex-col sm:flex-row gap-2 items-center mt-2">
+            <p className="text-sm text-muted-foreground">Ou</p>
             <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
               <DialogTrigger asChild>
                 <Button type="button" variant="outline" className="w-full">
-                  <Camera className="mr-2 h-4 w-4" /> Escanear Atestado
+                  <Camera className="mr-2 h-4 w-4" /> Escanear com a Câmera
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-3xl">
@@ -252,8 +271,16 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
           <FormMessage />
         </FormItem>
 
-        <Button type="submit" className="w-full">
-          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Atestado
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+            </>
+          ) : (
+            <>
+              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Atestado
+            </>
+          )}
         </Button>
       </form>
     </Form>

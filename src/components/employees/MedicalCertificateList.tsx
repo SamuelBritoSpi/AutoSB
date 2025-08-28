@@ -38,11 +38,8 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
     }
   }
 
-  const openAttachment = (dataUri: string) => {
-    const newWindow = window.open();
-    if (newWindow) {
-      newWindow.document.write(`<img src="${dataUri}" style="width:100%;">`);
-    }
+  const openAttachment = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -90,8 +87,8 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
                     </TableCell>
                     <TableCell>{cert.originalReceived ? 'Sim' : 'Não'}</TableCell>
                     <TableCell>
-                      {cert.fileDataUri ? (
-                        <Button variant="outline" size="icon" onClick={() => openAttachment(cert.fileDataUri!)}>
+                      {cert.fileURL ? (
+                        <Button variant="outline" size="icon" onClick={() => openAttachment(cert.fileURL!)}>
                            <FileImage className="h-4 w-4" />
                         </Button>
                       ) : (

@@ -117,8 +117,10 @@ export async function importData(data: AllData): Promise<void> {
     });
     data.certificates.forEach(item => {
         const { id, ...rest } = item;
+        // @ts-ignore - this is for migration from old format
+        const { fileDataUri, ...certRest } = rest; 
         const docRef = doc(db, STORES.certificates, id);
-        batch.set(docRef, rest);
+        batch.set(docRef, certRest);
     });
 
     await batch.commit();
