@@ -28,7 +28,7 @@ const demandSchema = z.object({
 type DemandFormValues = z.infer<typeof demandSchema>;
 
 interface DemandFormProps {
-  onAddDemand: (demand: Omit<Demand, 'id'>) => void;
+  onAddDemand: (demand: Omit<Demand, 'id'>) => Promise<void>;
   existingDemand?: Demand | null; 
   onUpdateDemand?: (demand: Demand) => void;
   onClose?: () => void; 
@@ -51,7 +51,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
     },
   });
 
-  const onSubmit = (values: DemandFormValues) => {
+  const onSubmit = async (values: DemandFormValues) => {
     if (existingDemand && onUpdateDemand) {
       const demandData = {
         id: existingDemand.id,
@@ -71,8 +71,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
         dueDate: values.dueDate.toISOString(),
         status: 'recebido' as DemandStatus,
       };
-      onAddDemand(demandData);
-      toast({ title: "Demanda Adicionada", description: "Nova demanda registrada com sucesso." });
+      await onAddDemand(demandData);
       form.reset({ title: '', description: '', priority: 'media', dueDate: new Date() });
     }
     if (onClose) onClose();
@@ -168,8 +167,8 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
           />
         </div>
         <div className="flex gap-2">
-          <Button type="submit" className="w-full md:w-auto">
-            <PlusCircle className="mr-2 h-4 w-4" /> {existingDemand ? 'Atualizar Demanda' : 'Adicionar Demanda'}
+          <Button type="submit" className="w-full md:w-auto" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? 'Adicionando...' : <><PlusCircle className="mr-2 h-4 w-4" /> {existingDemand ? 'Atualizar Demanda' : 'Adicionar Demanda'}</> }
           </Button>
           {onClose && !existingDemand && ( // Mostra 'Cancelar' apenas para o formulário de adicionar novo, não para editar em dialog
             <Button type="button" variant="outline" onClick={onClose} className="w-full md:w-auto">
@@ -186,3 +185,5 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
     </Form>
   );
 }
+
+    

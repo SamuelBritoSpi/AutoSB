@@ -81,13 +81,14 @@ export default function GestaoFeriasPage() {
          toast({ title: 'Dados Carregados', description: 'Informações carregadas do banco de dados na nuvem.'});
       }
     })
-  }, [toast]);
+  }, []);
 
   const handleAddDemand = async (demandData: Omit<Demand, 'id'>) => {
     try {
       const newDemand = await addDemand(demandData);
       setDemands(prev => [newDemand, ...prev]);
       setShowDemandForm(false);
+      toast({ title: "Demanda Adicionada", description: "Nova demanda registrada com sucesso." });
     } catch (error) {
        console.error("Failed to add demand:", error);
        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar a demanda.' });
@@ -399,5 +400,7 @@ export default function GestaoFeriasPage() {
     </>
   );
 }
+
+    
 
     
