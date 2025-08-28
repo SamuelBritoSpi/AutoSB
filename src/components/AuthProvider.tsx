@@ -1,46 +1,26 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { getAllData } from '@/lib/idb';
-import type { Demand, Vacation, Employee, MedicalCertificate } from '@/lib/types';
-import GestaoFeriasPage from '@/components/GestaoFeriasPage';
-import AppHeader from '@/components/AppHeader';
 import { Loader2 } from 'lucide-react';
 
-interface AppData {
-  demands: Demand[];
-  vacations: Vacation[];
-  employees: Employee[];
-  certificates: MedicalCertificate[];
+interface AuthProviderProps {
+    children: ReactNode;
 }
 
-export default function AuthProvider() {
+export default function AuthProvider({ children }: AuthProviderProps) {
     const router = useRouter();
     const pathname = usePathname();
     const [user, setUser] = useState<User | null>(null);
-    const [data, setData] = useState<AppData | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [authChecked, setAuthChecked] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            setUser(user);
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
             setAuthChecked(true);
-
-            if (user) {
-                try {
-                    const initialData = await getAllData();
-                    setData(initialData);
-                } catch (error) {
-                    console.error("Failed to load data:", error);
-                    // Handle data loading error, e.g., show a toast
-                }
-            }
-            setIsLoading(false);
         });
 
         return () => unsubscribe();
@@ -59,35 +39,32 @@ export default function AuthProvider() {
     }, [user, authChecked, pathname, router]);
 
     const isAuthPage = pathname === '/login';
-    if (isAuthPage) {
-         // Let the login page render itself
-        return null;
-    }
 
-
-    if (isLoading || !authChecked || !user || (!data && !isAuthPage)) {
+    // While checking auth, show a loader unless it's the login page itself
+    if (!authChecked) {
         return (
             <div className="flex justify-center items-center min-h-screen">
                 <div className="text-center flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-lg font-semibold">Carregando dados...</p>
-                    <p className="text-muted-foreground">Por favor, aguarde.</p>
+                    <p className="text-lg font-semibold">Verificando credenciais...</p>
                 </div>
             </div>
         );
     }
     
-    if (user && data && !isAuthPage) {
-        return (
-          <>
-            <AppHeader />
-            <div className="flex-grow container mx-auto p-4 md:p-6">
-              <GestaoFeriasPage initialData={data} />
-            </div>
-          </>
-        );
+    // If it's the login page, or the user is authenticated, render the children
+    if (isAuthPage || user) {
+        return <>{children}</>;
     }
 
-    // This will render the children on auth pages like /login
-    return null;
+    // If no user and not on login page (and auth is checked),
+    // show loader while redirecting
+    return (
+       <div className="flex justify-center items-center min-h-screen">
+         <div className="text-center flex flex-col items-center gap-2">
+           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+           <p className="text-lg font-semibold">Redirecionando...</p>
+         </div>
+       </div>
+    );
 }
