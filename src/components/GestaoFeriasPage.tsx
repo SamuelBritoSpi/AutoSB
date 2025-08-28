@@ -27,8 +27,9 @@ import {
   addEmployee,
   updateEmployee as updateDbEmployee,
   deleteEmployee as deleteDbEmployee,
-  addCertificate,
-  deleteCertificate as deleteDbCertificate
+  addCertificate as addDbCertificate,
+  deleteCertificate as deleteDbCertificate,
+  updateCertificate
 } from '@/lib/idb';
 
 
@@ -53,22 +54,24 @@ export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps)
   const [showVacationForm, setShowVacationForm] = useState(false);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
 
-  const handleAddDemand = async (demandData: Omit<Demand, 'id'>) => {
+  const handleAddDemand = (demandData: Omit<Demand, 'id'>) => {
     const tempId = `temp-${Date.now()}`;
     const newDemand: Demand = { ...demandData, id: tempId };
+    const originalDemands = [...demands];
 
     setDemands(prev => [newDemand, ...prev]);
     setShowDemandForm(false);
+    toast({ title: "Demanda Adicionada", description: "A demanda foi salva com sucesso." });
     
-    try {
-      const savedDemand = await addDemand(demandData);
-      setDemands(prev => prev.map(d => d.id === tempId ? savedDemand : d));
-      toast({ title: "Demanda Adicionada", description: "A demanda foi salva com sucesso." });
-    } catch (error) {
-      console.error("Failed to add demand:", error);
-      toast({ variant: 'destructive', title: 'Erro de Sincronização', description: 'Não foi possível salvar a demanda.' });
-      setDemands(prev => prev.filter(d => d.id !== tempId));
-    }
+    addDemand(demandData)
+      .then(savedDemand => {
+        setDemands(prev => prev.map(d => d.id === tempId ? savedDemand : d));
+      })
+      .catch(error => {
+        console.error("Failed to add demand:", error);
+        toast({ variant: 'destructive', title: 'Erro de Sincronização', description: 'Não foi possível salvar a demanda.' });
+        setDemands(originalDemands);
+      });
   };
 
   const handleUpdateDemand = (updatedDemand: Demand) => {
@@ -110,6 +113,7 @@ export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps)
   const handleAddVacation = (vacationData: Omit<Vacation, 'id'>) => {
     const tempId = `temp-vacation-${Date.now()}`;
     const newVacation: Vacation = { ...vacationData, id: tempId };
+    const originalVacations = [...vacations];
 
     setVacations(prev => [newVacation, ...prev]);
     setShowVacationForm(false);
@@ -122,13 +126,13 @@ export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps)
       .catch(error => {
        console.error("Failed to add vacation:", error);
        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar as férias.' });
-       setVacations(prev => prev.filter(v => v.id !== tempId));
+       setVacations(originalVacations);
     });
   };
   
   const handleUpdateVacation = (updatedVacation: Vacation) => {
     const originalVacations = [...vacations];
-    setVacations(prev => prev.map(v => v.id === updatedVacation.id ? updatedVacation : v));
+    setVacations(prev => prev.map(v => v.id === updatedVacation.id ? updatedVacation : d));
 
     updateDbVacation(updatedVacation).catch(error => {
        console.error("Failed to update vacation:", error);
@@ -152,6 +156,7 @@ export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps)
   const handleAddEmployee = (employeeData: Omit<Employee, 'id'>) => {
     const tempId = `temp-employee-${Date.now()}`;
     const newEmployee: Employee = { ...employeeData, id: tempId };
+    const originalEmployees = [...employees];
 
     setEmployees(prev => [newEmployee, ...prev]);
     setShowEmployeeForm(false);
@@ -164,13 +169,13 @@ export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps)
       .catch(error => {
        console.error("Failed to add employee:", error);
        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar o funcionário.' });
-       setEmployees(prev => prev.filter(e => e.id !== tempId));
+       setEmployees(originalEmployees);
     });
   };
 
   const handleUpdateEmployee = (updatedEmployee: Employee) => {
     const originalEmployees = [...employees];
-    setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
+    setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : d));
 
     updateDbEmployee(updatedEmployee).catch(error => {
        console.error("Failed to update employee:", error);
@@ -204,18 +209,19 @@ export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps)
   const handleAddCertificate = (certificateData: Omit<MedicalCertificate, 'id'>) => {
     const tempId = `temp-cert-${Date.now()}`;
     const newCertificate: MedicalCertificate = { ...certificateData, id: tempId };
+    const originalCertificates = [...certificates];
 
     setCertificates(prev => [newCertificate, ...prev]);
     toast({ title: "Atestado Adicionado", description: "Sincronizando..." });
 
-    addCertificate(certificateData)
+    addDbCertificate(certificateData)
       .then(savedCertificate => {
         setCertificates(prev => prev.map(c => c.id === tempId ? savedCertificate : c));
       })
       .catch(error => {
        console.error("Failed to add certificate:", error);
        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar o atestado.' });
-       setCertificates(prev => prev.filter(c => c.id !== tempId));
+       setCertificates(originalCertificates);
     });
   };
   

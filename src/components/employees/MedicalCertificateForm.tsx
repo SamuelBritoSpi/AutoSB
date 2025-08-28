@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRef, useState } from 'react';
 import CertificateScanner from './CertificateScanner';
 import { storage } from '@/lib/firebase';
-import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadString, getDownloadURL, deleteObject, uploadBytes } from 'firebase/storage';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -48,7 +48,7 @@ type CertificateFormValues = z.infer<typeof certificateSchema>;
 
 interface MedicalCertificateFormProps {
   employeeId: string;
-  onAddCertificate: (certificate: Omit<MedicalCertificate, 'id'>, fileToUpload?: File | string) => void;
+  onAddCertificate: (certificate: Omit<MedicalCertificate, 'id'>) => void;
 }
 
 export default function MedicalCertificateForm({ employeeId, onAddCertificate }: MedicalCertificateFormProps) {
@@ -56,6 +56,7 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<CertificateFormValues>({
     resolver: zodResolver(certificateSchema),
@@ -69,32 +70,55 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
   
   const fileList = form.watch('file');
   const attachedFileName = fileList?.[0]?.name || (scannedImageUri ? 'imagem_escaneada.jpg' : '');
-  const isSubmitting = form.formState.isSubmitting;
 
-  const onSubmit = (values: CertificateFormValues) => {
-    let fileToUpload: File | string | undefined = undefined;
+  const onSubmit = async (values: CertificateFormValues) => {
+    setIsSubmitting(true);
+    let fileURL: string | null = null;
 
-    if (scannedImageUri) {
-      fileToUpload = scannedImageUri;
-    } else if (values.file && values.file.length > 0) {
-      fileToUpload = values.file[0];
-    }
-    
-    const certificateData: Omit<MedicalCertificate, 'id'> = {
-      employeeId,
-      certificateDate: values.certificateDate.toISOString(),
-      days: values.isHalfDay ? 0.5 : values.days,
-      isHalfDay: values.isHalfDay,
-      originalReceived: values.originalReceived,
-      fileURL: null, // This will be updated after upload
-    };
-    
-    onAddCertificate(certificateData, fileToUpload);
-    
-    form.reset();
-    setScannedImageUri(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    try {
+        let fileToUpload: File | string | undefined = undefined;
+        if (scannedImageUri) {
+          fileToUpload = scannedImageUri;
+        } else if (values.file && values.file.length > 0) {
+          fileToUpload = values.file[0];
+        }
+
+        if (fileToUpload) {
+            const fileName = `certificates/${employeeId}/${Date.now()}-${attachedFileName || 'capture.jpg'}`;
+            const storageRef = ref(storage, fileName);
+
+            if (typeof fileToUpload === 'string') {
+                // It's a data URI from the scanner
+                await uploadString(storageRef, fileToUpload, 'data_url');
+            } else {
+                // It's a File object from input
+                await uploadBytes(storageRef, fileToUpload);
+            }
+            fileURL = await getDownloadURL(storageRef);
+            toast({ title: "Upload Concluído", description: "O anexo do atestado foi salvo." });
+        }
+        
+        const certificateData: Omit<MedicalCertificate, 'id'> = {
+          employeeId,
+          certificateDate: values.certificateDate.toISOString(),
+          days: values.isHalfDay ? 0.5 : values.days,
+          isHalfDay: values.isHalfDay,
+          originalReceived: values.originalReceived,
+          fileURL: fileURL,
+        };
+        
+        onAddCertificate(certificateData);
+        
+        form.reset();
+        setScannedImageUri(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+    } catch (error) {
+        console.error("Failed to upload file or add certificate:", error);
+        toast({ variant: 'destructive', title: 'Erro no Upload', description: 'Não foi possível salvar o anexo do atestado.' });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 

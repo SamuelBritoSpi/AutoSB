@@ -1,6 +1,6 @@
 // @/lib/firebase.ts
 import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence, Firestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAuth } from "firebase/auth";
 
@@ -14,30 +14,34 @@ const firebaseConfig = {
     "messagingSenderId": "341781459458"
 };
 
-
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Get Firestore, Storage, and Auth instances
-const db = getFirestore(app);
-const storage = getStorage(app);
-const auth = getAuth(app);
+let db: Firestore;
 
-
-// Enable offline persistence
-try {
-    enableIndexedDbPersistence(db)
-        .then(() => console.log("Persistência offline habilitada com sucesso."))
-        .catch((err) => {
-            if (err.code === 'failed-precondition') {
-                console.warn("Falha ao habilitar persistência offline: Múltiplas abas abertas.");
-            } else if (err.code === 'unimplemented') {
-                console.warn("Falha ao habilitar persistência offline: Navegador não suportado.");
-            }
-        });
-} catch (error) {
-    console.error("Erro ao tentar habilitar a persistência offline:", error);
+// Conditional initialization for Firestore
+if (typeof window !== 'undefined') {
+    // Client-side execution
+    db = getFirestore(app);
+    try {
+        enableIndexedDbPersistence(db)
+            .then(() => console.log("Persistência offline habilitada com sucesso."))
+            .catch((err) => {
+                if (err.code === 'failed-precondition') {
+                    console.warn("Falha ao habilitar persistência offline: Múltiplas abas abertas ou outra incompatibilidade.");
+                } else if (err.code === 'unimplemented') {
+                    console.warn("Falha ao habilitar persistência offline: Navegador não suportado.");
+                }
+            });
+    } catch (error) {
+        console.error("Erro ao tentar habilitar a persistência offline:", error);
+    }
+} else {
+    // Server-side execution
+    db = getFirestore(app);
 }
 
+const storage = getStorage(app);
+const auth = getAuth(app);
 
 export { app, db, storage, auth };

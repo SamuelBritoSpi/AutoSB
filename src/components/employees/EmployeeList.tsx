@@ -16,7 +16,7 @@ interface EmployeeListProps {
   certificates: MedicalCertificate[];
   onDeleteEmployee: (id: string) => void;
   onUpdateEmployee: (employee: Employee) => void;
-  onAddCertificate: (certificate: Omit<MedicalCertificate, 'id'>, fileToUpload?: File | string) => void;
+  onAddCertificate: (certificate: Omit<MedicalCertificate, 'id'>) => void;
   onDeleteCertificate: (id: string) => void;
 }
 

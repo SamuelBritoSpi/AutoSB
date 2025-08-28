@@ -16,7 +16,7 @@ import { Badge } from '../ui/badge';
 interface MedicalCertificateListProps {
   employee: Employee;
   certificates: MedicalCertificate[];
-  onAddCertificate: (certificate: Omit<MedicalCertificate, 'id'>, fileToUpload?: File | string) => void;
+  onAddCertificate: (certificate: Omit<MedicalCertificate, 'id'>) => void;
   onDeleteCertificate: (id: string) => void;
 }
 
