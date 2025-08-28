@@ -1,25 +1,27 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UploadCloud, FileQuestion, Table as TableIcon, AlertTriangle } from 'lucide-react';
+import { UploadCloud, FileQuestion, Table as TableIcon, AlertTriangle, Calculator } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 // --- Funções de Cálculo de Horas ---
 
-// Converte "HH:mm" para minutos totais a partir da meia-noite
 const timeToMinutes = (timeStr: string): number => {
-  if (!/^\d{2}:\d{2}$/.test(timeStr)) return 0;
-  const [hours, minutes] = timeStr.split(':').map(Number);
+  if (!/^\d{1,2}:\d{2}$/.test(timeStr)) return 0;
+  const parts = timeStr.split(':').map(Number);
+  const hours = parts[0] || 0;
+  const minutes = parts[1] || 0;
   return hours * 60 + minutes;
 };
 
-// Calcula a diferença em minutos entre dois horários
 const timeDifference = (start: string, end: string): number => {
   const startMinutes = timeToMinutes(start);
   const endMinutes = timeToMinutes(end);
@@ -27,36 +29,42 @@ const timeDifference = (start: string, end: string): number => {
   return endMinutes - startMinutes;
 };
 
-// Formata minutos totais de volta para "HH:mm"
 const minutesToTime = (totalMinutes: number): string => {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  if (isNaN(totalMinutes)) return "00:00";
+  const sign = totalMinutes < 0 ? "-" : "";
+  const absMinutes = Math.abs(totalMinutes);
+  const hours = Math.floor(absMinutes / 60);
+  const minutes = absMinutes % 60;
+  return `${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 };
 
 // --- Tipos de Dados ---
-interface ProcessedTimeSheet {
+interface RawTimeSheetData {
     employeeName: string;
-    totalHoursWorked: string; // HH:mm
-    requiredHours: string; // Placeholder
-    balance: string; // Placeholder
+    totalMinutesWorked: number;
 }
-
+interface ProcessedTimeSheet extends RawTimeSheetData {
+    weeklyHours: number;
+    requiredMinutes: number;
+    balanceMinutes: number;
+}
 
 export default function TimeSheetTab() {
   const { toast } = useToast();
-  const [processedData, setProcessedData] = useState<ProcessedTimeSheet[]>([]);
+  const [rawData, setRawData] = useState<RawTimeSheetData[]>([]);
   const [fileName, setFileName] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [workingDays, setWorkingDays] = useState<number>(20);
+  const [dailyHours, setDailyHours] = useState<number>(8);
+  const [employeeWeeklyHours, setEmployeeWeeklyHours] = useState<Record<string, number>>({});
 
-  // Função para validar se uma string é um horário no formato HH:mm
-  const isTimeFormat = (value: string) => value && /^\d{2}:\d{2}$/.test(value.trim());
 
-  // Função para extrair os 4 horários de uma célula
+  const isTimeFormat = (value: string) => value && /^\d{1,2}:\d{2}$/.test(value.trim());
+
   const extractTimeEntries = (cellValue: string): [string, string, string, string] => {
     if (!cellValue) return ["", "", "", ""];
     const parts = cellValue.split(/[\s\n,;]+/).filter(Boolean).map(p => p.trim());
-    
     return [
       isTimeFormat(parts[0]) ? parts[0] : "",
       isTimeFormat(parts[1]) ? parts[1] : "",
@@ -73,28 +81,30 @@ export default function TimeSheetTab() {
     }
     
     setFileName(file.name);
+    setRawData([]);
+    setEmployeeWeeklyHours({});
 
     Papa.parse(file, {
       header: false,
       skipEmptyLines: true,
       complete: (results) => {
         try {
-          const rawData = results.data as string[][];
+          const csvData = results.data as string[][];
           
-          if (rawData.length < 2) {
+          if (csvData.length < 2) {
               throw new Error("O arquivo CSV parece estar vazio ou não tem linhas de dados.");
           }
 
-          const header = rawData[0];
+          const header = csvData[0];
           const employeeNameColumnIndex = header.findIndex(h => h && (h.toLowerCase().includes('funcionário') || h.toLowerCase().includes('nome')));
 
           if (employeeNameColumnIndex === -1) {
-            throw new Error("Não foi possível encontrar a coluna com os nomes dos funcionários. Verifique o cabeçalho da planilha.");
+            throw new Error("Não foi possível encontrar a coluna com os nomes dos funcionários ('Funcionário' ou 'Nome').");
           }
 
-          const data = rawData.slice(1).map(row => {
+          const data: RawTimeSheetData[] = csvData.slice(1).map(row => {
             const employeeName = row[employeeNameColumnIndex];
-            if (!employeeName) return null; // Ignora linhas sem nome
+            if (!employeeName) return null;
 
             let totalMinutesForMonth = 0;
 
@@ -111,13 +121,11 @@ export default function TimeSheetTab() {
 
             return {
               employeeName,
-              totalHoursWorked: minutesToTime(totalMinutesForMonth),
-              requiredHours: 'A Calcular',
-              balance: 'A Calcular',
+              totalMinutesWorked: totalMinutesForMonth,
             };
-          }).filter((d): d is ProcessedTimeSheet => d !== null);
+          }).filter((d): d is RawTimeSheetData => d !== null);
 
-          setProcessedData(data);
+          setRawData(data);
           
           if (data.length === 0) {
              toast({ variant: 'destructive', title: 'Nenhum dado processado', description: 'Verifique se as linhas contêm nomes de funcionários e dados de ponto.' });
@@ -127,7 +135,7 @@ export default function TimeSheetTab() {
 
         } catch (error) {
            toast({ variant: 'destructive', title: 'Erro ao Processar', description: (error as Error).message });
-           setProcessedData([]);
+           setRawData([]);
         }
       },
       error: (error) => {
@@ -140,6 +148,30 @@ export default function TimeSheetTab() {
     fileInputRef.current?.click();
   };
 
+  const processedData: ProcessedTimeSheet[] = useMemo(() => {
+    const requiredMinutesPerDay = dailyHours * 60;
+    
+    return rawData.map(employeeData => {
+        const weeklyHours = employeeWeeklyHours[employeeData.employeeName] || (dailyHours * 5);
+        const dailyMinutesFromWeekly = (weeklyHours / 5) * 60;
+        const requiredMinutes = workingDays * dailyMinutesFromWeekly;
+
+        return {
+            ...employeeData,
+            weeklyHours: weeklyHours,
+            requiredMinutes: requiredMinutes,
+            balanceMinutes: employeeData.totalMinutesWorked - requiredMinutes,
+        };
+    });
+  }, [rawData, workingDays, dailyHours, employeeWeeklyHours]);
+
+  const handleWeeklyHoursChange = (employeeName: string, hours: string) => {
+    const numHours = parseInt(hours, 10);
+    setEmployeeWeeklyHours(prev => ({
+        ...prev,
+        [employeeName]: isNaN(numHours) ? 0 : numHours
+    }));
+  };
 
   return (
     <div className="space-y-6">
@@ -173,37 +205,70 @@ export default function TimeSheetTab() {
             <FileQuestion className="h-4 w-4" />
             <AlertTitle>Próximos Passos</AlertTitle>
             <AlertDescription>
-              Após importar sua planilha mensal, os resultados dos cálculos aparecerão aqui. O próximo passo será informar a carga horária exigida para cada funcionário para podermos calcular o saldo de horas.
+              Após importar sua planilha mensal, os resultados dos cálculos aparecerão aqui. Informe a carga horária e os dias úteis para calcular o saldo de horas.
             </AlertDescription>
         </Alert>
       ) : (
           <Card>
               <CardHeader>
                   <CardTitle className="flex items-center">
-                    <TableIcon className="mr-2"/>
-                    Resumo da Folha de Ponto
+                    <Calculator className="mr-2"/>
+                    Calcular Saldo de Horas
                   </CardTitle>
                   <CardDescription>
-                    Esta é a análise inicial com base no arquivo importado.
+                    Ajuste os parâmetros abaixo para calcular a carga horária exigida e o saldo final de cada funcionário.
                   </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50'>
+                    <div>
+                        <Label htmlFor="working-days">Dias Úteis no Mês</Label>
+                        <Input 
+                            id="working-days" 
+                            type="number" 
+                            value={workingDays} 
+                            onChange={(e) => setWorkingDays(Number(e.target.value))} 
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="daily-hours">Carga Horária Diária Padrão</Label>
+                        <Input 
+                            id="daily-hours" 
+                            type="number" 
+                            value={dailyHours}
+                            onChange={(e) => setDailyHours(Number(e.target.value))}
+                        />
+                    </div>
+                </div>
+
                  <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Funcionário</TableHead>
-                            <TableHead>Total de Horas Trabalhadas (Mês)</TableHead>
-                            <TableHead>Carga Horária Exigida</TableHead>
-                            <TableHead>Saldo (Excedente / Faltante)</TableHead>
+                            <TableHead>Horas Trabalhadas</TableHead>
+                            <TableHead className='w-[150px]'>C.H. Semanal</TableHead>
+                            <TableHead>C.H. Exigida (Mês)</TableHead>
+                            <TableHead>Saldo (Exced/Falt)</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {processedData.map((data, index) => (
-                            <TableRow key={index}>
+                        {processedData.map((data) => (
+                            <TableRow key={data.employeeName}>
                                 <TableCell className="font-medium">{data.employeeName}</TableCell>
-                                <TableCell>{data.totalHoursWorked}</TableCell>
-                                <TableCell>{data.requiredHours}</TableCell>
-                                <TableCell>{data.balance}</TableCell>
+                                <TableCell>{minutesToTime(data.totalMinutesWorked)}</TableCell>
+                                <TableCell>
+                                    <Input 
+                                        type="number" 
+                                        placeholder={`${dailyHours * 5}`}
+                                        className="h-8"
+                                        value={employeeWeeklyHours[data.employeeName] || ''}
+                                        onChange={(e) => handleWeeklyHoursChange(data.employeeName, e.target.value)}
+                                    />
+                                </TableCell>
+                                <TableCell>{minutesToTime(data.requiredMinutes)}</TableCell>
+                                <TableCell className={data.balanceMinutes >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                                  {minutesToTime(data.balanceMinutes)}
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -221,3 +286,4 @@ export default function TimeSheetTab() {
     </div>
   );
 }
+    
