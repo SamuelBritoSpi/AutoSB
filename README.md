@@ -2,9 +2,9 @@
 
 ## Sobre o Projeto
 
-O AutoSB é uma aplicação web de página única (SPA) projetada para auxiliar na gestão de tarefas diárias, organização de férias de funcionários e, principalmente, no controle detalhado de atestados médicos, seguindo regras específicas da legislação trabalhista.
+O AutoSB é uma aplicação web projetada para auxiliar na gestão de tarefas diárias, organização de férias de funcionários e, principalmente, no controle detalhado de atestados médicos, seguindo regras específicas da legislação trabalhista.
 
-Construída com foco na simplicidade e na operação local, a aplicação armazena todos os dados diretamente no navegador do usuário usando a tecnologia IndexedDB, garantindo privacidade e funcionamento offline.
+Construída com as tecnologias mais modernas, a aplicação utiliza Firebase para autenticação segura e armazenamento de dados em tempo real na nuvem, garantindo acesso de qualquer lugar e funcionamento offline.
 
 ## Tecnologias Utilizadas
 
@@ -12,7 +12,7 @@ Construída com foco na simplicidade e na operação local, a aplicação armaze
 - **TypeScript**: Para um código mais seguro e robusto.
 - **Tailwind CSS**: Para estilização rápida e moderna.
 - **ShadCN/UI**: Componentes de UI pré-construídos e acessíveis.
-- **IndexedDB**: Para armazenamento de dados local no navegador.
+- **Firebase**: Para autenticação, banco de dados (Firestore) e armazenamento de arquivos.
 - **Zod**: Para validação de esquemas e formulários.
 - **date-fns**: Para manipulação e formatação de datas.
 
@@ -38,48 +38,46 @@ Construída com foco na simplicidade e na operação local, a aplicação armaze
     - O sistema **calcula automaticamente** a soma de dias de atestado nos últimos 60 dias.
     - Ele alerta quando o limite é atingido (10 dias para efetivos, 15 para REDA/terceirizados), indicando a necessidade de encaminhamento ao **INSS** ou **processo SEI**.
 
-### 4. Backup e Segurança dos Dados (MUITO IMPORTANTE)
-- **Armazenamento Local (IndexedDB)**: Seus dados ficam salvos no navegador. **ATENÇÃO:** Se você limpar os dados do navegador, usar outro computador ou reinstalar o sistema, os dados serão perdidos.
-- **Backup e Restauração (Exportar/Importar)**: Para evitar a perda de dados, use a função **Exportar** regularmente. Isso salva uma cópia de segurança de **TODOS** os seus dados (demandas, férias, funcionários e imagens de atestados) em um único arquivo JSON. Guarde este arquivo em um local seguro. Se precisar, use a função **Importar** para restaurar seus dados em qualquer navegador ou computador.
+### 4. Segurança dos Dados
+- **Armazenamento na Nuvem (Firestore)**: Seus dados ficam salvos de forma segura no Firebase. Você pode acessá-los de qualquer computador com seu login e senha.
+- **Backup Automático**: O Firebase gerencia a segurança e a disponibilidade dos seus dados.
 
-## Como Usar Localmente (Sem Terminal)
+## Como Usar
 
-Para usar a aplicação como um programa local sem precisar executar `npm run dev` toda vez, siga estes passos **uma única vez**:
-
-1.  **Abra o terminal** na pasta raiz do projeto.
-2.  **Instale as dependências** (se ainda não o fez):
-    ```bash
-    npm install
-    ```
-3.  **Gere os arquivos da aplicação**:
-    ```bash
-    npm run export
-    ```
-    Este comando criará uma nova pasta chamada `out` no seu projeto.
-
-4.  **Abra a aplicação**:
-    - Navegue até a pasta `out`.
-    - Dê um duplo-clique no arquivo `index.html`.
-    - A aplicação abrirá no seu navegador padrão.
-
-5.  **(Opcional) Crie um Atalho**:
-    - Você pode clicar com o botão direito no arquivo `index.html` e criar um atalho para a sua Área de Trabalho para facilitar o acesso.
-
-Pronto! Agora, sempre que quiser usar a aplicação, basta abrir o `index.html` ou o atalho que você criou.
-
-## Para Desenvolvedores
+### Para Desenvolvedores (Ambiente de Desenvolvimento)
 
 Se você quiser modificar o código e ver as alterações em tempo real, use o servidor de desenvolvimento:
 
-1.  **Instale as dependências**:
+1.  **Instale as dependências** (se ainda não o fez):
     ```bash
     npm install
     ```
-2.  **Inicie o servidor**:
+2.  **Inicie o servidor de desenvolvimento**:
     ```bash
     npm run dev
     ```
 3.  **Acesse a aplicação**:
     - Abra seu navegador e acesse [http://localhost:3000](http://localhost:3000).
 
-**Importante:** Após finalizar suas modificações no código, você **deve rodar o comando `npm run export` novamente** para atualizar a versão final na pasta `out` com as suas alterações.
+### Para Uso Normal (Ambiente de Produção)
+
+Para usar a aplicação no dia a dia, como se fosse um programa instalado, siga estes passos:
+
+1.  **Instale as dependências** (faça isso apenas uma vez):
+    ```bash
+    npm install
+    ```
+2.  **Faça o "build" da aplicação** (faça isso apenas uma vez, ou sempre que o código for atualizado):
+    ```bash
+    npm run build
+    ```
+    Este comando otimiza a aplicação para a melhor performance.
+
+3.  **Inicie o servidor de produção**:
+    ```bash
+    npm run start
+    ```
+    Este comando iniciará um servidor local otimizado (geralmente em [http://localhost:3000](http://localhost:3000)).
+
+4.  **Acesse a aplicação**:
+    - Abra seu navegador e acesse o endereço que apareceu no seu terminal (normalmente [http://localhost:3000](http://localhost:3000)). Você pode salvar este endereço nos seus favoritos para acesso rápido.
