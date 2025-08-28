@@ -1,10 +1,10 @@
 
 // @/lib/firebase.ts
-import { initializeApp, getApp, getApps } from 'firebase/app';
+import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, enableIndexedDbPersistence, Firestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { getAuth } from "firebase/auth";
-import { getMessaging } from "firebase/messaging";
+import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getAuth, Auth } from "firebase/auth";
+import { getMessaging, Messaging } from "firebase/messaging";
 
 // Your web app's Firebase configuration is now loaded from environment variables
 const firebaseConfig = {
@@ -20,14 +20,18 @@ const firebaseConfig = {
 export const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-let db: Firestore;
+const auth: Auth = getAuth(app);
+const storage: FirebaseStorage = getStorage(app);
 
-// Conditional initialization for Firestore
+// Firestore and Messaging are only available on the client side
+let db: Firestore | null = null;
+let messaging: Messaging | null = null;
+
 if (typeof window !== 'undefined') {
-    // Client-side execution
     db = getFirestore(app);
+    messaging = getMessaging(app);
     try {
         enableIndexedDbPersistence(db)
             .then(() => console.log("Persistência offline habilitada com sucesso."))
@@ -41,16 +45,6 @@ if (typeof window !== 'undefined') {
     } catch (error) {
         console.error("Erro ao tentar habilitar a persistência offline:", error);
     }
-} else {
-    // Server-side execution
-    db = getFirestore(app);
 }
-
-const storage = getStorage(app);
-const auth = getAuth(app);
-
-// Initialize Firebase Cloud Messaging and get a reference to the service
-const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
-
 
 export { app, db, storage, auth, messaging };

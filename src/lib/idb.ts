@@ -13,6 +13,10 @@ const STORES = {
 // --- Generic CRUD Operations for Firestore ---
 
 async function getAll<T>(storeName: string): Promise<T[]> {
+  if (!db) {
+    console.warn("Firestore is not available. Returning empty array.");
+    return [];
+  }
   const querySnapshot = await getDocs(collection(db, storeName));
   const data: T[] = [];
   querySnapshot.forEach((doc) => {
@@ -23,17 +27,20 @@ async function getAll<T>(storeName: string): Promise<T[]> {
 }
 
 async function add<T extends object>(storeName: string, item: T): Promise<string> {
+   if (!db) { throw new Error("Firestore is not available."); }
   const docRef = await addDoc(collection(db, storeName), item);
   return docRef.id;
 }
 
 async function update<T extends { id: string }>(storeName: string, item: T): Promise<void> {
+   if (!db) { throw new Error("Firestore is not available."); }
   const { id, ...data } = item;
   const docRef = doc(db, storeName, id);
   await updateDoc(docRef, data);
 }
 
 async function remove(storeName: string, id: string): Promise<void> {
+  if (!db) { throw new Error("Firestore is not available."); }
   await deleteDoc(doc(db, storeName, id));
 }
 
@@ -95,6 +102,7 @@ export async function getAllData(): Promise<AllData> {
 
 // This function can be used to migrate data from a JSON backup to Firestore.
 export async function importData(data: AllData): Promise<void> {
+    if (!db) { throw new Error("Firestore is not available for import."); }
     const batch = writeBatch(db);
 
     // Note: This doesn't clear old data by default, it just adds/overwrites.
