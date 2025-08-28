@@ -59,9 +59,9 @@ Se você quiser modificar o código e ver as alterações em tempo real, use o s
 3.  **Acesse a aplicação**:
     - Abra seu navegador e acesse [http://localhost:3000](http://localhost:3000).
 
-### Para Uso Normal (Ambiente de Produção)
+### Para Uso Normal (Ambiente de Produção Local)
 
-Para usar a aplicação no dia a dia, como se fosse um programa instalado, siga estes passos:
+Para usar a aplicação no dia a dia no seu próprio computador, como se fosse um programa instalado:
 
 1.  **Instale as dependências** (faça isso apenas uma vez):
     ```bash
@@ -81,3 +81,27 @@ Para usar a aplicação no dia a dia, como se fosse um programa instalado, siga 
 
 4.  **Acesse a aplicação**:
     - Abra seu navegador e acesse o endereço que apareceu no seu terminal (normalmente [http://localhost:3000](http://localhost:3000)). Você pode salvar este endereço nos seus favoritos para acesso rápido.
+
+
+## Como Publicar na Web (Deploy com Firebase App Hosting)
+
+Com o Firebase App Hosting, você pode publicar sua aplicação na internet para que qualquer pessoa com o link possa acessá-la.
+
+**Pré-requisitos:**
+- Ter o **Firebase CLI** instalado. Se não tiver, instale com o comando: `npm install -g firebase-tools`.
+- Ter feito login no Firebase CLI. Se não tiver, execute: `firebase login`.
+
+**Passos para o Deploy:**
+
+1. **Selecione seu projeto Firebase** (faça isso apenas uma vez):
+   ```bash
+   firebase use gestofrias
+   ```
+
+2. **Faça o deploy da aplicação**:
+   ```bash
+   firebase apphosting:backends:deploy --project=gestofrias --backend=autodb
+   ```
+   - O Firebase fará o "build" da sua aplicação e a enviará para a nuvem.
+   - Ao final, ele fornecerá a URL pública onde sua aplicação estará acessível (algo como `https://autodb--gestofrias.us-central1.run.app`).
+   - Se o backend `autodb` ainda não existir, o próprio comando vai te guiar para criá-lo.
