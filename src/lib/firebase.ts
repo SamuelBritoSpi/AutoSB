@@ -6,18 +6,18 @@ import { getStorage } from 'firebase/storage';
 import { getAuth } from "firebase/auth";
 import { getMessaging } from "firebase/messaging";
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration is now loaded from environment variables
 const firebaseConfig = {
-    "projectId": "gestofrias",
-    "appId": "1:341781459458:web:7c3d44634e57497810ed1b",
-    "storageBucket": "gestofrias.appspot.com",
-    "apiKey": "AIzaSyB5olDxqPS-ZvS6USvCgfxWXPDuRYeox0s",
-    "authDomain": "gestofrias.firebaseapp.com",
-    "messagingSenderId": "341781459458"
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // VAPID key for web push notifications
-export const VAPID_KEY = "BB7xs2IE0ythgnkRExVkGHY-OGWOH8rqLI9NR6rhiiOWO24af8iwhn67DWRbQVHgmjk5szxMITkzrUuxuPuCCU8";
+export const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

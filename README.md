@@ -42,66 +42,44 @@ Construída com as tecnologias mais modernas, a aplicação utiliza Firebase par
 - **Armazenamento na Nuvem (Firestore)**: Seus dados ficam salvos de forma segura no Firebase. Você pode acessá-los de qualquer computador com seu login e senha.
 - **Backup Automático**: O Firebase gerencia a segurança e a disponibilidade dos seus dados.
 
-## Como Usar
+## Como Publicar na Web (Deploy com Vercel)
 
-### Para Desenvolvedores (Ambiente de Desenvolvimento)
-
-Se você quiser modificar o código e ver as alterações em tempo real, use o servidor de desenvolvimento:
-
-1.  **Instale as dependências** (se ainda não o fez):
-    ```bash
-    npm install
-    ```
-2.  **Inicie o servidor de desenvolvimento**:
-    ```bash
-    npm run dev
-    ```
-3.  **Acesse a aplicação**:
-    - Abra seu navegador e acesse [http://localhost:3000](http://localhost:3000).
-
-### Para Uso Normal (Ambiente de Produção Local)
-
-Para usar a aplicação no dia a dia no seu próprio computador, como se fosse um programa instalado:
-
-1.  **Instale as dependências** (faça isso apenas uma vez):
-    ```bash
-    npm install
-    ```
-2.  **Faça o "build" da aplicação** (faça isso apenas uma vez, ou sempre que o código for atualizado):
-    ```bash
-    npm run build
-    ```
-    Este comando otimiza a aplicação para a melhor performance.
-
-3.  **Inicie o servidor de produção**:
-    ```bash
-    npm run start
-    ```
-    Este comando iniciará um servidor local otimizado (geralmente em [http://localhost:3000](http://localhost:3000)).
-
-4.  **Acesse a aplicação**:
-    - Abra seu navegador e acesse o endereço que apareceu no seu terminal (normalmente [http://localhost:3000](http://localhost:3000)). Você pode salvar este endereço nos seus favoritos para acesso rápido.
-
-
-## Como Publicar na Web (Deploy com Firebase App Hosting)
-
-Com o Firebase App Hosting, você pode publicar sua aplicação na internet para que qualquer pessoa com o link possa acessá-la.
+A Vercel é a melhor plataforma para publicar projetos Next.js e oferece um plano gratuito excelente, sem necessidade de cartão de crédito.
 
 **Pré-requisitos:**
-- Ter o **Firebase CLI** instalado. Se não tiver, instale com o comando: `npm install -g firebase-tools`.
-- Ter feito login no Firebase CLI. Se não tiver, execute: `firebase login`.
+1.  **Conta no GitHub:** Seu código precisa estar em um repositório no GitHub.
+2.  **Conta na Vercel:** Crie uma conta gratuita em [vercel.com](https://vercel.com/), você pode usar sua conta do GitHub para se registrar.
 
-**Passos para o Deploy:**
+**Passo a Passo para o Deploy:**
 
-1. **Selecione seu projeto Firebase** (faça isso apenas uma vez):
-   ```bash
-   firebase use gestofrias
-   ```
+1.  **Novo Projeto na Vercel:**
+    *   No seu painel da Vercel, clique em **"Add New..." -> "Project"**.
+    *   A Vercel se conectará ao seu GitHub e listará seus repositórios. Encontre o repositório do **AutoSB** e clique em **"Import"**.
 
-2. **Faça o deploy da aplicação**:
-   ```bash
-   firebase apphosting:backends:deploy --project=gestofrias --backend=autodb
-   ```
-   - O Firebase fará o "build" da sua aplicação e a enviará para a nuvem.
-   - Ao final, ele fornecerá a URL pública onde sua aplicação estará acessível (algo como `https://autodb--gestofrias.us-central1.run.app`).
-   - Se o backend `autodb` ainda não existir, o próprio comando vai te guiar para criá-lo.
+2.  **Configurar o Projeto:**
+    *   A Vercel detectará que é um projeto Next.js e preencherá a maioria das configurações automaticamente. Você não precisa mudar nada nas "Build and Output Settings".
+
+3.  **Configurar as Variáveis de Ambiente (Passo Crucial):**
+    *   Na mesma tela de configuração, expanda a seção **"Environment Variables"**.
+    *   Você precisará adicionar **uma por uma** as chaves de configuração do seu Firebase. Essas chaves garantem que sua aplicação publicada na web consiga se conectar ao seu banco de dados Firebase.
+    *   Os valores para essas variáveis estão no arquivo `.env` do seu projeto.
+
+    Adicione as seguintes variáveis:
+
+| Nome da Variável                                  | Valor                                         |
+| ------------------------------------------------- | --------------------------------------------- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`                    | (Cole o valor de `apiKey` aqui)                 |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`                | (Cole o valor de `authDomain` aqui)             |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID`                 | (Cole o valor de `projectId` aqui)              |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`             | (Cole o valor de `storageBucket` aqui)          |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`        | (Cole o valor de `messagingSenderId` aqui)    |
+| `NEXT_PUBLIC_FIREBASE_APP_ID`                     | (Cole o valor de `appId` aqui)                  |
+| `NEXT_PUBLIC_FIREBASE_VAPID_KEY`                  | (Cole a sua chave VAPID de notificações aqui) |
+
+
+4.  **Fazer o Deploy:**
+    *   Após adicionar todas as variáveis, clique no botão **"Deploy"**.
+    *   A Vercel fará o "build" da sua aplicação e a publicará. O processo leva alguns minutos.
+    *   Ao final, você receberá uma URL pública (como `autodb.vercel.app`) onde sua aplicação estará funcionando!
+
+**Deploy Automático:** A partir de agora, toda vez que você fizer um `git push` para a branch principal (`main` ou `master`) do seu repositório no GitHub, a Vercel automaticamente fará um novo deploy com as atualizações.
