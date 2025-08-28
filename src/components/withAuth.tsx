@@ -23,8 +23,15 @@ const withAuth = <P extends object>(WrappedComponent: React.ComponentType<P>) =>
         const [user, setUser] = useState<User | null>(null);
         const [data, setData] = useState<AllData | null>(null);
         const [isLoading, setIsLoading] = useState(true);
+        const [isClient, setIsClient] = useState(false);
 
         useEffect(() => {
+          setIsClient(true);
+        }, []);
+
+        useEffect(() => {
+            if (!isClient) return;
+
             const unsubscribe = onAuthStateChanged(auth, (user) => {
                 if (user) {
                     setUser(user);
@@ -46,9 +53,9 @@ const withAuth = <P extends object>(WrappedComponent: React.ComponentType<P>) =>
 
             // Cleanup subscription on unmount
             return () => unsubscribe();
-        }, [router]);
+        }, [router, isClient]);
 
-        if (isLoading || !data) {
+        if (!isClient || isLoading || !data) {
             return (
                 <div className="flex justify-center items-center min-h-screen">
                     <div className="text-center flex flex-col items-center gap-2">
