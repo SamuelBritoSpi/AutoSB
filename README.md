@@ -20,12 +20,13 @@ Construída com foco na simplicidade e na operação local, a aplicação armaze
 
 ### 1. Gestão de Demandas
 - **Criação e Edição**: Registre novas tarefas com título, descrição, prioridade (alta, média, baixa) e data de entrega.
-- **Controle de Status**: Acompanhe o progresso de cada demanda (`A Fazer`, `Em Progresso`, `Concluída`).
+- **Controle de Status**: Acompanhe o progresso de cada demanda com um fluxo de trabalho customizável (`Recebido`, `Em Análise`, `Aguardando SEC`, `Aguardando CSH`, `Finalizado`, etc.).
 - **Filtros e Ordenação**: Organize sua lista de demandas por status, data ou prioridade para focar no que é mais importante.
 
 ### 2. Gestão de Férias
 - **Registro Simplificado**: Adicione rapidamente os períodos de férias dos funcionários.
 - **Busca Rápida**: Encontre facilmente os registros de férias pesquisando pelo nome do funcionário.
+- **Visão em Calendário**: Visualize as férias e os prazos das demandas em um calendário unificado.
 
 ### 3. Gestão de Funcionários e Atestados Médicos
 - **Cadastro de Funcionários**: Mantenha uma lista de funcionários com nome e tipo de contrato (`Efetivo`, `REDA`, `Terceirizado`).
@@ -37,9 +38,9 @@ Construída com foco na simplicidade e na operação local, a aplicação armaze
     - O sistema **calcula automaticamente** a soma de dias de atestado nos últimos 60 dias.
     - Ele alerta quando o limite é atingido (10 dias para efetivos, 15 para REDA/terceirizados), indicando a necessidade de encaminhamento ao **INSS** ou **processo SEI**.
 
-### 4. Persistência e Backup de Dados
-- **Armazenamento Local (IndexedDB)**: Todos os dados são salvos automaticamente no banco de dados do seu navegador. Você pode fechar e abrir a aplicação sem perder suas informações.
-- **Backup e Restauração**: Faça o backup de todos os seus dados (demandas, férias, funcionários e atestados com imagens) para um arquivo JSON. Restaure seus dados em qualquer navegador ou computador usando a função de importação.
+### 4. Backup e Segurança dos Dados (MUITO IMPORTANTE)
+- **Armazenamento Local (IndexedDB)**: Seus dados ficam salvos no navegador. **ATENÇÃO:** Se você limpar os dados do navegador, usar outro computador ou reinstalar o sistema, os dados serão perdidos.
+- **Backup e Restauração (Exportar/Importar)**: Para evitar a perda de dados, use a função **Exportar** regularmente. Isso salva uma cópia de segurança de **TODOS** os seus dados (demandas, férias, funcionários e imagens de atestados) em um único arquivo JSON. Guarde este arquivo em um local seguro. Se precisar, use a função **Importar** para restaurar seus dados em qualquer navegador ou computador.
 
 ## Como Usar Localmente (Sem Terminal)
 
