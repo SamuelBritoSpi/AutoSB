@@ -2,6 +2,7 @@ import React from 'react';
 import GestaoFeriasPage from '@/components/GestaoFeriasPage';
 import { getAllData } from '@/lib/idb';
 import AppHeader from '@/components/AppHeader';
+import AuthProvider from '@/components/AuthProvider';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,11 +11,11 @@ export default async function HomePage() {
   const initialData = await getAllData();
 
   return (
-    <>
+    <AuthProvider>
       <AppHeader />
       <div className="flex-grow container mx-auto p-4 md:p-6">
         <GestaoFeriasPage initialData={initialData} />
       </div>
-    </>
+    </AuthProvider>
   );
 }
