@@ -20,28 +20,33 @@ import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { 
   addDemand, 
-  getDemands, 
   updateDemand as updateDbDemand, 
   deleteDemand as deleteDbDemand,
   addVacation,
-  getVacations,
   updateVacation as updateDbVacation,
   deleteVacation as deleteDbVacation,
   addEmployee,
-  getEmployees,
   updateEmployee as updateDbEmployee,
   deleteEmployee as deleteDbEmployee,
   addCertificate,
-  getCertificates,
   deleteCertificate as deleteDbCertificate
 } from '@/lib/idb';
 
 
-export default function GestaoFeriasPage() {
-  const [demands, setDemands] = useState<Demand[]>([]);
-  const [vacations, setVacations] = useState<Vacation[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [certificates, setCertificates] = useState<MedicalCertificate[]>([]);
+interface GestaoFeriasPageProps {
+  initialData: {
+    demands: Demand[];
+    vacations: Vacation[];
+    employees: Employee[];
+    certificates: MedicalCertificate[];
+  }
+}
+
+export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps) {
+  const [demands, setDemands] = useState<Demand[]>(initialData.demands);
+  const [vacations, setVacations] = useState<Vacation[]>(initialData.vacations);
+  const [employees, setEmployees] = useState<Employee[]>(initialData.employees);
+  const [certificates, setCertificates] = useState<MedicalCertificate[]>(initialData.certificates);
 
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -49,48 +54,22 @@ export default function GestaoFeriasPage() {
   const [showVacationForm, setShowVacationForm] = useState(false);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
 
-  async function loadAllData() {
-      try {
-        const [loadedDemands, loadedVacations, loadedEmployees, loadedCertificates] = await Promise.all([
-          getDemands(),
-          getVacations(),
-          getEmployees(),
-          getCertificates()
-        ]);
-        setDemands(loadedDemands);
-        setVacations(loadedVacations);
-        setEmployees(loadedEmployees);
-        setCertificates(loadedCertificates);
-        console.log("Dados carregados com sucesso do Firestore.");
-        return true;
-      } catch (error) {
-        console.error("Failed to load data from Firestore", error);
-        toast({ variant: 'destructive', title: 'Erro ao Carregar Dados', description: 'Não foi possível carregar os dados do banco de dados na nuvem.' });
-        return false;
-      }
-  }
-
-  useEffect(() => {
-    loadAllData();
-  }, []);
-
-  const handleAddDemand = (demandData: Omit<Demand, 'id'>) => {
+  const handleAddDemand = async (demandData: Omit<Demand, 'id'>) => {
     const tempId = `temp-${Date.now()}`;
     const newDemand: Demand = { ...demandData, id: tempId };
 
     setDemands(prev => [newDemand, ...prev]);
     setShowDemandForm(false);
-    toast({ title: "Demanda Adicionada", description: "Sincronizando com a nuvem..." });
-
-    addDemand(demandData)
-      .then(savedDemand => {
-        setDemands(prev => prev.map(d => d.id === tempId ? savedDemand : d));
-      })
-      .catch(error => {
-        console.error("Failed to add demand:", error);
-        toast({ variant: 'destructive', title: 'Erro de Sincronização', description: 'Não foi possível salvar a demanda.' });
-        setDemands(prev => prev.filter(d => d.id !== tempId));
-      });
+    
+    try {
+      const savedDemand = await addDemand(demandData);
+      setDemands(prev => prev.map(d => d.id === tempId ? savedDemand : d));
+      toast({ title: "Demanda Adicionada", description: "A demanda foi salva com sucesso." });
+    } catch (error) {
+      console.error("Failed to add demand:", error);
+      toast({ variant: 'destructive', title: 'Erro de Sincronização', description: 'Não foi possível salvar a demanda.' });
+      setDemands(prev => prev.filter(d => d.id !== tempId));
+    }
   };
 
   const handleUpdateDemand = (updatedDemand: Demand) => {
