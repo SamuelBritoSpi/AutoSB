@@ -1,8 +1,10 @@
+
 // @/lib/firebase.ts
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getFirestore, enableIndexedDbPersistence, Firestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAuth } from "firebase/auth";
+import { getMessaging } from "firebase/messaging";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -13,6 +15,9 @@ const firebaseConfig = {
     "authDomain": "gestofrias.firebaseapp.com",
     "messagingSenderId": "341781459458"
 };
+
+// VAPID key for web push notifications
+export const VAPID_KEY = "BB7xs2IE0ythgnkRExVkGHY-OGWOH8rqLI9NR6rhiiOWO24af8iwhn67DWRbQVHgmjk5szxMITkzrUuxuPuCCU8";
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -44,4 +49,8 @@ if (typeof window !== 'undefined') {
 const storage = getStorage(app);
 const auth = getAuth(app);
 
-export { app, db, storage, auth };
+// Initialize Firebase Cloud Messaging and get a reference to the service
+const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
+
+
+export { app, db, storage, auth, messaging };

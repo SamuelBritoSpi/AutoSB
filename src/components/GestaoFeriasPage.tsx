@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DemandForm from '@/components/demands/DemandForm';
 import DemandList from '@/components/demands/DemandList';
@@ -11,8 +11,7 @@ import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeList from '@/components/employees/EmployeeList';
 import DashboardTab from '@/components/dashboard/DashboardTab';
 import CalendarView from '@/components/calendar/CalendarView';
-
-
+import { useAuth } from './AuthProvider';
 import type { Demand, Vacation, DemandStatus, Employee, MedicalCertificate } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide } from 'lucide-react';
@@ -31,23 +30,17 @@ import {
   deleteCertificate as deleteDbCertificate,
   updateCertificate
 } from '@/lib/idb';
+import { sendNotification } from '@/ai/flows/send-notification-flow';
 
 
-interface GestaoFeriasPageProps {
-  initialData: {
-    demands: Demand[];
-    vacations: Vacation[];
-    employees: Employee[];
-    certificates: MedicalCertificate[];
-  }
-}
-
-export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps) {
-  const [demands, setDemands] = useState<Demand[]>(initialData.demands);
-  const [vacations, setVacations] = useState<Vacation[]>(initialData.vacations);
-  const [employees, setEmployees] = useState<Employee[]>(initialData.employees);
-  const [certificates, setCertificates] = useState<MedicalCertificate[]>(initialData.certificates);
-
+export default function GestaoFeriasPage() {
+  const { 
+    demands, setDemands, 
+    vacations, setVacations,
+    employees, setEmployees,
+    certificates, setCertificates
+  } = useAuth();
+  
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showDemandForm, setShowDemandForm] = useState(false);
@@ -107,6 +100,20 @@ export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps)
       const updatedDemand = { ...demandToUpdate, status };
       handleUpdateDemand(updatedDemand);
       toast({ title: "Status Atualizado", description: `Status da demanda alterado.`});
+
+      // Send notification if finalized
+      if (status === 'finalizado') {
+        const owner = employees.find(e => e.id === updatedDemand.ownerId);
+        if (owner?.fcmTokens && owner.fcmTokens.length > 0) {
+            owner.fcmTokens.forEach(token => {
+                sendNotification({
+                    token,
+                    title: 'Demanda Finalizada!',
+                    body: `A demanda "${updatedDemand.title}" foi concluída.`
+                }).catch(console.error);
+            });
+        }
+      }
     }
   };
 
@@ -278,6 +285,7 @@ export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps)
               <DemandForm 
                 onAddDemand={handleAddDemand} 
                 onClose={() => setShowDemandForm(false)} 
+                employees={employees}
               />
             )}
           </section>
@@ -288,6 +296,7 @@ export default function GestaoFeriasPage({ initialData }: GestaoFeriasPageProps)
               onUpdateStatus={handleUpdateDemandStatus} 
               onDeleteDemand={handleDeleteDemand}
               onUpdateDemand={handleUpdateDemand}
+              employees={employees}
             />
           </section>
         </TabsContent>

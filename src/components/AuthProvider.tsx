@@ -1,11 +1,41 @@
 
 "use client";
 
-import React, { useEffect, useState, type ReactNode } from 'react';
+import React, { useEffect, useState, type ReactNode, useContext, createContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, messaging } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
+import { getAllData } from '@/lib/idb';
+import type { Demand, Vacation, Employee, MedicalCertificate } from '@/lib/types';
+import { onMessage } from 'firebase/messaging';
+import { useToast } from '@/hooks/use-toast';
+
+interface AppData {
+  demands: Demand[];
+  vacations: Vacation[];
+  employees: Employee[];
+  certificates: MedicalCertificate[];
+}
+
+interface AuthContextType extends AppData {
+    user: User | null;
+    setDemands: React.Dispatch<React.SetStateAction<Demand[]>>;
+    setVacations: React.Dispatch<React.SetStateAction<Vacation[]>>;
+    setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
+    setCertificates: React.Dispatch<React.SetStateAction<MedicalCertificate[]>>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
+
 
 interface AuthProviderProps {
     children: ReactNode;
@@ -14,12 +44,49 @@ interface AuthProviderProps {
 export default function AuthProvider({ children }: AuthProviderProps) {
     const router = useRouter();
     const pathname = usePathname();
+    const { toast } = useToast();
+
     const [user, setUser] = useState<User | null>(null);
     const [authChecked, setAuthChecked] = useState(false);
+    const [dataLoaded, setDataLoaded] = useState(false);
+    
+    // Data states
+    const [demands, setDemands] = useState<Demand[]>([]);
+    const [vacations, setVacations] = useState<Vacation[]>([]);
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [certificates, setCertificates] = useState<MedicalCertificate[]>([]);
 
+    // Foreground notification handler
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (typeof window !== 'undefined' && messaging) {
+        const unsubscribe = onMessage(messaging, (payload) => {
+          console.log('Foreground message received. ', payload);
+          toast({
+            title: payload.notification?.title,
+            description: payload.notification?.body,
+          });
+        });
+        return () => unsubscribe();
+      }
+    }, [toast]);
+    
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
+            if (currentUser) {
+                try {
+                    const initialData = await getAllData();
+                    setDemands(initialData.demands);
+                    setVacations(initialData.vacations);
+                    setEmployees(initialData.employees);
+                    setCertificates(initialData.certificates);
+                    setDataLoaded(true);
+                } catch (error) {
+                    console.error("Failed to load data:", error);
+                }
+            } else {
+                setDataLoaded(true); // No user, no data to load
+            }
             setAuthChecked(true);
         });
 
@@ -38,27 +105,42 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         }
     }, [user, authChecked, pathname, router]);
 
+
+    // Determine what to render
+    const isLoading = !authChecked || !dataLoaded;
     const isAuthPage = pathname === '/login';
 
-    // While checking auth, show a loader unless it's the login page itself
-    if (!authChecked) {
+    if (isAuthPage) {
+        return <>{children}</>;
+    }
+    
+    if (isLoading) {
         return (
             <div className="flex justify-center items-center min-h-screen">
                 <div className="text-center flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-lg font-semibold">Verificando credenciais...</p>
+                    <p className="text-lg font-semibold">Carregando dados...</p>
+                    <p className="text-muted-foreground">Por favor, aguarde.</p>
                 </div>
             </div>
         );
     }
     
-    // If it's the login page, or the user is authenticated, render the children
-    if (isAuthPage || user) {
-        return <>{children}</>;
+    if (user) {
+        return (
+            <AuthContext.Provider value={{
+                user,
+                demands, setDemands,
+                vacations, setVacations,
+                employees, setEmployees,
+                certificates, setCertificates
+            }}>
+                {children}
+            </AuthContext.Provider>
+        );
     }
 
-    // If no user and not on login page (and auth is checked),
-    // show loader while redirecting
+    // This case handles the brief moment of redirection if not on /login
     return (
        <div className="flex justify-center items-center min-h-screen">
          <div className="text-center flex flex-col items-center gap-2">

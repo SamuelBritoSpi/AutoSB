@@ -17,6 +17,7 @@ export interface Demand {
   priority: DemandPriority;
   dueDate: string; // ISO string for date
   status: DemandStatus;
+  ownerId?: string; // ID of the employee responsible for the demand
 }
 
 export interface Vacation {
@@ -32,6 +33,7 @@ export interface Employee {
   id: string;
   name: string;
   contractType: ContractType;
+  fcmTokens?: string[]; // For push notifications
 }
 
 export interface MedicalCertificate {

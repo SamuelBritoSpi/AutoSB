@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Demand, DemandPriority, DemandStatus } from '@/lib/types';
+import type { Demand, DemandPriority, DemandStatus, Employee } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -17,12 +17,14 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, PlusCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '../AuthProvider';
 
 const demandSchema = z.object({
   title: z.string().min(1, { message: "Título é obrigatório." }),
   description: z.string().min(1, { message: "Descrição é obrigatória." }),
   priority: z.enum(['alta', 'media', 'baixa'], { message: "Prioridade é obrigatória." }),
   dueDate: z.date({ required_error: "Data de entrega é obrigatória." }),
+  ownerId: z.string().optional(),
 });
 
 type DemandFormValues = z.infer<typeof demandSchema>;
@@ -31,11 +33,14 @@ interface DemandFormProps {
   onAddDemand: (demand: Omit<Demand, 'id'>) => void;
   existingDemand?: Demand | null; 
   onUpdateDemand?: (demand: Demand) => void;
-  onClose?: () => void; 
+  onClose?: () => void;
+  employees: Employee[];
 }
 
-export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand, onClose }: DemandFormProps) {
+export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand, onClose, employees }: DemandFormProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
+
   const form = useForm<DemandFormValues>({
     resolver: zodResolver(demandSchema),
     defaultValues: existingDemand ? {
@@ -43,36 +48,37 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
       description: existingDemand.description,
       priority: existingDemand.priority,
       dueDate: parseISO(existingDemand.dueDate),
+      ownerId: existingDemand.ownerId,
     } : {
       title: '',
       description: '',
       priority: 'media',
       dueDate: new Date(),
+      ownerId: employees?.[0]?.id || '', // Default to first employee or current user if applicable
     },
   });
 
   const onSubmit = (values: DemandFormValues) => {
     if (existingDemand && onUpdateDemand) {
       const demandData = {
-        id: existingDemand.id,
-        title: values.title,
-        description: values.description,
+        ...existingDemand,
+        ...values,
         priority: values.priority as DemandPriority,
         dueDate: values.dueDate.toISOString(),
-        status: existingDemand.status,
       };
       onUpdateDemand(demandData);
       toast({ title: "Demanda Atualizada", description: "A demanda foi atualizada com sucesso." });
     } else {
-       const demandData = {
+       const demandData: Omit<Demand, 'id'> = {
         title: values.title,
         description: values.description,
         priority: values.priority as DemandPriority,
         dueDate: values.dueDate.toISOString(),
         status: 'recebido' as DemandStatus,
+        ownerId: values.ownerId,
       };
       onAddDemand(demandData);
-      form.reset({ title: '', description: '', priority: 'media', dueDate: new Date() });
+      form.reset({ title: '', description: '', priority: 'media', dueDate: new Date(), ownerId: employees?.[0]?.id || '' });
     }
     if (onClose) onClose();
   };
@@ -106,7 +112,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <FormField
             control={form.control}
             name="priority"
@@ -123,6 +129,28 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
                     <SelectItem value="alta">Alta</SelectItem>
                     <SelectItem value="media">Média</SelectItem>
                     <SelectItem value="baixa">Baixa</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="ownerId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Responsável</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o responsável" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {employees.map(employee => (
+                      <SelectItem key={employee.id} value={employee.id}>{employee.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />

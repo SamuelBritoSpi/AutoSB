@@ -1,6 +1,7 @@
+
 "use client";
 
-import type { Demand, DemandStatus } from '@/lib/types';
+import type { Demand, DemandStatus, Employee } from '@/lib/types';
 import DemandCard from './DemandCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ interface DemandListProps {
   onUpdateStatus: (id: string, status: DemandStatus) => void;
   onDeleteDemand: (id: string) => void;
   onUpdateDemand: (demand: Demand) => void;
+  employees: Employee[];
 }
 
 type SortKey = 'dueDate' | 'priority' | 'description';
@@ -32,7 +34,7 @@ const statusText: Record<DemandStatus | 'all', string> = {
   'finalizado': 'Finalizado'
 };
 
-export default function DemandList({ demands, onUpdateStatus, onDeleteDemand, onUpdateDemand }: DemandListProps) {
+export default function DemandList({ demands, onUpdateStatus, onDeleteDemand, onUpdateDemand, employees }: DemandListProps) {
   const [sortKey, setSortKey] = useState<SortKey>('dueDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [statusFilter, setStatusFilter] = useState<DemandStatus | 'all'>('all');
@@ -139,6 +141,7 @@ export default function DemandList({ demands, onUpdateStatus, onDeleteDemand, on
               onUpdateDemand={onUpdateDemand}
               onClose={closeEditDialog}
               onAddDemand={()=>{}} // Not used in edit mode
+              employees={employees}
             />
           </DialogContent>
         </Dialog>
