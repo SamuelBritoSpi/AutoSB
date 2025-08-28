@@ -5,7 +5,7 @@ import { Briefcase, Database, LogOut, Bell } from 'lucide-react';
 import { Button } from './ui/button';
 import { ThemeToggle } from './ThemeToggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { auth, getMessagingObject, VAPID_KEY } from '@/lib/firebase-client';
+import { getAuthInstance, getMessagingObject, VAPID_KEY } from '@/lib/firebase-client';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +20,7 @@ export default function AppHeader() {
   const { user, employees, setEmployees } = useAuth();
 
   const handleLogout = async () => {
+    const auth = getAuthInstance();
     try {
       await signOut(auth);
       toast({ title: 'Logout efetuado com sucesso!'});

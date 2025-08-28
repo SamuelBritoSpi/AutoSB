@@ -19,7 +19,7 @@ import { CalendarIcon, PlusCircle, Paperclip, Camera, Loader2 } from 'lucide-rea
 import { useToast } from '@/hooks/use-toast';
 import { useRef, useState } from 'react';
 import CertificateScanner from './CertificateScanner';
-import { storage } from '@/lib/firebase-client';
+import { getStorageInstance } from '@/lib/firebase-client';
 import { ref, uploadString, getDownloadURL, deleteObject, uploadBytes } from 'firebase/storage';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -74,6 +74,7 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
   const onSubmit = async (values: CertificateFormValues) => {
     setIsSubmitting(true);
     let fileURL: string | null = null;
+    const storage = getStorageInstance();
 
     try {
         let fileToUpload: File | string | undefined = undefined;

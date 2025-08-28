@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { Briefcase, LogIn, Loader2 } from 'lucide-react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase-client';
+import { getAuthInstance } from '@/lib/firebase-client';
 
 
 export default function LoginPage() {
@@ -22,6 +22,7 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     setIsLoading(true);
+    const auth = getAuthInstance();
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({

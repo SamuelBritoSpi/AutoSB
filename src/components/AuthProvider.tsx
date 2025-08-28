@@ -4,7 +4,7 @@
 import React, { useEffect, useState, type ReactNode, useContext, createContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth, getMessagingObject } from '@/lib/firebase-client';
+import { getAuthInstance, getMessagingObject } from '@/lib/firebase-client';
 import { Loader2 } from 'lucide-react';
 import { getAllData } from '@/lib/idb';
 import type { Demand, Vacation, Employee, MedicalCertificate } from '@/lib/types';
@@ -72,6 +72,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }, [toast]);
     
     useEffect(() => {
+        const auth = getAuthInstance();
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
