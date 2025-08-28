@@ -47,7 +47,7 @@ type CertificateFormValues = z.infer<typeof certificateSchema>;
 
 interface MedicalCertificateFormProps {
   employeeId: string;
-  onAddCertificate: (certificate: MedicalCertificate) => void;
+  onAddCertificate: (certificate: Omit<MedicalCertificate, 'id'>) => void;
 }
 
 export default function MedicalCertificateForm({ employeeId, onAddCertificate }: MedicalCertificateFormProps) {
@@ -70,8 +70,7 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
 
   const onSubmit = (values: CertificateFormValues) => {
     const processSubmit = (fileDataUri: string | null) => {
-      const certificateData: MedicalCertificate = {
-        id: crypto.randomUUID(),
+      const certificateData: Omit<MedicalCertificate, 'id'> = {
         employeeId,
         certificateDate: values.certificateDate.toISOString(),
         days: values.isHalfDay ? 0.5 : values.days,

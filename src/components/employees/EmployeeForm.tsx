@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Employee, ContractType } from '@/lib/types';
@@ -19,7 +20,7 @@ const employeeSchema = z.object({
 type EmployeeFormValues = z.infer<typeof employeeSchema>;
 
 interface EmployeeFormProps {
-  onAddEmployee: (employee: Employee) => void;
+  onAddEmployee: (employee: Omit<Employee, 'id'>) => void;
   existingEmployee?: Employee | null;
   onUpdateEmployee?: (employee: Employee) => void;
   onClose?: () => void;
@@ -39,16 +40,19 @@ export default function EmployeeForm({ onAddEmployee, existingEmployee, onUpdate
   });
 
   const onSubmit = (values: EmployeeFormValues) => {
-    const employeeData: Employee = {
-      id: existingEmployee ? existingEmployee.id : crypto.randomUUID(),
-      name: values.name,
-      contractType: values.contractType as ContractType,
-    };
-
     if (existingEmployee && onUpdateEmployee) {
+      const employeeData: Employee = {
+        id: existingEmployee.id,
+        name: values.name,
+        contractType: values.contractType as ContractType,
+      };
       onUpdateEmployee(employeeData);
       toast({ title: "Funcionário Atualizado", description: "O registro foi atualizado com sucesso." });
     } else {
+      const employeeData: Omit<Employee, 'id'> = {
+        name: values.name,
+        contractType: values.contractType as ContractType,
+      };
       onAddEmployee(employeeData);
       toast({ title: "Funcionário Adicionado", description: "Novo funcionário registrado com sucesso." });
       form.reset({ name: '', contractType: 'efetivo' });

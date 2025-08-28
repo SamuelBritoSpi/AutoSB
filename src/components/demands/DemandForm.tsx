@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Demand, DemandPriority, DemandStatus } from '@/lib/types';
@@ -27,7 +28,7 @@ const demandSchema = z.object({
 type DemandFormValues = z.infer<typeof demandSchema>;
 
 interface DemandFormProps {
-  onAddDemand: (demand: Demand) => void;
+  onAddDemand: (demand: Omit<Demand, 'id'>) => void;
   existingDemand?: Demand | null; 
   onUpdateDemand?: (demand: Demand) => void;
   onClose?: () => void; 
@@ -51,19 +52,25 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
   });
 
   const onSubmit = (values: DemandFormValues) => {
-    const demandData = {
-      id: existingDemand ? existingDemand.id : crypto.randomUUID(),
-      title: values.title,
-      description: values.description,
-      priority: values.priority as DemandPriority,
-      dueDate: values.dueDate.toISOString(),
-      status: existingDemand ? existingDemand.status : ('recebido' as DemandStatus),
-    };
-
     if (existingDemand && onUpdateDemand) {
+      const demandData = {
+        id: existingDemand.id,
+        title: values.title,
+        description: values.description,
+        priority: values.priority as DemandPriority,
+        dueDate: values.dueDate.toISOString(),
+        status: existingDemand.status,
+      };
       onUpdateDemand(demandData);
       toast({ title: "Demanda Atualizada", description: "A demanda foi atualizada com sucesso." });
     } else {
+       const demandData = {
+        title: values.title,
+        description: values.description,
+        priority: values.priority as DemandPriority,
+        dueDate: values.dueDate.toISOString(),
+        status: 'recebido' as DemandStatus,
+      };
       onAddDemand(demandData);
       toast({ title: "Demanda Adicionada", description: "Nova demanda registrada com sucesso." });
       form.reset({ title: '', description: '', priority: 'media', dueDate: new Date() });

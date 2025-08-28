@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Briefcase, Upload, Download } from 'lucide-react';
@@ -19,12 +20,19 @@ export default function AppHeader({ onImport, onExport }: AppHeaderProps) {
           <h1 className="text-xl font-headline font-bold">AutoSB</h1>
         </div>
         <div className="flex items-center gap-2">
-           <Button variant="secondary" size="sm" onClick={onImport}>
+           {/* 
+            Os botões de Importar/Exportar foram removidos pois com o Firebase,
+            os dados são salvos na nuvem automaticamente. A funcionalidade
+            de importação ainda existe no código para uma possível migração
+            inicial de um backup JSON.
+            
+            <Button variant="secondary" size="sm" onClick={onImport}>
              <Upload className="mr-2 h-4 w-4" /> Importar
-           </Button>
-           <Button variant="secondary" size="sm" onClick={onExport}>
+            </Button>
+            <Button variant="secondary" size="sm" onClick={onExport}>
              <Download className="mr-2 h-4 w-4" /> Exportar
-           </Button>
+            </Button>
+           */}
            <ThemeToggle />
         </div>
       </div>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Vacation } from '@/lib/types';
@@ -27,7 +28,7 @@ const vacationSchema = z.object({
 type VacationFormValues = z.infer<typeof vacationSchema>;
 
 interface VacationFormProps {
-  onAddVacation: (vacation: Vacation) => void;
+  onAddVacation: (vacation: Omit<Vacation, 'id'>) => void;
   existingVacation?: Vacation | null;
   onUpdateVacation?: (vacation: Vacation) => void;
   onClose?: () => void;
@@ -47,17 +48,22 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
   });
 
   const onSubmit = (values: VacationFormValues) => {
-    const vacationData: Vacation = {
-      id: existingVacation ? existingVacation.id : crypto.randomUUID(),
-      employeeName: values.employeeName,
-      startDate: values.startDate.toISOString(),
-      endDate: values.endDate.toISOString(),
-    };
 
     if (existingVacation && onUpdateVacation) {
+      const vacationData = {
+        id: existingVacation.id,
+        employeeName: values.employeeName,
+        startDate: values.startDate.toISOString(),
+        endDate: values.endDate.toISOString(),
+      };
       onUpdateVacation(vacationData);
       toast({ title: "Férias Atualizadas", description: "Registro de férias atualizado com sucesso." });
     } else {
+       const vacationData = {
+        employeeName: values.employeeName,
+        startDate: values.startDate.toISOString(),
+        endDate: values.endDate.toISOString(),
+      };
       onAddVacation(vacationData);
       toast({ title: "Férias Registradas", description: "Novas férias registradas com sucesso." });
       form.reset({ employeeName: '' });

@@ -50,8 +50,10 @@ export default function GestaoFeriasPage() {
   const [showDemandForm, setShowDemandForm] = useState(false);
   const [showVacationForm, setShowVacationForm] = useState(false);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   async function loadAllData() {
+      setIsLoading(true);
       try {
         const [loadedDemands, loadedVacations, loadedEmployees, loadedCertificates] = await Promise.all([
           getDemands(),
@@ -65,23 +67,25 @@ export default function GestaoFeriasPage() {
         setCertificates(loadedCertificates);
         return true;
       } catch (error) {
-        console.error("Failed to load data from IndexedDB", error);
-        toast({ variant: 'destructive', title: 'Erro ao Carregar Dados', description: 'Não foi possível carregar os dados do banco de dados local.' });
+        console.error("Failed to load data from Firestore", error);
+        toast({ variant: 'destructive', title: 'Erro ao Carregar Dados', description: 'Não foi possível carregar os dados do banco de dados na nuvem.' });
         return false;
+      } finally {
+        setIsLoading(false);
       }
   }
 
   useEffect(() => {
     loadAllData().then(success => {
       if(success) {
-         toast({ title: 'Dados Carregados', description: 'Seus dados locais foram carregados com sucesso.'});
+         toast({ title: 'Dados Carregados', description: 'Seus dados foram carregados da nuvem com sucesso.'});
       }
     })
   }, [toast]);
 
-  const handleAddDemand = async (newDemand: Demand) => {
+  const handleAddDemand = async (demandData: Omit<Demand, 'id'>) => {
     try {
-      await addDemand(newDemand);
+      const newDemand = await addDemand(demandData);
       setDemands(prev => [newDemand, ...prev]);
       setShowDemandForm(false);
     } catch (error) {
@@ -120,9 +124,9 @@ export default function GestaoFeriasPage() {
     }
   };
 
-  const handleAddVacation = async (newVacation: Vacation) => {
+  const handleAddVacation = async (vacationData: Omit<Vacation, 'id'>) => {
     try {
-      await addVacation(newVacation);
+      const newVacation = await addVacation(vacationData);
       setVacations(prev => [newVacation, ...prev]);
       setShowVacationForm(false);
     } catch (error) {
@@ -152,9 +156,9 @@ export default function GestaoFeriasPage() {
     }
   };
 
-  const handleAddEmployee = async (newEmployee: Employee) => {
+  const handleAddEmployee = async (employeeData: Omit<Employee, 'id'>) => {
     try {
-      await addEmployee(newEmployee);
+      const newEmployee = await addEmployee(employeeData);
       setEmployees(prev => [newEmployee, ...prev]);
       setShowEmployeeForm(false);
     } catch (error) {
@@ -190,9 +194,9 @@ export default function GestaoFeriasPage() {
     }
   };
 
-  const handleAddCertificate = async (newCertificate: MedicalCertificate) => {
+  const handleAddCertificate = async (certificateData: Omit<MedicalCertificate, 'id'>) => {
     try {
-      await addCertificate(newCertificate);
+      const newCertificate = await addCertificate(certificateData);
       setCertificates(prev => [newCertificate, ...prev]);
     } catch (error) {
        console.error("Failed to add certificate:", error);
@@ -211,6 +215,7 @@ export default function GestaoFeriasPage() {
     }
   };
 
+  // The export/import functions are kept for potential data migration
   const handleExportData = async () => {
     try {
       const allData = await getAllData();
@@ -266,6 +271,17 @@ export default function GestaoFeriasPage() {
     };
     input.click();
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <p className="text-lg font-semibold">Carregando dados da nuvem...</p>
+          <p className="text-muted-foreground">Por favor, aguarde.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
