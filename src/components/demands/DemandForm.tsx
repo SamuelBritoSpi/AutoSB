@@ -28,7 +28,7 @@ const demandSchema = z.object({
 type DemandFormValues = z.infer<typeof demandSchema>;
 
 interface DemandFormProps {
-  onAddDemand: (demand: Omit<Demand, 'id'>) => Promise<void>;
+  onAddDemand: (demand: Omit<Demand, 'id'>) => void;
   existingDemand?: Demand | null; 
   onUpdateDemand?: (demand: Demand) => void;
   onClose?: () => void; 
@@ -51,7 +51,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
     },
   });
 
-  const onSubmit = async (values: DemandFormValues) => {
+  const onSubmit = (values: DemandFormValues) => {
     if (existingDemand && onUpdateDemand) {
       const demandData = {
         id: existingDemand.id,
@@ -71,7 +71,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
         dueDate: values.dueDate.toISOString(),
         status: 'recebido' as DemandStatus,
       };
-      await onAddDemand(demandData);
+      onAddDemand(demandData);
       form.reset({ title: '', description: '', priority: 'media', dueDate: new Date() });
     }
     if (onClose) onClose();
@@ -185,5 +185,3 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
     </Form>
   );
 }
-
-    
