@@ -1,6 +1,6 @@
 
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
-import { db } from './firebase';
+import { getDb } from './firebase-client'; // Use client-specific db
 import type { Demand, Vacation, Employee, MedicalCertificate } from './types';
 
 const STORES = {
@@ -13,6 +13,7 @@ const STORES = {
 // --- Generic CRUD Operations for Firestore ---
 
 async function getAll<T>(storeName: string): Promise<T[]> {
+  const db = getDb();
   if (!db) {
     console.warn("Firestore is not available. Returning empty array.");
     return [];
@@ -27,12 +28,14 @@ async function getAll<T>(storeName: string): Promise<T[]> {
 }
 
 async function add<T extends object>(storeName: string, item: T): Promise<string> {
+   const db = getDb();
    if (!db) { throw new Error("Firestore is not available."); }
   const docRef = await addDoc(collection(db, storeName), item);
   return docRef.id;
 }
 
 async function update<T extends { id: string }>(storeName: string, item: T): Promise<void> {
+   const db = getDb();
    if (!db) { throw new Error("Firestore is not available."); }
   const { id, ...data } = item;
   const docRef = doc(db, storeName, id);
@@ -40,6 +43,7 @@ async function update<T extends { id: string }>(storeName: string, item: T): Pro
 }
 
 async function remove(storeName: string, id: string): Promise<void> {
+  const db = getDb();
   if (!db) { throw new Error("Firestore is not available."); }
   await deleteDoc(doc(db, storeName, id));
 }
@@ -102,6 +106,7 @@ export async function getAllData(): Promise<AllData> {
 
 // This function can be used to migrate data from a JSON backup to Firestore.
 export async function importData(data: AllData): Promise<void> {
+    const db = getDb();
     if (!db) { throw new Error("Firestore is not available for import."); }
     const batch = writeBatch(db);
 

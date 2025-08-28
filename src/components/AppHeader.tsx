@@ -5,7 +5,7 @@ import { Briefcase, Database, LogOut, Bell } from 'lucide-react';
 import { Button } from './ui/button';
 import { ThemeToggle } from './ThemeToggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { auth, messaging, VAPID_KEY } from '@/lib/firebase';
+import { auth, getMessagingObject, VAPID_KEY } from '@/lib/firebase-client';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +30,7 @@ export default function AppHeader() {
   };
 
   const handleEnableNotifications = async () => {
+    const messaging = getMessagingObject();
     if (!messaging || !user) {
         toast({ variant: 'destructive', title: 'Erro', description: 'Serviço de mensagens não está disponível ou usuário não logado.' });
         return;

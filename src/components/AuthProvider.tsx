@@ -4,7 +4,7 @@
 import React, { useEffect, useState, type ReactNode, useContext, createContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth, messaging } from '@/lib/firebase';
+import { auth, getMessagingObject } from '@/lib/firebase-client';
 import { Loader2 } from 'lucide-react';
 import { getAllData } from '@/lib/idb';
 import type { Demand, Vacation, Employee, MedicalCertificate } from '@/lib/types';
@@ -58,6 +58,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
     // Foreground notification handler
     useEffect(() => {
+      const messaging = getMessagingObject();
       if (typeof window !== 'undefined' && messaging) {
         const unsubscribe = onMessage(messaging, (payload) => {
           console.log('Foreground message received. ', payload);

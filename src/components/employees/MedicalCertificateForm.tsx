@@ -19,7 +19,7 @@ import { CalendarIcon, PlusCircle, Paperclip, Camera, Loader2 } from 'lucide-rea
 import { useToast } from '@/hooks/use-toast';
 import { useRef, useState } from 'react';
 import CertificateScanner from './CertificateScanner';
-import { storage } from '@/lib/firebase';
+import { storage } from '@/lib/firebase-client';
 import { ref, uploadString, getDownloadURL, deleteObject, uploadBytes } from 'firebase/storage';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB

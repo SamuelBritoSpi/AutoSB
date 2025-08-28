@@ -338,8 +338,7 @@ export default function GestaoFeriasPage() {
             {showEmployeeForm && (
               <EmployeeForm 
                 onAddEmployee={handleAddEmployee} 
-                onClose={() => setShowEmployeeForm(false)} 
-              />
+                onClose={() => setShowEmployeeForm(false)} />
             )}
           </section>
           <section aria-labelledby="employees-list-title">

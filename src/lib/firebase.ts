@@ -1,12 +1,10 @@
 
 // @/lib/firebase.ts
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getFirestore, enableIndexedDbPersistence, Firestore } from 'firebase/firestore';
-import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getAuth, Auth } from "firebase/auth";
-import { getMessaging, Messaging } from "firebase/messaging";
 
-// Your web app's Firebase configuration is now loaded from environment variables
+// Esta configuração é segura para ser usada no lado do servidor,
+// mas as chaves em si virão de variáveis de ambiente.
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -16,35 +14,16 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// VAPID key for web push notifications
+// VAPID key para notificações push web
 export const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
-// Initialize Firebase
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
-const auth: Auth = getAuth(app);
-const storage: FirebaseStorage = getStorage(app);
-
-// Firestore and Messaging are only available on the client side
-let db: Firestore | null = null;
-let messaging: Messaging | null = null;
-
-if (typeof window !== 'undefined') {
-    db = getFirestore(app);
-    messaging = getMessaging(app);
-    try {
-        enableIndexedDbPersistence(db)
-            .then(() => console.log("Persistência offline habilitada com sucesso."))
-            .catch((err) => {
-                if (err.code === 'failed-precondition') {
-                    console.warn("Falha ao habilitar persistência offline: Múltiplas abas abertas ou outra incompatibilidade.");
-                } else if (err.code === 'unimplemented') {
-                    console.warn("Falha ao habilitar persistência offline: Navegador não suportado.");
-                }
-            });
-    } catch (error) {
-        console.error("Erro ao tentar habilitar a persistência offline:", error);
-    }
+// Função de inicialização universal
+function getFirebaseApp(): FirebaseApp {
+    return !getApps().length ? initializeApp(firebaseConfig) : getApp();
 }
 
-export { app, db, storage, auth, messaging };
+// Auth pode ser necessário em ambos os lados, mas principalmente no cliente.
+// Para o build do servidor, ele só precisa de uma configuração válida, que obtém das env vars.
+const auth: Auth = getAuth(getFirebaseApp());
+
+export { auth };

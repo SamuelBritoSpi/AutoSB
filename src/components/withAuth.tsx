@@ -4,7 +4,7 @@
 import React, { useEffect, useState, ComponentType } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase-client';
 import { Loader2 } from 'lucide-react';
 import { getAllData } from '@/lib/idb';
 import { Demand, Vacation, Employee, MedicalCertificate } from '@/lib/types';
