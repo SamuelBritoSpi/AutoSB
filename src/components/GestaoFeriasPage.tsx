@@ -201,7 +201,7 @@ export default function GestaoFeriasPage() {
     setCertificates(prev => prev.filter(c => c.employeeId !== id));
     toast({ title: "Funcionário Excluído", description: "O registro do funcionário e seus atestados foram removidos." });
 
-    deleteEmployee(id).then(() => {
+    deleteDbEmployee(id).then(() => {
         const deletePromises = relatedCerts.map(cert => deleteDbCertificate(cert.id));
         return Promise.all(deletePromises);
     })
