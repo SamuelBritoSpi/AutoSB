@@ -182,7 +182,7 @@ export default function GestaoFeriasPage() {
 
   const handleUpdateEmployee = (updatedEmployee: Employee) => {
     const originalEmployees = [...employees];
-    setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : d));
+    setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
 
     updateDbEmployee(updatedEmployee).catch(error => {
        console.error("Failed to update employee:", error);
