@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { auth } from '@/lib/firebase';
+import { getAuthInstance } from '@/lib/firebase-client';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -16,6 +16,7 @@ export default function LoginForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const auth = getAuthInstance();
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/'); // Redireciona para a página inicial após o login
     } catch (error: any) {
