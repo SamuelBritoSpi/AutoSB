@@ -58,16 +58,20 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
     // Foreground notification handler
     useEffect(() => {
-      const messaging = getMessagingObject();
-      if (typeof window !== 'undefined' && messaging) {
-        const unsubscribe = onMessage(messaging, (payload) => {
-          console.log('Foreground message received. ', payload);
-          toast({
-            title: payload.notification?.title,
-            description: payload.notification?.body,
+      try {
+        const messaging = getMessagingObject();
+        if (typeof window !== 'undefined' && messaging) {
+          const unsubscribe = onMessage(messaging, (payload) => {
+            console.log('Foreground message received. ', payload);
+            toast({
+              title: payload.notification?.title,
+              description: payload.notification?.body,
+            });
           });
-        });
-        return () => unsubscribe();
+          return unsubscribe;
+        }
+      } catch (error) {
+        console.warn('Firebase messaging not available:', error);
       }
     }, [toast]);
     

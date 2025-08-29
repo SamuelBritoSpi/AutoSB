@@ -31,10 +31,17 @@ export default function AppHeader() {
   };
 
   const handleEnableNotifications = async () => {
-    const messaging = getMessagingObject();
-    if (!messaging || !user) {
-        toast({ variant: 'destructive', title: 'Erro', description: 'Serviço de mensagens não está disponível ou usuário não logado.' });
-        return;
+    let messaging;
+    try {
+      messaging = getMessagingObject();
+      if (!messaging || !user) {
+          toast({ variant: 'destructive', title: 'Erro', description: 'Serviço de mensagens não está disponível ou usuário não logado.' });
+          return;
+      }
+    } catch (error) {
+      console.warn('Firebase messaging not available:', error);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Serviço de mensagens não está disponível.' });
+      return;
     }
 
     try {

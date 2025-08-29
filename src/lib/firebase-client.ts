@@ -34,8 +34,27 @@ let messaging: Messaging | null = null;
 function getFirebaseApp(): FirebaseApp {
     // This check is critical. If projectId is missing, the env vars are not loaded.
     if (!firebaseConfig.projectId) {
-        // This error will be visible in the browser's console.
-        throw new Error("Firebase config is missing. Ensure you have set up your Vercel environment variables correctly.");
+        // Log warning instead of throwing error to prevent app crash
+        console.warn("Firebase config is missing. Some features may not work properly. Please set up your Vercel environment variables.");
+        // Return a mock app or throw error based on environment
+        if (process.env.NODE_ENV === 'development') {
+            throw new Error("Firebase config is missing. Ensure you have set up your environment variables correctly.");
+        }
+        // In production, we'll create a minimal config to prevent crashes
+        const fallbackConfig = {
+            apiKey: "fallback",
+            authDomain: "fallback.firebaseapp.com",
+            projectId: "fallback-project",
+            storageBucket: "fallback.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "fallback-app-id"
+        };
+        if (!getApps().length) {
+            app = initializeApp(fallbackConfig);
+        } else {
+            app = getApp();
+        }
+        return app;
     }
     
     if (!getApps().length) {
@@ -48,22 +67,32 @@ function getFirebaseApp(): FirebaseApp {
 
 export function getAuthInstance(): Auth {
     if (!auth) {
-        auth = getAuth(getFirebaseApp());
+        try {
+            auth = getAuth(getFirebaseApp());
+        } catch (error) {
+            console.error("Failed to initialize Firebase Auth:", error);
+            throw error;
+        }
     }
     return auth;
 }
 
 export function getDbInstance(): Firestore {
     if (!db) {
-        db = getFirestore(getFirebaseApp());
         try {
-            enableIndexedDbPersistence(db);
-        } catch (err: any) {
-            if (err.code === 'failed-precondition') {
-                console.warn("Firestore persistence failed: multiple tabs open.");
-            } else if (err.code === 'unimplemented') {
-                console.warn("Firestore persistence not supported in this browser.");
+            db = getFirestore(getFirebaseApp());
+            try {
+                enableIndexedDbPersistence(db);
+            } catch (err: any) {
+                if (err.code === 'failed-precondition') {
+                    console.warn("Firestore persistence failed: multiple tabs open.");
+                } else if (err.code === 'unimplemented') {
+                    console.warn("Firestore persistence not supported in this browser.");
+                }
             }
+        } catch (error) {
+            console.error("Failed to initialize Firestore:", error);
+            throw error;
         }
     }
     return db;
@@ -71,7 +100,12 @@ export function getDbInstance(): Firestore {
 
 export function getStorageInstance(): FirebaseStorage {
     if (!storage) {
-        storage = getStorage(getFirebaseApp());
+        try {
+            storage = getStorage(getFirebaseApp());
+        } catch (error) {
+            console.error("Failed to initialize Firebase Storage:", error);
+            throw error;
+        }
     }
     return storage;
 }
@@ -83,15 +117,16 @@ export function getMessagingObject(): Messaging | null {
     if (!messaging) {
       try {
         const firebaseApp = getFirebaseApp();
-        // Check if projectId exists again before initializing messaging
-        if (firebaseApp.options.projectId) {
+        // Check if projectId exists and is not fallback before initializing messaging
+        if (firebaseApp.options.projectId && firebaseApp.options.projectId !== 'fallback-project') {
             messaging = getMessaging(firebaseApp);
         } else {
-            console.warn("Firebase App not fully configured for messaging due to missing projectId.");
+            console.warn("Firebase App not fully configured for messaging due to missing or fallback projectId.");
+            return null;
         }
       } catch (error) {
-        console.error("Could not initialize messaging", error);
-        messaging = null
+        console.warn("Could not initialize messaging:", error);
+        messaging = null;
       }
     }
     return messaging;
