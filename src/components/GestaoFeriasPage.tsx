@@ -139,7 +139,7 @@ export default function GestaoFeriasPage() {
   
   const handleUpdateVacation = (updatedVacation: Vacation) => {
     const originalVacations = [...vacations];
-    setVacations(prev => prev.map(v => v.id === updatedVacation.id ? updatedVacation : d));
+    setVacations(prev => prev.map(v => v.id === updatedVacation.id ? updatedVacation : v));
 
     updateDbVacation(updatedVacation).catch(error => {
        console.error("Failed to update vacation:", error);
