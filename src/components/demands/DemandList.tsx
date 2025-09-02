@@ -20,7 +20,7 @@ interface DemandListProps {
   onUpdateStatus: (id: string, status: string) => void;
   onDeleteDemand: (id: string) => void;
   onUpdateDemand: (demand: Demand) => void;
-  onAddStatus: (label: string, icon: string, color: string) => void;
+  onAddStatus: (label: string, icon: string) => void;
   onDeleteStatus: (id: string) => void;
 }
 

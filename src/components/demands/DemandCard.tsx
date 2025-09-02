@@ -86,10 +86,10 @@ export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onD
         </div>
          <div className="flex items-center text-sm">
             {currentStatus ? (
-              <div className={cn("flex items-center gap-2 rounded-md border-2 px-2.5 py-0.5 text-xs font-semibold", currentStatus.color ? currentStatus.color.replace("bg-", "border-") : "border-transparent")}>
-                  <LucideIcon name={currentStatus.icon} className="h-4 w-4 text-foreground/80" />
-                  <span className="text-xs font-semibold text-foreground/80">{currentStatus.label}</span>
-              </div>
+              <Badge variant="secondary" className="flex items-center gap-2">
+                  <LucideIcon name={currentStatus.icon} className="h-4 w-4" />
+                  <span>{currentStatus.label}</span>
+              </Badge>
             ) : (
                <Badge variant="secondary">{demand.status}</Badge>
             )}

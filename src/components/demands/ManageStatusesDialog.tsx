@@ -27,7 +27,7 @@ interface ManageStatusesDialogProps {
   onOpenChange: (open: boolean) => void;
   demandStatuses: DemandStatus[];
   demands: Demand[];
-  onAddStatus: (label: string, icon: string, color: string) => void;
+  onAddStatus: (label: string, icon: string) => void;
   onDeleteStatus: (id: string) => void;
 }
 
@@ -41,15 +41,6 @@ const availableIcons = [
     "Unlock", "User", "Video", "Zap", "FileQuestion", "FileSearch", "FileDiff", "FileJson"
 ];
 
-
-const availableColors = [
-  "bg-slate-500", "bg-gray-500", "bg-zinc-500", "bg-neutral-500",
-  "bg-red-500", "bg-orange-500", "bg-amber-500", "bg-yellow-500",
-  "bg-lime-500", "bg-green-500", "bg-emerald-500", "bg-teal-500",
-  "bg-cyan-500", "bg-sky-500", "bg-blue-500", "bg-indigo-500",
-  "bg-violet-500", "bg-purple-500", "bg-fuchsia-500", "bg-pink-500",
-  "bg-rose-500",
-];
 
 const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     const IconComponent = (icons as any)[name];
@@ -74,7 +65,6 @@ export default function ManageStatusesDialog({
   const { toast } = useToast();
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [selectedIcon, setSelectedIcon] = useState("Inbox");
-  const [selectedColor, setSelectedColor] = useState("bg-blue-500");
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
@@ -91,10 +81,9 @@ export default function ManageStatusesDialog({
 
     setIsAdding(true);
     try {
-      onAddStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
+      onAddStatus(newStatusLabel.trim(), selectedIcon);
       setNewStatusLabel("");
       setSelectedIcon("Inbox");
-      setSelectedColor("bg-blue-500");
     } finally {
       setIsAdding(false);
     }
@@ -128,7 +117,7 @@ export default function ManageStatusesDialog({
             <ScrollArea className="h-40 rounded-md border p-2">
                 {demandStatuses.length > 0 ? demandStatuses.map((status) => (
                     <div key={status.id} className="flex items-center justify-between p-1">
-                        <div className={cn("flex items-center gap-2 rounded-md border-2 px-2.5 py-0.5 text-xs font-semibold", status.color ? status.color.replace("bg-", "border-") : "border-transparent")}>
+                        <div className="flex items-center gap-2 rounded-md px-2.5 py-0.5 text-xs font-semibold">
                             <LucideIcon name={status.icon} className="h-4 w-4 text-foreground/80" />
                             <span className="text-foreground/80">{status.label}</span>
                              {fixedStatuses.includes(status.label) && <Lock className="h-3 w-3 text-muted-foreground" />}
@@ -155,7 +144,7 @@ export default function ManageStatusesDialog({
                 />
             </div>
              <div className="flex items-center space-x-2">
-                <div className='w-1/2'>
+                <div className='w-full'>
                     <Label>Ícone</Label>
                     <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -188,26 +177,6 @@ export default function ManageStatusesDialog({
                                     </ScrollArea>
                                 </CommandGroup>
                             </Command>
-                        </PopoverContent>
-                    </Popover>
-                </div>
-                <div className='w-1/2'>
-                    <Label>Cor</Label>
-                     <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" className='w-full justify-start'>
-                                <Palette className="mr-2 h-4 w-4" />
-                                <div className={cn("w-4 h-4 rounded-full", selectedColor)}></div>
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="p-2 w-[200px]">
-                             <div className="grid grid-cols-5 gap-2">
-                                {availableColors.map(colorClass => (
-                                    <Button key={colorClass} variant="outline" size="icon" className="h-8 w-8" onClick={() => setSelectedColor(colorClass)}>
-                                        <div className={cn("w-4 h-4 rounded-full", colorClass)}></div>
-                                    </Button>
-                                ))}
-                             </div>
                         </PopoverContent>
                     </Popover>
                 </div>
