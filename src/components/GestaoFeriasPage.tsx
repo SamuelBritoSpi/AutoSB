@@ -73,15 +73,21 @@ export default function GestaoFeriasPage() {
         // Ensure fixed statuses exist
         const existingLabels = new Set(initialData.demandStatuses.map(s => s.label));
         let statuses = [...initialData.demandStatuses];
-        let needsUpdate = false;
+        
+        const updatePromises: Promise<any>[] = [];
 
         for (const [label, props] of Object.entries(FIXED_STATUSES)) {
             if (!existingLabels.has(label)) {
-                needsUpdate = true;
                 const newStatusData: Omit<DemandStatus, 'id'> = { label, ...props };
-                const savedStatus = await addDbDemandStatus(newStatusData);
-                statuses.push(savedStatus);
+                const promise = addDbDemandStatus(newStatusData).then(savedStatus => {
+                    statuses.push(savedStatus);
+                });
+                updatePromises.push(promise);
             }
+        }
+        
+        if (updatePromises.length > 0) {
+            await Promise.all(updatePromises);
         }
         
         setDemandStatuses(statuses.sort((a, b) => a.order - b.order));

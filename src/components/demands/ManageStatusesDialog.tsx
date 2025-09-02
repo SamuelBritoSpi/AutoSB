@@ -38,7 +38,7 @@ const availableIcons = [
     "Filter", "Flag", "Folder", "Globe", "Heart", "Home", "Image", "Key", "Lightbulb", "Link", "Lock", "Mail", 
     "MapPin", "MessageCircle", "Monitor", "Package", "Pen", "Phone", "Rocket", "Save", "Search", "Settings", 
     "Shield", "ShoppingBag", "Smartphone", "Star", "Tag", "Target", "ThumbsUp", "Tool", "Trash", "TrendingUp", 
-    "Unlock", "User", "Video", "Zap"
+    "Unlock", "User", "Video", "Zap", "FileQuestion", "FileSearch", "FileDiff", "FileJson"
 ];
 
 
@@ -56,9 +56,7 @@ const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     if (!IconComponent) {
         return <Smile {...props} />;
     }
-    const colorClass = (props as any).color;
-    const style = colorClass ? { color: colorClass.replace('bg-', 'var(--') + ')' } : {};
-    return <IconComponent {...props} style={style} />;
+    return <IconComponent {...props} />;
 };
 
 // Define the fixed statuses that cannot be deleted.
@@ -92,13 +90,14 @@ export default function ManageStatusesDialog({
     }
 
     setIsAdding(true);
-    onAddStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
-    
-    // Reset form for next entry
-    setNewStatusLabel("");
-    setSelectedIcon("Inbox");
-    setSelectedColor("bg-blue-500");
-    setIsAdding(false);
+    try {
+      onAddStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
+      setNewStatusLabel("");
+      setSelectedIcon("Inbox");
+      setSelectedColor("bg-blue-500");
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const handleDelete = async (status: DemandStatus) => {
@@ -129,9 +128,9 @@ export default function ManageStatusesDialog({
             <ScrollArea className="h-40 rounded-md border p-2">
                 {demandStatuses.length > 0 ? demandStatuses.map((status) => (
                     <div key={status.id} className="flex items-center justify-between p-1">
-                        <div className="flex items-center gap-2">
-                            <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color ? status.color.replace("bg-", "text-") : "")} />
-                            <span>{status.label}</span>
+                        <div className={cn("flex items-center gap-2 rounded-md border-2 px-2.5 py-0.5 text-xs font-semibold", status.color ? status.color.replace("bg-", "border-") : "border-transparent")}>
+                            <LucideIcon name={status.icon} className="h-4 w-4 text-foreground/80" />
+                            <span className="text-foreground/80">{status.label}</span>
                              {fixedStatuses.includes(status.label) && <Lock className="h-3 w-3 text-muted-foreground" />}
                         </div>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(status)} disabled={deletingId === status.id || fixedStatuses.includes(status.label)}>

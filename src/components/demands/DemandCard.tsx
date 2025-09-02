@@ -40,9 +40,7 @@ const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     if (!IconComponent) {
         return <Smile {...props} />;
     }
-    const colorClass = (props as any).color;
-    const style = colorClass ? { color: colorClass.replace('bg-', 'var(--') + ')' } : {};
-    return <IconComponent {...props} style={style} />;
+    return <IconComponent {...props} />;
 };
 
 export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onDelete, onEdit, onManageStatuses }: DemandCardProps) {
@@ -50,8 +48,6 @@ export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onD
   const currentStatus = useMemo(() => {
     return demandStatuses.find(s => s.label === demand.status);
   }, [demand.status, demandStatuses]);
-
-  const textColorClass = currentStatus?.color?.replace('bg-', 'text-');
 
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -90,9 +86,9 @@ export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onD
         </div>
          <div className="flex items-center text-sm">
             {currentStatus ? (
-              <div className={cn("flex items-center gap-2 rounded-full border px-2.5 py-0.5 text-xs font-semibold", currentStatus.color ? currentStatus.color.replace("bg-", "border-").replace("-500", "/40 dark:border-white/20") : "")}>
-                  <LucideIcon name={currentStatus.icon} className={cn("h-4 w-4", textColorClass)} />
-                  <span className={cn("text-xs font-semibold", textColorClass)}>{currentStatus.label}</span>
+              <div className={cn("flex items-center gap-2 rounded-md border-2 px-2.5 py-0.5 text-xs font-semibold", currentStatus.color ? currentStatus.color.replace("bg-", "border-") : "border-transparent")}>
+                  <LucideIcon name={currentStatus.icon} className="h-4 w-4 text-foreground/80" />
+                  <span className="text-xs font-semibold text-foreground/80">{currentStatus.label}</span>
               </div>
             ) : (
                <Badge variant="secondary">{demand.status}</Badge>
@@ -109,7 +105,7 @@ export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onD
           <DropdownMenuContent align="end">
             {demandStatuses.map((status) => (
               <DropdownMenuItem key={status.id} onClick={() => onUpdateStatus(demand.id, status.label)} disabled={demand.status === status.label}>
-                <LucideIcon name={status.icon} className={cn("mr-2 h-4 w-4", status.color ? status.color.replace("bg-", "text-") : "")} />
+                <LucideIcon name={status.icon} className="mr-2 h-4 w-4" />
                 {status.label}
               </DropdownMenuItem>
             ))}

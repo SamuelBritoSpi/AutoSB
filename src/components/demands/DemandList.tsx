@@ -32,9 +32,7 @@ const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     if (!IconComponent) {
         return <Smile {...props} />;
     }
-    const colorClass = (props as any).color;
-    const style = colorClass ? { color: colorClass.replace('bg-', 'var(--') + ')' } : {};
-    return <IconComponent {...props} style={style} />;
+    return <IconComponent {...props} />;
 };
 
 export default function DemandList({ 
@@ -110,8 +108,8 @@ export default function DemandList({
               {demandStatuses.map((status) => (
                 <SelectItem key={status.id} value={status.label}>
                     <div className='flex items-center gap-2'>
-                        <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color ? status.color.replace("bg-", "text-") : "")} />
-                        {status.label}
+                        <LucideIcon name={status.icon} className="h-4 w-4" />
+                        <span>{status.label}</span>
                     </div>
                 </SelectItem>
               ))}
