@@ -5,7 +5,6 @@ import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import type { Demand } from '@/lib/types';
 import { useTheme } from 'next-themes';
-import { useAuth } from '../AuthProvider';
 
 
 const FINAL_STATUS_LABEL = 'Finalizado';
@@ -37,11 +36,8 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 
 export default function PriorityChart({ demands }: PriorityChartProps) {
     const { resolvedTheme } = useTheme();
-    const { demandStatuses } = useAuth();
     
     const chartData = useMemo(() => {
-        const finalStatus = demandStatuses.find(s => s.label === FINAL_STATUS_LABEL)?.label || FINAL_STATUS_LABEL;
-
         const priorityCounts: Record<Demand['priority'], number> = {
             alta: 0,
             media: 0,
@@ -49,7 +45,7 @@ export default function PriorityChart({ demands }: PriorityChartProps) {
         };
         
         demands.forEach(demand => {
-            if (demand.status !== finalStatus) {
+            if (demand.status !== FINAL_STATUS_LABEL) {
                 priorityCounts[demand.priority]++;
             }
         });
@@ -59,7 +55,7 @@ export default function PriorityChart({ demands }: PriorityChartProps) {
             { name: 'Média', value: priorityCounts.media },
             { name: 'Baixa', value: priorityCounts.baixa },
         ].filter(d => d.value > 0);
-    }, [demands, demandStatuses]);
+    }, [demands]);
 
   if (chartData.length === 0) {
     return (
@@ -102,5 +98,3 @@ export default function PriorityChart({ demands }: PriorityChartProps) {
     </div>
   );
 }
-
-    

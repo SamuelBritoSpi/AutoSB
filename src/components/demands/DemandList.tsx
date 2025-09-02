@@ -11,15 +11,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import DemandForm from './DemandForm';
 import ManageStatusesDialog from './ManageStatusesDialog';
 import { cn } from '@/lib/utils';
-import { useAuth } from '../AuthProvider';
 
 
 interface DemandListProps {
   demands: Demand[];
+  demandStatuses: DemandStatus[];
+  employees: Employee[];
   onUpdateStatus: (id: string, status: string) => void;
   onDeleteDemand: (id: string) => void;
   onUpdateDemand: (demand: Demand) => void;
-  employees: Employee[];
+  onAddStatus: (label: string, icon: string, color: string) => void;
+  onDeleteStatus: (id: string) => void;
 }
 
 type SortKey = 'dueDate' | 'priority' | 'description';
@@ -32,12 +34,14 @@ const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
 
 export default function DemandList({ 
   demands, 
+  demandStatuses,
+  employees,
   onUpdateStatus, 
   onDeleteDemand, 
   onUpdateDemand, 
-  employees,
+  onAddStatus,
+  onDeleteStatus,
 }: DemandListProps) {
-  const { demandStatuses } = useAuth();
   const [sortKey, setSortKey] = useState<SortKey>('dueDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -133,6 +137,7 @@ export default function DemandList({
             <DemandCard 
               key={demand.id} 
               demand={demand} 
+              demandStatuses={demandStatuses}
               onUpdateStatus={onUpdateStatus}
               onDelete={onDeleteDemand}
               onEdit={handleEdit} 
@@ -160,9 +165,11 @@ export default function DemandList({
       <ManageStatusesDialog
         open={isStatusManagerOpen}
         onOpenChange={setIsStatusManagerOpen}
+        demandStatuses={demandStatuses}
+        onAddStatus={onAddStatus}
+        onDeleteStatus={onDeleteStatus}
+        demands={demands}
       />
     </div>
   );
 }
-
-    

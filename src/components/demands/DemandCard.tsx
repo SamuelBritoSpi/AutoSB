@@ -12,11 +12,11 @@ import { AlertTriangle, ArrowDownCircle, CalendarDays, CheckCircle2, ChevronDown
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
-import { useAuth } from '../AuthProvider';
 
 
 interface DemandCardProps {
   demand: Demand;
+  demandStatuses: DemandStatus[];
   onUpdateStatus: (id: string, status: string) => void;
   onDelete: (id: string) => void;
   onEdit: (demand: Demand) => void;
@@ -40,8 +40,7 @@ const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     return IconComponent ? <IconComponent {...props} /> : <Smile {...props}/>;
 };
 
-export default function DemandCard({ demand, onUpdateStatus, onDelete, onEdit, onManageStatuses }: DemandCardProps) {
-  const { demandStatuses } = useAuth();
+export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onDelete, onEdit, onManageStatuses }: DemandCardProps) {
   
   const currentStatus = useMemo(() => {
     return demandStatuses.find(s => s.label === demand.status);
@@ -117,5 +116,3 @@ export default function DemandCard({ demand, onUpdateStatus, onDelete, onEdit, o
     </Card>
   );
 }
-
-    

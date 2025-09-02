@@ -14,16 +14,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import type { DemandStatus } from "@/lib/types";
+import type { Demand, DemandStatus } from "@/lib/types";
 import { Loader2, PlusCircle, Trash2, X, Palette, Smile, icons, type LucideIcon, type LucideProps, Lock } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { useAuth } from '../AuthProvider';
 
 interface ManageStatusesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  demandStatuses: DemandStatus[];
+  demands: Demand[];
+  onAddStatus: (label: string, icon: string, color: string) => void;
+  onDeleteStatus: (id: string) => void;
 }
 
 const availableIcons = [
@@ -51,16 +54,19 @@ const fixedStatuses = ["Aberto", "Aguardando Resposta", "Finalizado"];
 export default function ManageStatusesDialog({
   open,
   onOpenChange,
+  demandStatuses,
+  demands,
+  onAddStatus,
+  onDeleteStatus,
 }: ManageStatusesDialogProps) {
   const { toast } = useToast();
-  const { demandStatuses, addGlobalDemandStatus, deleteGlobalDemandStatus, demands } = useAuth();
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [selectedIcon, setSelectedIcon] = useState("Inbox");
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleAdd = async () => {
+  const handleAdd = () => {
     if (!newStatusLabel.trim()) {
       toast({ variant: 'destructive', title: "Erro", description: "O nome do status não pode ser vazio." });
       return;
@@ -71,15 +77,13 @@ export default function ManageStatusesDialog({
     }
 
     setIsAdding(true);
-    try {
-        await addGlobalDemandStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
-    } finally {
-        // Reset form for next entry
-        setNewStatusLabel("");
-        setSelectedIcon("Inbox");
-        setSelectedColor("bg-blue-500");
-        setIsAdding(false);
-    }
+    onAddStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
+    
+    // Reset form for next entry
+    setNewStatusLabel("");
+    setSelectedIcon("Inbox");
+    setSelectedColor("bg-blue-500");
+    setIsAdding(false);
   };
 
   const handleDelete = async (status: DemandStatus) => {
@@ -89,7 +93,7 @@ export default function ManageStatusesDialog({
     }
     setDeletingId(status.id);
     try {
-        await deleteGlobalDemandStatus(status.id, demands);
+        await onDeleteStatus(status.id);
     } finally {
         setDeletingId(null);
     }
@@ -196,7 +200,3 @@ export default function ManageStatusesDialog({
     </Dialog>
   );
 }
-
-    
-
-    

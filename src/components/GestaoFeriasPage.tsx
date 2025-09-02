@@ -11,10 +11,9 @@ import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeList from '@/components/employees/EmployeeList';
 import DashboardTab from '@/components/dashboard/DashboardTab';
 import CalendarView from '@/components/calendar/CalendarView';
-import { useAuth } from './AuthProvider';
 import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -23,35 +22,84 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { 
-  addDemand, 
+  addDemand as addDbDemand,
   updateDemand as updateDbDemand, 
   deleteDemand as deleteDbDemand,
-  addVacation,
+  addVacation as addDbVacation,
   updateVacation as updateDbVacation,
   deleteVacation as deleteDbVacation,
-  addEmployee,
+  addEmployee as addDbEmployee,
   updateEmployee as updateDbEmployee,
   deleteEmployee as deleteDbEmployee,
   addCertificate as addDbCertificate,
   deleteCertificate as deleteDbCertificate,
+  addDemandStatus as addDbDemandStatus,
+  deleteDemandStatus as deleteDbDemandStatus,
+  getAllData,
 } from '@/lib/idb';
 import { sendNotification } from '@/ai/flows/send-notification-flow';
 
+// Define the fixed statuses that should always exist.
+const FIXED_STATUSES: Record<string, Omit<DemandStatus, 'id' | 'label'>> = {
+  "Aberto": { order: 0, icon: "Inbox", color: "bg-blue-500" },
+  "Aguardando Resposta": { order: 1, icon: "MailQuestion", color: "bg-yellow-500" },
+  "Finalizado": { order: 99, icon: "CheckCircle2", color: "bg-green-500" },
+};
 
 export default function GestaoFeriasPage() {
-  const { 
-    demands, setDemands, 
-    vacations, setVacations,
-    employees, setEmployees,
-    certificates, setCertificates,
-    demandStatuses,
-  } = useAuth();
-  
   const { toast } = useToast();
+
+  const [demands, setDemands] = useState<Demand[]>([]);
+  const [vacations, setVacations] = useState<Vacation[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [certificates, setCertificates] = useState<MedicalCertificate[]>([]);
+  const [demandStatuses, setDemandStatuses] = useState<DemandStatus[]>([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showDemandForm, setShowDemandForm] = useState(false);
   const [showVacationForm, setShowVacationForm] = useState(false);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const initialData = await getAllData();
+        setDemands(initialData.demands);
+        setVacations(initialData.vacations);
+        setEmployees(initialData.employees);
+        setCertificates(initialData.certificates);
+
+        // Ensure fixed statuses exist
+        const existingLabels = new Set(initialData.demandStatuses.map(s => s.label));
+        let statuses = [...initialData.demandStatuses];
+        let needsUpdate = false;
+
+        for (const [label, props] of Object.entries(FIXED_STATUSES)) {
+            if (!existingLabels.has(label)) {
+                needsUpdate = true;
+                const newStatusData: Omit<DemandStatus, 'id'> = { label, ...props };
+                const savedStatus = await addDbDemandStatus(newStatusData);
+                statuses.push(savedStatus);
+            }
+        }
+
+        if (needsUpdate) {
+            statuses.sort((a, b) => a.order - b.order);
+        }
+        
+        setDemandStatuses(statuses);
+      } catch (error) {
+        console.error("Failed to load initial data", error);
+        toast({ variant: 'destructive', title: "Erro ao Carregar Dados", description: "Não foi possível buscar os dados do servidor."})
+      } finally {
+        setDataLoaded(true);
+      }
+    };
+    
+    loadData();
+  }, [toast]);
+
 
   const tabOptions = [
     { value: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="mr-2 h-5 w-5" /> },
@@ -70,7 +118,7 @@ export default function GestaoFeriasPage() {
     setShowDemandForm(false);
     toast({ title: "Demanda Adicionada", description: "A demanda foi salva com sucesso." });
     
-    addDemand(newDemand)
+    addDbDemand(newDemand)
       .then(savedDemand => {
         setDemands(prev => prev.map(d => d.id === tempId ? savedDemand : d));
       })
@@ -120,8 +168,8 @@ export default function GestaoFeriasPage() {
       toast({ title: "Status Atualizado", description: `Status da demanda alterado.`});
 
       // Send notification if finalized
-      const lastStatus = demandStatuses.slice(-1)[0];
-      if (status === lastStatus?.label) {
+      const finalStatus = demandStatuses.find(s => s.label === "Finalizado");
+      if (status === finalStatus?.label) {
         const owner = employees.find(e => e.id === updatedDemand.ownerId);
         if (owner?.fcmTokens && owner.fcmTokens.length > 0) {
             owner.fcmTokens.forEach(token => {
@@ -145,7 +193,7 @@ export default function GestaoFeriasPage() {
     setShowVacationForm(false);
     toast({ title: "Férias Adicionadas", description: "Sincronizando com a nuvem..." });
     
-    addVacation(vacationData)
+    addDbVacation(vacationData)
       .then(savedVacation => {
         setVacations(prev => prev.map(v => v.id === tempId ? savedVacation : v));
       })
@@ -188,7 +236,7 @@ export default function GestaoFeriasPage() {
     setShowEmployeeForm(false);
     toast({ title: "Funcionário Adicionado", description: "Sincronizando..." });
 
-    addEmployee(employeeData)
+    addDbEmployee(employeeData)
       .then(savedEmployee => {
         setEmployees(prev => prev.map(e => e.id === tempId ? savedEmployee : e));
       })
@@ -263,6 +311,75 @@ export default function GestaoFeriasPage() {
     });
   };
 
+   const addGlobalDemandStatus = (label: string, icon: string, color: string) => {
+      const newOrder = demandStatuses.length > 0 ? Math.max(...demandStatuses.filter(s => s.label !== 'Finalizado').map(s => s.order)) + 1 : 0;
+      const tempId = `temp-status-${Date.now()}`;
+      const newStatusData: Omit<DemandStatus, 'id'> = { label, icon, color, order: newOrder };
+      
+      const optimisticStatus: DemandStatus = { ...newStatusData, id: tempId };
+      setDemandStatuses(prev => [...prev, optimisticStatus].sort((a, b) => a.order - b.order));
+
+      addDbDemandStatus(newStatusData)
+        .then(savedStatus => {
+          setDemandStatuses(prev => prev.map(s => s.id === tempId ? savedStatus : s).sort((a,b) => a.order - b.order));
+          toast({ title: "Status Adicionado", description: `"${label}" foi adicionado com sucesso.` });
+        })
+        .catch(error => {
+          toast({ variant: 'destructive', title: "Erro", description: "Não foi possível adicionar o status." });
+          setDemandStatuses(prev => prev.filter(s => s.id !== tempId));
+        });
+    };
+
+    const deleteGlobalDemandStatus = async (id: string) => {
+      const statusToDelete = demandStatuses.find(s => s.id === id);
+      if (!statusToDelete) return;
+      
+      if (Object.keys(FIXED_STATUSES).includes(statusToDelete.label)) {
+        toast({ variant: 'destructive', title: "Ação não permitida", description: "Este é um status fixo e não pode ser excluído." });
+        return;
+      }
+      
+      const originalStatuses = [...demandStatuses];
+      const demandsToUpdate = demands.filter(d => d.status === statusToDelete.label);
+      const newStatusLabel = demandStatuses.find(s => s.label === 'Aberto')?.label || 'Aberto';
+
+      setDemandStatuses(prev => prev.filter(s => s.id !== id));
+      if (demandsToUpdate.length > 0) {
+        setDemands(prev => prev.map(d => d.status === statusToDelete.label ? { ...d, status: newStatusLabel } : d));
+      }
+      
+      try {
+        if (demandsToUpdate.length > 0) {
+          const updatePromises = demandsToUpdate.map(d => updateDbDemand({ ...d, status: newStatusLabel }));
+          await Promise.all(updatePromises);
+        }
+        await deleteDbDemandStatus(id);
+        toast({ title: "Status Removido", description: `"${statusToDelete.label}" foi removido.`});
+      } catch (error) {
+        toast({ variant: 'destructive', title: "Erro de Sincronização", description: 'Não foi possível remover o status.' });
+        setDemandStatuses(originalStatuses);
+         if (demandsToUpdate.length > 0) {
+           setDemands(prev => prev.map(d => {
+              const originalDemand = demandsToUpdate.find(upd => upd.id === d.id);
+              return originalDemand ? { ...d, status: originalDemand.status } : d;
+           }));
+         }
+      }
+    };
+
+
+  if (!dataLoaded) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+          <div className="text-center flex flex-col items-center gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-lg font-semibold">Carregando dados...</p>
+              <p className="text-muted-foreground">Por favor, aguarde.</p>
+          </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full space-y-8 mt-0">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -323,10 +440,13 @@ export default function GestaoFeriasPage() {
           <section aria-labelledby="demands-list-title">
             <h2 id="demands-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Demandas</h2>
             <DemandList 
-              demands={demands} 
+              demands={demands}
+              demandStatuses={demandStatuses}
               onUpdateStatus={handleUpdateDemandStatus}
               onDeleteDemand={handleDeleteDemand}
               onUpdateDemand={handleUpdateDemand}
+              onAddStatus={addGlobalDemandStatus}
+              onDeleteStatus={deleteGlobalDemandStatus}
               employees={employees}
             />
           </section>
@@ -384,10 +504,7 @@ export default function GestaoFeriasPage() {
             />
           </section>
         </TabsContent>
-
       </Tabs>
     </div>
   );
 }
-
-    

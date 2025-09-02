@@ -11,7 +11,6 @@ import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Mailbox, Hourglas
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeCertificates } from '@/lib/certificate-logic';
-import { useAuth } from '../AuthProvider';
 
 interface DashboardTabProps {
   demands: Demand[];
@@ -24,25 +23,20 @@ const FINAL_STATUS_LABEL = 'Finalizado';
 const WAITING_STATUS_LABEL = 'Aguardando Resposta';
 
 export default function DashboardTab({ demands, employees, certificates }: DashboardTabProps) {
-  const { demandStatuses } = useAuth();
   
   const demandStats = useMemo(() => {
-    const finalStatus = demandStatuses.find(s => s.label === FINAL_STATUS_LABEL)?.label || FINAL_STATUS_LABEL;
-    const waitingStatus = demandStatuses.find(s => s.label === WAITING_STATUS_LABEL)?.label || WAITING_STATUS_LABEL;
-
-    const done = demands.filter(d => d.status === finalStatus).length;
-    const waiting = demands.filter(d => d.status === waitingStatus).length;
+    const done = demands.filter(d => d.status === FINAL_STATUS_LABEL).length;
+    const waiting = demands.filter(d => d.status === WAITING_STATUS_LABEL).length;
     const openDemands = demands.length - done;
     return { openDemands, waiting, done };
-  }, [demands, demandStatuses]);
+  }, [demands]);
 
   const upcomingDemands = useMemo(() => {
-    const finalStatus = demandStatuses.find(s => s.label === FINAL_STATUS_LABEL)?.label || FINAL_STATUS_LABEL;
     return demands
-      .filter(d => d.status !== finalStatus && parseISO(d.dueDate) >= new Date())
+      .filter(d => d.status !== FINAL_STATUS_LABEL && parseISO(d.dueDate) >= new Date())
       .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())
       .slice(0, 5);
-  }, [demands, demandStatuses]);
+  }, [demands]);
 
   const highRiskEmployees = useMemo(() => {
     return employees
@@ -152,5 +146,3 @@ export default function DashboardTab({ demands, employees, certificates }: Dashb
     </div>
   );
 }
-
-    
