@@ -18,6 +18,8 @@ export interface DemandStatus {
   id: string;
   label: string;
   order: number; // Para manter uma ordem consistente
+  icon: string; // Lucide icon name
+  color: string; // Tailwind CSS color class (e.g., "bg-blue-500")
 }
 
 export interface Demand {

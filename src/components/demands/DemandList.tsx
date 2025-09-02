@@ -5,11 +5,12 @@ import type { Demand, DemandStatus, Employee } from '@/lib/types';
 import DemandCard from './DemandCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { ListFilter, ArrowDownAZ, ArrowUpAZ, CalendarClock, AlertOctagon } from 'lucide-react';
+import { ListFilter, ArrowDownAZ, ArrowUpAZ, CalendarClock, AlertOctagon, type LucideIcon, type LucideProps, icons, Smile } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import DemandForm from './DemandForm';
 import ManageStatusesDialog from './ManageStatusesDialog';
+import { cn } from '@/lib/utils';
 
 
 interface DemandListProps {
@@ -19,12 +20,17 @@ interface DemandListProps {
   onDeleteDemand: (id: string) => void;
   onUpdateDemand: (demand: Demand) => void;
   employees: Employee[];
-  onAddStatus: (label: string) => void;
+  onAddStatus: (label: string, icon: string, color: string) => void;
   onDeleteStatus: (id: string) => Promise<void>;
 }
 
 type SortKey = 'dueDate' | 'priority' | 'description';
 type SortOrder = 'asc' | 'desc';
+
+const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
+    const IconComponent = (icons as any)[name];
+    return IconComponent ? <IconComponent {...props} /> : <Smile {...props}/>;
+};
 
 export default function DemandList({ 
   demands, 
@@ -97,7 +103,12 @@ export default function DemandList({
             <SelectContent>
                 <SelectItem value="all">Todos Status</SelectItem>
               {statuses.map((status) => (
-                <SelectItem key={status.id} value={status.label}>{status.label}</SelectItem>
+                <SelectItem key={status.id} value={status.label}>
+                    <div className='flex items-center gap-2'>
+                        <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color.replace("bg-", "text-"))} />
+                        {status.label}
+                    </div>
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

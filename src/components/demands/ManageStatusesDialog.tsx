@@ -15,15 +15,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import type { DemandStatus } from "@/lib/types";
-import { Loader2, PlusCircle, Trash2, X } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, X, Palette, Smile, icons, type LucideIcon, type LucideProps } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface ManageStatusesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   statuses: DemandStatus[];
-  onAddStatus: (label: string) => void;
+  onAddStatus: (label: string, icon: string, color: string) => void;
   onDeleteStatus: (id: string) => Promise<void>;
 }
+
+const availableIcons = [
+    "Inbox", "FileClock", "Hourglass", "MailQuestion", "Send", "CheckCircle2", "XCircle", "ChevronRightCircle", "Clock", "FileCheck", "FileText", "History", "Paperclip"
+];
+
+const availableColors = [
+  "bg-slate-500", "bg-gray-500", "bg-zinc-500", "bg-neutral-500",
+  "bg-red-500", "bg-orange-500", "bg-amber-500", "bg-yellow-500",
+  "bg-lime-500", "bg-green-500", "bg-emerald-500", "bg-teal-500",
+  "bg-cyan-500", "bg-sky-500", "bg-blue-500", "bg-indigo-500",
+  "bg-violet-500", "bg-purple-500", "bg-fuchsia-500", "bg-pink-500",
+  "bg-rose-500",
+];
+
+const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
+    const IconComponent = (icons as any)[name];
+    return IconComponent ? <IconComponent {...props} /> : <Smile {...props}/>;
+};
+
 
 export default function ManageStatusesDialog({
   open,
@@ -34,6 +55,8 @@ export default function ManageStatusesDialog({
 }: ManageStatusesDialogProps) {
   const { toast } = useToast();
   const [newStatusLabel, setNewStatusLabel] = useState("");
+  const [selectedIcon, setSelectedIcon] = useState("Inbox");
+  const [selectedColor, setSelectedColor] = useState("bg-blue-500");
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -44,11 +67,11 @@ export default function ManageStatusesDialog({
     }
     setIsAdding(true);
     
-    // Call the passed-in function, which now handles optimistic UI
-    onAddStatus(newStatusLabel.trim());
+    onAddStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
 
-    // Reset the UI immediately
     setNewStatusLabel("");
+    setSelectedIcon("Inbox");
+    setSelectedColor("bg-blue-500");
     setIsAdding(false);
   };
 
@@ -69,7 +92,7 @@ export default function ManageStatusesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Gerenciar Status</DialogTitle>
           <DialogDescription>
@@ -79,10 +102,13 @@ export default function ManageStatusesDialog({
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <h4 className="font-medium">Status Atuais</h4>
-            <div className="space-y-2 rounded-md border p-2 min-h-[6rem]">
+            <ScrollArea className="h-40 rounded-md border p-2">
                 {statuses.length > 0 ? statuses.map((status) => (
-                    <div key={status.id} className="flex items-center justify-between">
-                        <span>{status.label}</span>
+                    <div key={status.id} className="flex items-center justify-between p-1">
+                        <div className="flex items-center gap-2">
+                            <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color.replace("bg-", "text-"))} />
+                            <span>{status.label}</span>
+                        </div>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(status)} disabled={deletingId === status.id}>
                             {deletingId === status.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-destructive" />}
                         </Button>
@@ -90,24 +116,69 @@ export default function ManageStatusesDialog({
                 )) : (
                     <p className="text-sm text-muted-foreground text-center py-4">Nenhum status cadastrado.</p>
                 )}
-            </div>
+            </ScrollArea>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 border-t pt-4">
              <h4 className="font-medium">Adicionar Novo Status</h4>
-            <div className="flex items-center space-x-2">
+            <div className="space-y-2">
+                <Label htmlFor="new-status-label">Nome do Status</Label>
                 <Input
-                id="new-status"
-                value={newStatusLabel}
-                onChange={(e) => setNewStatusLabel(e.target.value)}
-                placeholder="Ex: Em Aprovação"
-                onKeyPress={(e) => e.key === 'Enter' && handleAdd()}
-                disabled={isAdding}
+                    id="new-status-label"
+                    value={newStatusLabel}
+                    onChange={(e) => setNewStatusLabel(e.target.value)}
+                    placeholder="Ex: Em Aprovação"
+                    disabled={isAdding}
                 />
-                <Button onClick={handleAdd} disabled={isAdding || !newStatusLabel.trim()}>
+            </div>
+             <div className="flex items-center space-x-2">
+                <div className='w-1/2'>
+                    <Label>Ícone</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className='w-full justify-start'>
+                                <LucideIcon name={selectedIcon} className="mr-2 h-4 w-4" />
+                                {selectedIcon}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 w-[200px]">
+                            <ScrollArea className="h-48">
+                                {availableIcons.map(iconName => (
+                                    <Button key={iconName} variant="ghost" className="w-full justify-start" onClick={() => setSelectedIcon(iconName)}>
+                                         <LucideIcon name={iconName} className="mr-2 h-4 w-4" />
+                                         {iconName}
+                                    </Button>
+                                ))}
+                            </ScrollArea>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+                <div className='w-1/2'>
+                    <Label>Cor</Label>
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className='w-full justify-start'>
+                                <Palette className="mr-2 h-4 w-4" />
+                                <div className={cn("w-4 h-4 rounded-full", selectedColor)}></div>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-2 w-[200px]">
+                             <div className="grid grid-cols-5 gap-2">
+                                {availableColors.map(colorClass => (
+                                    <Button key={colorClass} variant="outline" size="icon" className="h-8 w-8" onClick={() => setSelectedColor(colorClass)}>
+                                        <div className={cn("w-4 h-4 rounded-full", colorClass)}></div>
+                                    </Button>
+                                ))}
+                             </div>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+             </div>
+             <div className="pt-2">
+                <Button onClick={handleAdd} disabled={isAdding || !newStatusLabel.trim()} className='w-full'>
                     {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4"/>}
                     Adicionar
                 </Button>
-            </div>
+             </div>
           </div>
         </div>
         <DialogFooter>

@@ -134,16 +134,14 @@ export default function GestaoFeriasPage() {
     }
   };
   
-  const handleAddDemandStatus = (label: string) => {
+  const handleAddDemandStatus = (label: string, icon: string, color: string) => {
     const newOrder = demandStatuses.length > 0 ? Math.max(...demandStatuses.map(s => s.order)) + 1 : 0;
     const tempId = `temp-status-${Date.now()}`;
-    const newStatusData = { label, order: newOrder };
+    const newStatusData = { label, icon, color, order: newOrder };
     
-    // Optimistic UI update
     const optimisticStatus: DemandStatus = { ...newStatusData, id: tempId };
     setDemandStatuses(prev => [...prev, optimisticStatus]);
 
-    // Async database operation
     addDemandStatus(newStatusData)
       .then(savedStatus => {
         setDemandStatuses(prev => prev.map(s => s.id === tempId ? savedStatus : s));
