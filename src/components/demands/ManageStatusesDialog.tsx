@@ -71,13 +71,15 @@ export default function ManageStatusesDialog({
     }
 
     setIsAdding(true);
-    await addGlobalDemandStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
-
-    // Reset form for next entry
-    setNewStatusLabel("");
-    setSelectedIcon("Inbox");
-    setSelectedColor("bg-blue-500");
-    setIsAdding(false);
+    try {
+        await addGlobalDemandStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
+    } finally {
+        // Reset form for next entry
+        setNewStatusLabel("");
+        setSelectedIcon("Inbox");
+        setSelectedColor("bg-blue-500");
+        setIsAdding(false);
+    }
   };
 
   const handleDelete = async (status: DemandStatus) => {
@@ -194,5 +196,7 @@ export default function ManageStatusesDialog({
     </Dialog>
   );
 }
+
+    
 
     

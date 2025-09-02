@@ -40,6 +40,13 @@ export const useAuth = () => {
     return context;
 };
 
+// Define the fixed statuses that should always exist.
+const FIXED_STATUSES = {
+  "Aberto": { order: 0, icon: "Inbox", color: "bg-blue-500" },
+  "Aguardando Resposta": { order: 1, icon: "MailQuestion", color: "bg-yellow-500" },
+  "Finalizado": { order: 99, icon: "CheckCircle2", color: "bg-green-500" },
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
@@ -87,8 +94,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     setVacations(initialData.vacations);
                     setEmployees(initialData.employees);
                     setCertificates(initialData.certificates);
-                    setDemandStatuses(initialData.demandStatuses);
+
+                    // Ensure fixed statuses exist
+                    const existingLabels = new Set(initialData.demandStatuses.map(s => s.label));
+                    let statuses = [...initialData.demandStatuses];
+                    let needsUpdate = false;
+
+                    for (const [label, props] of Object.entries(FIXED_STATUSES)) {
+                        if (!existingLabels.has(label)) {
+                            needsUpdate = true;
+                            const newStatusData = { label, ...props };
+                            const savedStatus = await addDemandStatus(newStatusData);
+                            statuses.push(savedStatus);
+                        }
+                    }
+
+                    if (needsUpdate) {
+                       statuses.sort((a, b) => a.order - b.order);
+                    }
+                    
+                    setDemandStatuses(statuses);
                     setDataLoaded(true);
+
                 } catch (error) {
                     console.error("Failed to load data:", error);
                 }
@@ -114,16 +141,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [user, authChecked, pathname, router]);
 
     const addGlobalDemandStatus = async (label: string, icon: string, color: string) => {
-      const newOrder = demandStatuses.length > 0 ? Math.max(...demandStatuses.map(s => s.order)) + 1 : 0;
+      const newOrder = demandStatuses.length > 0 ? Math.max(...demandStatuses.filter(s => s.label !== 'Finalizado').map(s => s.order)) + 1 : 0;
       const tempId = `temp-status-${Date.now()}`;
       const newStatusData = { label, icon, color, order: newOrder };
       
       const optimisticStatus: DemandStatus = { ...newStatusData, id: tempId };
-      setDemandStatuses(prev => [...prev, optimisticStatus]);
+      setDemandStatuses(prev => [...prev, optimisticStatus].sort((a, b) => a.order - b.order));
 
       try {
         const savedStatus = await addDemandStatus(newStatusData);
-        setDemandStatuses(prev => prev.map(s => s.id === tempId ? savedStatus : s));
+        setDemandStatuses(prev => prev.map(s => s.id === tempId ? savedStatus : s).sort((a,b) => a.order - b.order));
         toast({ title: "Status Adicionado", description: `"${label}" foi adicionado com sucesso.` });
       } catch (error) {
         toast({ variant: 'destructive', title: "Erro", description: "Não foi possível adicionar o status." });
@@ -217,5 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
        </div>
     );
 }
+
+    
 
     
