@@ -7,7 +7,7 @@ import { onAuthStateChanged, type User } from 'firebase/auth';
 import { getAuthInstance, getMessagingObject } from '@/lib/firebase-client';
 import { Loader2 } from 'lucide-react';
 import { getAllData } from '@/lib/idb';
-import type { Demand, Vacation, Employee, MedicalCertificate } from '@/lib/types';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from '@/lib/types';
 import { onMessage } from 'firebase/messaging';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,6 +16,7 @@ interface AppData {
   vacations: Vacation[];
   employees: Employee[];
   certificates: MedicalCertificate[];
+  demandStatuses: DemandStatus[];
 }
 
 interface AuthContextType extends AppData {
@@ -24,6 +25,7 @@ interface AuthContextType extends AppData {
     setVacations: React.Dispatch<React.SetStateAction<Vacation[]>>;
     setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
     setCertificates: React.Dispatch<React.SetStateAction<MedicalCertificate[]>>;
+    setDemandStatuses: React.Dispatch<React.SetStateAction<DemandStatus[]>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -55,6 +57,8 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     const [vacations, setVacations] = useState<Vacation[]>([]);
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [certificates, setCertificates] = useState<MedicalCertificate[]>([]);
+    const [demandStatuses, setDemandStatuses] = useState<DemandStatus[]>([]);
+
 
     // Foreground notification handler
     useEffect(() => {
@@ -86,6 +90,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
                     setVacations(initialData.vacations);
                     setEmployees(initialData.employees);
                     setCertificates(initialData.certificates);
+                    setDemandStatuses(initialData.demandStatuses);
                     setDataLoaded(true);
                 } catch (error) {
                     console.error("Failed to load data:", error);
@@ -139,7 +144,8 @@ export default function AuthProvider({ children }: AuthProviderProps) {
                 demands, setDemands,
                 vacations, setVacations,
                 employees, setEmployees,
-                certificates, setCertificates
+                certificates, setCertificates,
+                demandStatuses, setDemandStatuses
             }}>
                 {children}
             </AuthContext.Provider>

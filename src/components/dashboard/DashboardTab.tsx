@@ -11,6 +11,7 @@ import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Mailbox, Hourglas
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeCertificates } from '@/lib/certificate-logic';
+import { useAuth } from '../AuthProvider';
 
 interface DashboardTabProps {
   demands: Demand[];
@@ -19,19 +20,25 @@ interface DashboardTabProps {
 }
 
 export default function DashboardTab({ demands, employees, certificates }: DashboardTabProps) {
+  const { demandStatuses } = useAuth();
+  
+  const lastStatus = useMemo(() => demandStatuses.slice(-1)[0]?.label, [demandStatuses]);
+
   const demandStats = useMemo(() => {
-    const newDemands = demands.filter(d => d.status === 'recebido' || d.status === 'em-analise').length;
-    const waiting = demands.filter(d => d.status.startsWith('aguardando')).length;
-    const done = demands.filter(d => d.status === 'finalizado').length;
+    const finalizadoStatus = lastStatus || 'finalizado';
+    const newDemands = demands.filter(d => d.status !== finalizadoStatus).length;
+    const waiting = demands.filter(d => d.status.toLowerCase().includes('aguardando')).length;
+    const done = demands.filter(d => d.status === finalizadoStatus).length;
     return { newDemands, waiting, done };
-  }, [demands]);
+  }, [demands, lastStatus]);
 
   const upcomingDemands = useMemo(() => {
+    const finalizadoStatus = lastStatus || 'finalizado';
     return demands
-      .filter(d => d.status !== 'finalizado' && parseISO(d.dueDate) >= new Date())
+      .filter(d => d.status !== finalizadoStatus && parseISO(d.dueDate) >= new Date())
       .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())
       .slice(0, 5);
-  }, [demands]);
+  }, [demands, lastStatus]);
 
   const highRiskEmployees = useMemo(() => {
     return employees
@@ -51,8 +58,8 @@ export default function DashboardTab({ demands, employees, certificates }: Dashb
     <div className="space-y-6">
       {/* Cards de Estatísticas */}
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Novas / Em Análise" value={demandStats.newDemands} icon={<Mailbox className="h-5 w-5 text-muted-foreground" />} />
-        <StatCard title="Aguardando Resposta" value={demandStats.waiting} icon={<Hourglass className="h-5 w-5 text-muted-foreground" />} />
+        <StatCard title="Demandas em Aberto" value={demandStats.newDemands} icon={<Hourglass className="h-5 w-5 text-muted-foreground" />} />
+        <StatCard title="Aguardando Resposta" value={demandStats.waiting} icon={<Mailbox className="h-5 w-5 text-muted-foreground" />} />
         <StatCard title="Finalizadas" value={demandStats.done} icon={<CheckCircle2 className="h-5 w-5 text-muted-foreground" />} />
       </div>
 

@@ -12,7 +12,7 @@ import EmployeeList from '@/components/employees/EmployeeList';
 import DashboardTab from '@/components/dashboard/DashboardTab';
 import CalendarView from '@/components/calendar/CalendarView';
 import { useAuth } from './AuthProvider';
-import type { Demand, Vacation, DemandStatus, Employee, MedicalCertificate } from '@/lib/types';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,8 @@ import {
   deleteEmployee as deleteDbEmployee,
   addCertificate as addDbCertificate,
   deleteCertificate as deleteDbCertificate,
-  updateCertificate
+  addDemandStatus,
+  deleteDemandStatus as deleteDbDemandStatus,
 } from '@/lib/idb';
 import { sendNotification } from '@/ai/flows/send-notification-flow';
 
@@ -44,7 +45,8 @@ export default function GestaoFeriasPage() {
     demands, setDemands, 
     vacations, setVacations,
     employees, setEmployees,
-    certificates, setCertificates
+    certificates, setCertificates,
+    demandStatuses, setDemandStatuses,
   } = useAuth();
   
   const { toast } = useToast();
@@ -108,7 +110,7 @@ export default function GestaoFeriasPage() {
     }
   };
 
-  const handleUpdateDemandStatus = (id: string, status: DemandStatus) => {
+  const handleUpdateDemandStatus = (id: string, status: string) => {
     const demandToUpdate = demands.find(d => d.id === id);
     if(demandToUpdate) {
       const updatedDemand = { ...demandToUpdate, status };
@@ -116,7 +118,8 @@ export default function GestaoFeriasPage() {
       toast({ title: "Status Atualizado", description: `Status da demanda alterado.`});
 
       // Send notification if finalized
-      if (status === 'finalizado') {
+      const lastStatus = demandStatuses.slice(-1)[0];
+      if (status === lastStatus?.label) {
         const owner = employees.find(e => e.id === updatedDemand.ownerId);
         if (owner?.fcmTokens && owner.fcmTokens.length > 0) {
             owner.fcmTokens.forEach(token => {
@@ -130,6 +133,39 @@ export default function GestaoFeriasPage() {
       }
     }
   };
+  
+  const handleAddDemandStatus = async (label: string) => {
+    const newOrder = demandStatuses.length > 0 ? Math.max(...demandStatuses.map(s => s.order)) + 1 : 0;
+    const newStatusData = { label, order: newOrder };
+    
+    const savedStatus = await addDemandStatus(newStatusData);
+    setDemandStatuses(prev => [...prev, savedStatus]);
+  };
+
+  const handleDeleteDemandStatus = async (id: string) => {
+    const statusToDelete = demandStatuses.find(s => s.id === id);
+    if (!statusToDelete) return;
+    
+    // Prevent deletion if it's the only status
+    if (demandStatuses.length <= 1) {
+      toast({ variant: 'destructive', title: "Ação não permitida", description: "Deve haver pelo menos um status." });
+      return;
+    }
+    
+    // Update demands that have the status being deleted
+    const demandsToUpdate = demands.filter(d => d.status === statusToDelete.label);
+    const newStatusLabel = demandStatuses[0].label; // Fallback to the first status
+    if (demandsToUpdate.length > 0) {
+      const updatePromises = demandsToUpdate.map(d => updateDbDemand({ ...d, status: newStatusLabel }));
+      await Promise.all(updatePromises);
+      setDemands(prev => prev.map(d => d.status === statusToDelete.label ? { ...d, status: newStatusLabel } : d));
+    }
+    
+    // Delete the status
+    await deleteDbDemandStatus(id);
+    setDemandStatuses(prev => prev.filter(s => s.id !== id));
+  };
+
 
   const handleAddVacation = (vacationData: Omit<Vacation, 'id'>) => {
     const tempId = `temp-vacation-${Date.now()}`;
@@ -319,10 +355,13 @@ export default function GestaoFeriasPage() {
             <h2 id="demands-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Demandas</h2>
             <DemandList 
               demands={demands} 
-              onUpdateStatus={handleUpdateDemandStatus} _
+              statuses={demandStatuses}
+              onUpdateStatus={handleUpdateDemandStatus}
               onDeleteDemand={handleDeleteDemand}
               onUpdateDemand={handleUpdateDemand}
               employees={employees}
+              onAddStatus={handleAddDemandStatus}
+              onDeleteStatus={handleDeleteDemandStatus}
             />
           </section>
         </TabsContent>
@@ -363,7 +402,7 @@ export default function GestaoFeriasPage() {
             </div>
             {showEmployeeForm && (
               <EmployeeForm 
-                onAddEmployee={handleAddEmployee} _
+                onAddEmployee={handleAddEmployee}
                 onClose={() => setShowEmployeeForm(false)} />
             )}
           </section>

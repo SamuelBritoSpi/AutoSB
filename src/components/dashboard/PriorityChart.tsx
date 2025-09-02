@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import type { Demand } from '@/lib/types';
 import { useTheme } from 'next-themes';
+import { useAuth } from '../AuthProvider';
 
 interface PriorityChartProps {
   demands: Demand[];
@@ -33,24 +34,28 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 
 export default function PriorityChart({ demands }: PriorityChartProps) {
     const { resolvedTheme } = useTheme();
+    const { demandStatuses } = useAuth();
+    
+    const lastStatus = useMemo(() => demandStatuses.slice(-1)[0]?.label, [demandStatuses]);
 
-  const chartData = useMemo(() => {
-    const priorityCounts: Record<Demand['priority'], number> = {
-      alta: 0,
-      media: 0,
-      baixa: 0,
-    };
-    demands.forEach(demand => {
-      if (demand.status !== 'finalizado') {
-        priorityCounts[demand.priority]++;
-      }
-    });
-    return [
-      { name: 'Alta', value: priorityCounts.alta },
-      { name: 'Média', value: priorityCounts.media },
-      { name: 'Baixa', value: priorityCounts.baixa },
-    ].filter(d => d.value > 0);
-  }, [demands]);
+    const chartData = useMemo(() => {
+        const finalizadoStatus = lastStatus || 'finalizado';
+        const priorityCounts: Record<Demand['priority'], number> = {
+        alta: 0,
+        media: 0,
+        baixa: 0,
+        };
+        demands.forEach(demand => {
+        if (demand.status !== finalizadoStatus) {
+            priorityCounts[demand.priority]++;
+        }
+        });
+        return [
+        { name: 'Alta', value: priorityCounts.alta },
+        { name: 'Média', value: priorityCounts.media },
+        { name: 'Baixa', value: priorityCounts.baixa },
+        ].filter(d => d.value > 0);
+    }, [demands, lastStatus]);
 
   if (chartData.length === 0) {
     return (

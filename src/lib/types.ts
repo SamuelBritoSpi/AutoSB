@@ -1,6 +1,9 @@
 
+
 export type DemandPriority = 'alta' | 'media' | 'baixa';
-export type DemandStatus = 
+
+// O DemandStatus agora é uma string simples, já que os valores virão do banco.
+export type OldDemandStatus = 
   | 'recebido'
   | 'em-analise'
   | 'aguardando-sec'
@@ -10,13 +13,20 @@ export type DemandStatus =
   | 'resposta-recebida'
   | 'finalizado';
 
+// Nova interface para os documentos de status
+export interface DemandStatus {
+  id: string;
+  label: string;
+  order: number; // Para manter uma ordem consistente
+}
+
 export interface Demand {
   id: string;
   title: string; 
   description: string;
   priority: DemandPriority;
   dueDate: string; // ISO string for date
-  status: DemandStatus;
+  status: string; // Armazena o 'label' do status
   ownerId?: string; // ID of the employee responsible for the demand
 }
 

@@ -9,38 +9,40 @@ import { ListFilter, ArrowDownAZ, ArrowUpAZ, CalendarClock, AlertOctagon } from 
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import DemandForm from './DemandForm';
+import ManageStatusesDialog from './ManageStatusesDialog';
 
 
 interface DemandListProps {
   demands: Demand[];
-  onUpdateStatus: (id: string, status: DemandStatus) => void;
+  statuses: DemandStatus[];
+  onUpdateStatus: (id: string, status: string) => void;
   onDeleteDemand: (id: string) => void;
   onUpdateDemand: (demand: Demand) => void;
   employees: Employee[];
+  onAddStatus: (label: string) => Promise<void>;
+  onDeleteStatus: (id: string) => Promise<void>;
 }
 
 type SortKey = 'dueDate' | 'priority' | 'description';
 type SortOrder = 'asc' | 'desc';
 
-const statusText: Record<DemandStatus | 'all', string> = {
-  'all': 'Todos Status',
-  'recebido': 'Recebido',
-  'em-analise': 'Em Análise',
-  'aguardando-sec': 'Aguardando SEC',
-  'aguardando-csh': 'Aguardando CSH',
-  'aguardando-confianca': 'Aguardando Confiança',
-  'aguardando-gestor': 'Aguardando Gestor',
-  'resposta-recebida': 'Resposta Recebida',
-  'finalizado': 'Finalizado'
-};
-
-export default function DemandList({ demands, onUpdateStatus, onDeleteDemand, onUpdateDemand, employees }: DemandListProps) {
+export default function DemandList({ 
+  demands, 
+  statuses,
+  onUpdateStatus, 
+  onDeleteDemand, 
+  onUpdateDemand, 
+  employees,
+  onAddStatus,
+  onDeleteStatus
+}: DemandListProps) {
   const [sortKey, setSortKey] = useState<SortKey>('dueDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
-  const [statusFilter, setStatusFilter] = useState<DemandStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   
   const [editingDemand, setEditingDemand] = useState<Demand | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isStatusManagerOpen, setIsStatusManagerOpen] = useState(false);
 
   const priorityOrder: Record<Demand['priority'], number> = { 'alta': 1, 'media': 2, 'baixa': 3 };
 
@@ -88,13 +90,14 @@ export default function DemandList({ demands, onUpdateStatus, onDeleteDemand, on
           <h3 className="text-lg font-semibold">Filtrar e Ordenar</h3>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as DemandStatus | 'all')}>
+          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(statusText).map(([value, text]) => (
-                <SelectItem key={value} value={value}>{text}</SelectItem>
+                <SelectItem value="all">Todos Status</SelectItem>
+              {statuses.map((status) => (
+                <SelectItem key={status.id} value={status.label}>{status.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -123,9 +126,11 @@ export default function DemandList({ demands, onUpdateStatus, onDeleteDemand, on
             <DemandCard 
               key={demand.id} 
               demand={demand} 
+              statuses={statuses}
               onUpdateStatus={onUpdateStatus}
               onDelete={onDeleteDemand}
               onEdit={handleEdit} 
+              onManageStatuses={() => setIsStatusManagerOpen(true)}
             />
           ))}
         </div>
@@ -146,6 +151,13 @@ export default function DemandList({ demands, onUpdateStatus, onDeleteDemand, on
           </DialogContent>
         </Dialog>
       )}
+      <ManageStatusesDialog
+        open={isStatusManagerOpen}
+        onOpenChange={setIsStatusManagerOpen}
+        statuses={statuses}
+        onAddStatus={onAddStatus}
+        onDeleteStatus={onDeleteStatus}
+      />
     </div>
   );
 }

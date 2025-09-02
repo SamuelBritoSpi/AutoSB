@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Demand, DemandPriority, DemandStatus, Employee } from '@/lib/types';
+import type { Demand, DemandPriority, Employee } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -39,7 +39,7 @@ interface DemandFormProps {
 
 export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand, onClose, employees }: DemandFormProps) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { demandStatuses } = useAuth();
 
   const form = useForm<DemandFormValues>({
     resolver: zodResolver(demandSchema),
@@ -54,7 +54,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
       description: '',
       priority: 'media',
       dueDate: new Date(),
-      ownerId: employees?.[0]?.id || '', // Default to first employee or current user if applicable
+      ownerId: employees?.[0]?.id || '',
     },
   });
 
@@ -74,7 +74,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
         description: values.description,
         priority: values.priority as DemandPriority,
         dueDate: values.dueDate.toISOString(),
-        status: 'recebido' as DemandStatus,
+        status: demandStatuses?.[0]?.label || 'Recebido', // Default to first status or a fallback
         ownerId: values.ownerId,
       };
       onAddDemand(demandData);

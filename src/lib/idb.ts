@@ -1,27 +1,30 @@
 
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query } from 'firebase/firestore';
 import { getDbInstance } from './firebase-client'; // Use client-specific db
-import type { Demand, Vacation, Employee, MedicalCertificate } from './types';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from './types';
 
 const STORES = {
   demands: 'demands',
   vacations: 'vacations',
   employees: 'employees',
   certificates: 'certificates',
+  demandStatuses: 'demandStatuses',
 };
 
 // --- Generic CRUD Operations for Firestore ---
 
-async function getAll<T>(storeName: string): Promise<T[]> {
+async function getAll<T>(storeName: string, orderField?: string): Promise<T[]> {
   const db = getDbInstance();
   if (!db) {
     console.warn("Firestore is not available. Returning empty array.");
     return [];
   }
-  const querySnapshot = await getDocs(collection(db, storeName));
+  const collRef = collection(db, storeName);
+  const q = orderField ? query(collRef, orderBy(orderField)) : collRef;
+  const querySnapshot = await getDocs(q);
   const data: T[] = [];
   querySnapshot.forEach((doc) => {
-    // Combine document data with the document ID
     data.push({ ...doc.data(), id: doc.id } as T);
   });
   return data;
@@ -58,6 +61,15 @@ export const addDemand = async (demand: Omit<Demand, 'id'>) => {
 export const updateDemand = (demand: Demand) => update(STORES.demands, demand);
 export const deleteDemand = (id: string) => remove(STORES.demands, id);
 
+// --- Demand Statuses ---
+export const getDemandStatuses = () => getAll<DemandStatus>(STORES.demandStatuses, 'order');
+export const addDemandStatus = async (status: Omit<DemandStatus, 'id'>) => {
+    const newId = await add(STORES.demandStatuses, status);
+    return { ...status, id: newId };
+};
+export const deleteDemandStatus = (id: string) => remove(STORES.demandStatuses, id);
+
+
 // --- Vacations ---
 export const getVacations = () => getAll<Vacation>(STORES.vacations);
 export const addVacation = async (vacation: Omit<Vacation, 'id'>) => {
@@ -92,16 +104,18 @@ interface AllData {
     vacations: Vacation[];
     employees: Employee[];
     certificates: MedicalCertificate[];
+    demandStatuses: DemandStatus[];
 }
 
 export async function getAllData(): Promise<AllData> {
-    const [demands, vacations, employees, certificates] = await Promise.all([
+    const [demands, vacations, employees, certificates, demandStatuses] = await Promise.all([
         getDemands(),
         getVacations(),
         getEmployees(),
-        getCertificates()
+        getCertificates(),
+        getDemandStatuses(),
     ]);
-    return { demands, vacations, employees, certificates };
+    return { demands, vacations, employees, certificates, demandStatuses };
 }
 
 // This function can be used to migrate data from a JSON backup to Firestore.
@@ -135,6 +149,12 @@ export async function importData(data: AllData): Promise<void> {
         const docRef = doc(db, STORES.certificates, id);
         batch.set(docRef, certRest);
     });
+     data.demandStatuses.forEach(item => {
+        const { id, ...rest } = item;
+        const docRef = doc(db, STORES.demandStatuses, id);
+        batch.set(docRef, rest);
+    });
+
 
     await batch.commit();
 }
