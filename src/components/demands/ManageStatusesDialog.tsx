@@ -107,7 +107,7 @@ export default function ManageStatusesDialog({
                 {statuses.length > 0 ? statuses.map((status) => (
                     <div key={status.id} className="flex items-center justify-between p-1">
                         <div className="flex items-center gap-2">
-                            <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color.replace("bg-", "text-"))} />
+                            <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color ? status.color.replace("bg-", "text-") : "")} />
                             <span>{status.label}</span>
                         </div>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(status)} disabled={deletingId === status.id}>

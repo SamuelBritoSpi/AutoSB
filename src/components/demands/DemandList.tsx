@@ -105,7 +105,7 @@ export default function DemandList({
               {statuses.map((status) => (
                 <SelectItem key={status.id} value={status.label}>
                     <div className='flex items-center gap-2'>
-                        <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color.replace("bg-", "text-"))} />
+                        <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color ? status.color.replace("bg-", "text-") : "")} />
                         {status.label}
                     </div>
                 </SelectItem>
