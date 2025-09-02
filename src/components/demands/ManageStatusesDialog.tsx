@@ -15,10 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import type { Demand, DemandStatus } from "@/lib/types";
-import { Loader2, PlusCircle, Trash2, X, Palette, Smile, icons, type LucideIcon, type LucideProps, Lock } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, X, Palette, Smile, icons, type LucideIcon, type LucideProps, Lock, Check, ChevronsUpDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
+
 
 interface ManageStatusesDialogProps {
   open: boolean;
@@ -30,8 +32,15 @@ interface ManageStatusesDialogProps {
 }
 
 const availableIcons = [
-    "Inbox", "FileClock", "Hourglass", "MailQuestion", "Send", "CheckCircle2", "XCircle", "ChevronRightCircle", "Clock", "FileCheck", "FileText", "History", "Paperclip"
+    "Inbox", "FileClock", "Hourglass", "MailQuestion", "Send", "CheckCircle2", "XCircle", "ChevronRightCircle", 
+    "Clock", "FileCheck", "FileText", "History", "Paperclip", "AlarmClock", "Archive", "ArrowRight", "BadgeInfo", 
+    "Bell", "Book", "Briefcase", "Bug", "Building", "Calendar", "ClipboardCheck", "Copy", "Database", "File", 
+    "Filter", "Flag", "Folder", "Globe", "Heart", "Home", "Image", "Key", "Lightbulb", "Link", "Lock", "Mail", 
+    "MapPin", "MessageCircle", "Monitor", "Package", "Pen", "Phone", "Rocket", "Save", "Search", "Settings", 
+    "Shield", "ShoppingBag", "Smartphone", "Star", "Tag", "Target", "ThumbsUp", "Tool", "Trash", "TrendingUp", 
+    "Unlock", "User", "Video", "Zap"
 ];
+
 
 const availableColors = [
   "bg-slate-500", "bg-gray-500", "bg-zinc-500", "bg-neutral-500",
@@ -44,7 +53,12 @@ const availableColors = [
 
 const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     const IconComponent = (icons as any)[name];
-    return IconComponent ? <IconComponent {...props} /> : <Smile {...props}/>;
+    if (!IconComponent) {
+        return <Smile {...props} />;
+    }
+    const colorClass = (props as any).color;
+    const style = colorClass ? { color: colorClass.replace('bg-', 'var(--') + ')' } : {};
+    return <IconComponent {...props} style={style} />;
 };
 
 // Define the fixed statuses that cannot be deleted.
@@ -65,6 +79,7 @@ export default function ManageStatusesDialog({
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
 
   const handleAdd = () => {
     if (!newStatusLabel.trim()) {
@@ -143,22 +158,37 @@ export default function ManageStatusesDialog({
              <div className="flex items-center space-x-2">
                 <div className='w-1/2'>
                     <Label>Ícone</Label>
-                    <Popover>
+                    <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" className='w-full justify-start'>
+                            <Button variant="outline" role="combobox" aria-expanded={iconPopoverOpen} className='w-full justify-between'>
                                 <LucideIcon name={selectedIcon} className="mr-2 h-4 w-4" />
                                 {selectedIcon}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="p-0 w-[200px]">
-                            <ScrollArea className="h-48">
-                                {availableIcons.map(iconName => (
-                                    <Button key={iconName} variant="ghost" className="w-full justify-start" onClick={() => setSelectedIcon(iconName)}>
-                                         <LucideIcon name={iconName} className="mr-2 h-4 w-4" />
-                                         {iconName}
-                                    </Button>
-                                ))}
-                            </ScrollArea>
+                            <Command>
+                                <CommandInput placeholder="Procurar ícone..." />
+                                <CommandEmpty>Nenhum ícone encontrado.</CommandEmpty>
+                                <CommandGroup>
+                                    <ScrollArea className='h-48'>
+                                        {availableIcons.map(iconName => (
+                                            <CommandItem
+                                                key={iconName}
+                                                value={iconName}
+                                                onSelect={(currentValue) => {
+                                                    setSelectedIcon(currentValue === selectedIcon ? "" : currentValue)
+                                                    setIconPopoverOpen(false)
+                                                }}
+                                            >
+                                                <Check className={cn("mr-2 h-4 w-4", selectedIcon === iconName ? "opacity-100" : "opacity-0")} />
+                                                <LucideIcon name={iconName} className="mr-2 h-4 w-4" />
+                                                {iconName}
+                                            </CommandItem>
+                                        ))}
+                                    </ScrollArea>
+                                </CommandGroup>
+                            </Command>
                         </PopoverContent>
                     </Popover>
                 </div>

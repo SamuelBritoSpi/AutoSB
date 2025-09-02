@@ -37,7 +37,12 @@ const priorityText: Record<Demand['priority'], string> = {
 
 const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     const IconComponent = (icons as any)[name];
-    return IconComponent ? <IconComponent {...props} /> : <Smile {...props}/>;
+    if (!IconComponent) {
+        return <Smile {...props} />;
+    }
+    const colorClass = (props as any).color;
+    const style = colorClass ? { color: colorClass.replace('bg-', 'var(--') + ')' } : {};
+    return <IconComponent {...props} style={style} />;
 };
 
 export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onDelete, onEdit, onManageStatuses }: DemandCardProps) {

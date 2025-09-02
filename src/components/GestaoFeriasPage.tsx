@@ -83,12 +83,8 @@ export default function GestaoFeriasPage() {
                 statuses.push(savedStatus);
             }
         }
-
-        if (needsUpdate) {
-            statuses.sort((a, b) => a.order - b.order);
-        }
         
-        setDemandStatuses(statuses);
+        setDemandStatuses(statuses.sort((a, b) => a.order - b.order));
       } catch (error) {
         console.error("Failed to load initial data", error);
         toast({ variant: 'destructive', title: "Erro ao Carregar Dados", description: "Não foi possível buscar os dados do servidor."})
