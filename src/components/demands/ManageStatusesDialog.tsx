@@ -27,7 +27,7 @@ interface ManageStatusesDialogProps {
   onOpenChange: (open: boolean) => void;
   demandStatuses: DemandStatus[];
   demands: Demand[];
-  onAddStatus: (label: string, icon: string) => void;
+  onAddStatus: (label: string, icon: string, color: string) => void;
   onDeleteStatus: (id: string) => void;
 }
 
@@ -41,6 +41,16 @@ const availableIcons = [
     "Unlock", "User", "Video", "Zap", "FileQuestion", "FileSearch", "FileDiff", "FileJson"
 ];
 
+const availableColors = [
+    { label: "Cinza", value: "text-gray-500" },
+    { label: "Vermelho", value: "text-red-500" },
+    { label: "Laranja", value: "text-orange-500" },
+    { label: "Amarelo", value: "text-yellow-500" },
+    { label: "Verde", value: "text-green-500" },
+    { label: "Azul", value: "text-blue-500" },
+    { label: "Roxo", value: "text-purple-500" },
+    { label: "Rosa", value: "text-pink-500" },
+]
 
 const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     const IconComponent = (icons as any)[name];
@@ -65,6 +75,7 @@ export default function ManageStatusesDialog({
   const { toast } = useToast();
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [selectedIcon, setSelectedIcon] = useState("Inbox");
+  const [selectedColor, setSelectedColor] = useState(availableColors[0].value);
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
@@ -81,9 +92,10 @@ export default function ManageStatusesDialog({
 
     setIsAdding(true);
     try {
-      onAddStatus(newStatusLabel.trim(), selectedIcon);
+      onAddStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
       setNewStatusLabel("");
       setSelectedIcon("Inbox");
+      setSelectedColor(availableColors[0].value);
     } finally {
       setIsAdding(false);
     }
@@ -118,7 +130,7 @@ export default function ManageStatusesDialog({
                 {demandStatuses.length > 0 ? demandStatuses.map((status) => (
                     <div key={status.id} className="flex items-center justify-between p-1">
                         <div className="flex items-center gap-2 rounded-md px-2.5 py-0.5 text-xs font-semibold">
-                            <LucideIcon name={status.icon} className="h-4 w-4 text-foreground/80" />
+                            <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color)} />
                             <span className="text-foreground/80">{status.label}</span>
                              {fixedStatuses.includes(status.label) && <Lock className="h-3 w-3 text-muted-foreground" />}
                         </div>
@@ -131,7 +143,7 @@ export default function ManageStatusesDialog({
                 )}
             </ScrollArea>
           </div>
-          <div className="space-y-2 border-t pt-4">
+          <div className="space-y-4 border-t pt-4">
              <h4 className="font-medium">Adicionar Novo Status</h4>
             <div className="space-y-2">
                 <Label htmlFor="new-status-label">Nome do Status</Label>
@@ -143,44 +155,61 @@ export default function ManageStatusesDialog({
                     disabled={isAdding}
                 />
             </div>
-             <div className="flex items-center space-x-2">
-                <div className='w-full'>
-                    <Label>Ícone</Label>
-                    <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" role="combobox" aria-expanded={iconPopoverOpen} className='w-full justify-between'>
-                                <LucideIcon name={selectedIcon} className="mr-2 h-4 w-4" />
-                                {selectedIcon}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="p-0 w-[200px]">
-                            <Command>
-                                <CommandInput placeholder="Procurar ícone..." />
-                                <CommandEmpty>Nenhum ícone encontrado.</CommandEmpty>
-                                <CommandGroup>
-                                    <ScrollArea className='h-48'>
-                                        {availableIcons.map(iconName => (
-                                            <CommandItem
-                                                key={iconName}
-                                                value={iconName}
-                                                onSelect={(currentValue) => {
-                                                    setSelectedIcon(currentValue === selectedIcon ? "" : currentValue)
-                                                    setIconPopoverOpen(false)
-                                                }}
-                                            >
-                                                <Check className={cn("mr-2 h-4 w-4", selectedIcon === iconName ? "opacity-100" : "opacity-0")} />
-                                                <LucideIcon name={iconName} className="mr-2 h-4 w-4" />
-                                                {iconName}
-                                            </CommandItem>
-                                        ))}
-                                    </ScrollArea>
-                                </CommandGroup>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
-                </div>
+             <div className="space-y-2">
+                <Label>Ícone</Label>
+                <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" role="combobox" aria-expanded={iconPopoverOpen} className='w-full justify-between'>
+                            <LucideIcon name={selectedIcon} className="mr-2 h-4 w-4" />
+                            {selectedIcon}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0 w-[200px]">
+                        <Command>
+                            <CommandInput placeholder="Procurar ícone..." />
+                            <CommandEmpty>Nenhum ícone encontrado.</CommandEmpty>
+                            <CommandGroup>
+                                <ScrollArea className='h-48'>
+                                    {availableIcons.map(iconName => (
+                                        <CommandItem
+                                            key={iconName}
+                                            value={iconName}
+                                            onSelect={(currentValue) => {
+                                                setSelectedIcon(currentValue === selectedIcon ? "" : currentValue)
+                                                setIconPopoverOpen(false)
+                                            }}
+                                        >
+                                            <Check className={cn("mr-2 h-4 w-4", selectedIcon === iconName ? "opacity-100" : "opacity-0")} />
+                                            <LucideIcon name={iconName} className="mr-2 h-4 w-4" />
+                                            {iconName}
+                                        </CommandItem>
+                                    ))}
+                                </ScrollArea>
+                            </CommandGroup>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
              </div>
+              <div className="space-y-2">
+                <Label>Cor</Label>
+                <div className="flex flex-wrap gap-2">
+                    {availableColors.map(color => (
+                        <Button 
+                          key={color.value}
+                          variant="outline"
+                          size="icon"
+                          className={cn("w-8 h-8 rounded-full", {
+                            'ring-2 ring-primary ring-offset-2': selectedColor === color.value
+                          })}
+                          onClick={() => setSelectedColor(color.value)}
+                        >
+                            <div className={cn("w-5 h-5 rounded-full", color.value.replace('text-', 'bg-'))} />
+                        </Button>
+                    ))}
+                </div>
+              </div>
+
              <div className="pt-2">
                 <Button onClick={handleAdd} disabled={isAdding || !newStatusLabel.trim()} className='w-full'>
                     {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4"/>}

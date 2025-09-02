@@ -87,7 +87,7 @@ export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onD
          <div className="flex items-center text-sm">
             {currentStatus ? (
               <Badge variant="secondary" className="flex items-center gap-2">
-                  <LucideIcon name={currentStatus.icon} className="h-4 w-4" />
+                  <LucideIcon name={currentStatus.icon} className={cn("h-4 w-4", currentStatus.color)} />
                   <span>{currentStatus.label}</span>
               </Badge>
             ) : (
@@ -105,7 +105,7 @@ export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onD
           <DropdownMenuContent align="end">
             {demandStatuses.map((status) => (
               <DropdownMenuItem key={status.id} onClick={() => onUpdateStatus(demand.id, status.label)} disabled={demand.status === status.label}>
-                <LucideIcon name={status.icon} className="mr-2 h-4 w-4" />
+                <LucideIcon name={status.icon} className={cn("mr-2 h-4 w-4", status.color)} />
                 {status.label}
               </DropdownMenuItem>
             ))}

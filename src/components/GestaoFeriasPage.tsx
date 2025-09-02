@@ -41,9 +41,9 @@ import { sendNotification } from '@/ai/flows/send-notification-flow';
 
 // Define the fixed statuses that should always exist.
 const FIXED_STATUSES: Record<string, Omit<DemandStatus, 'id' | 'label'>> = {
-  "Aberto": { order: 0, icon: "Inbox" },
-  "Aguardando Resposta": { order: 1, icon: "MailQuestion" },
-  "Finalizado": { order: 99, icon: "CheckCircle2" },
+  "Aberto": { order: 0, icon: "Inbox", color: "text-gray-500" },
+  "Aguardando Resposta": { order: 1, icon: "MailQuestion", color: "text-yellow-500" },
+  "Finalizado": { order: 99, icon: "CheckCircle2", color: "text-green-500" },
 };
 
 export default function GestaoFeriasPage() {
@@ -313,10 +313,10 @@ export default function GestaoFeriasPage() {
     });
   };
 
-   const addGlobalDemandStatus = (label: string, icon: string) => {
+   const addGlobalDemandStatus = (label: string, icon: string, color: string) => {
       const newOrder = demandStatuses.length > 0 ? Math.max(...demandStatuses.filter(s => s.label !== 'Finalizado').map(s => s.order)) + 1 : 0;
       const tempId = `temp-status-${Date.now()}`;
-      const newStatusData: Omit<DemandStatus, 'id'> = { label, icon, order: newOrder };
+      const newStatusData: Omit<DemandStatus, 'id'> = { label, icon, color, order: newOrder };
       
       const optimisticStatus: DemandStatus = { ...newStatusData, id: tempId };
       setDemandStatuses(prev => [...prev, optimisticStatus].sort((a, b) => a.order - b.order));

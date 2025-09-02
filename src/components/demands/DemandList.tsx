@@ -20,7 +20,7 @@ interface DemandListProps {
   onUpdateStatus: (id: string, status: string) => void;
   onDeleteDemand: (id: string) => void;
   onUpdateDemand: (demand: Demand) => void;
-  onAddStatus: (label: string, icon: string) => void;
+  onAddStatus: (label: string, icon: string, color: string) => void;
   onDeleteStatus: (id: string) => void;
 }
 
@@ -108,7 +108,7 @@ export default function DemandList({
               {demandStatuses.map((status) => (
                 <SelectItem key={status.id} value={status.label}>
                     <div className='flex items-center gap-2'>
-                        <LucideIcon name={status.icon} className="h-4 w-4" />
+                        <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color)} />
                         <span>{status.label}</span>
                     </div>
                 </SelectItem>
