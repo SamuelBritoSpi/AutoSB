@@ -63,14 +63,14 @@ export default function GestaoFeriasPage() {
 
   const handleAddDemand = (demandData: Omit<Demand, 'id'>) => {
     const tempId = `temp-${Date.now()}`;
-    const newDemand: Demand = { ...demandData, id: tempId };
+    const newDemand: Demand = { ...demandData, id: tempId, ownerId: demandData.ownerId || null };
     const originalDemands = [...demands];
 
     setDemands(prev => [newDemand, ...prev]);
     setShowDemandForm(false);
     toast({ title: "Demanda Adicionada", description: "A demanda foi salva com sucesso." });
     
-    addDemand(demandData)
+    addDemand(newDemand)
       .then(savedDemand => {
         setDemands(prev => prev.map(d => d.id === tempId ? savedDemand : d));
       })
@@ -83,9 +83,13 @@ export default function GestaoFeriasPage() {
 
   const handleUpdateDemand = (updatedDemand: Demand) => {
     const originalDemands = [...demands];
-    setDemands(prev => prev.map(d => d.id === updatedDemand.id ? updatedDemand : d));
+    const finalDemand = {
+      ...updatedDemand,
+      ownerId: updatedDemand.ownerId || null,
+    };
+    setDemands(prev => prev.map(d => d.id === finalDemand.id ? finalDemand : d));
     
-    updateDbDemand(updatedDemand).catch(error => {
+    updateDbDemand(finalDemand).catch(error => {
       console.error("Failed to update demand:", error);
       toast({ variant: 'destructive', title: 'Erro de Sincronização', description: 'Não foi possível atualizar a demanda.' });
       setDemands(originalDemands);

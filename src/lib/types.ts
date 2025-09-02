@@ -29,7 +29,7 @@ export interface Demand {
   priority: DemandPriority;
   dueDate: string; // ISO string for date
   status: string; // Armazena o 'label' do status
-  ownerId?: string; // ID of the employee responsible for the demand
+  ownerId?: string | null; // ID of the employee responsible for the demand
 }
 
 export interface Vacation {

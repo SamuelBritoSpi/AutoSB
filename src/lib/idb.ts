@@ -55,15 +55,16 @@ async function remove(storeName: string, id: string): Promise<void> {
 // --- Demands ---
 export const getDemands = () => getAll<Demand>(STORES.demands);
 export const addDemand = async (demand: Omit<Demand, 'id'>) => {
-    const newId = await add(STORES.demands, demand);
-    return { ...demand, id: newId };
+    const finalDemand = { ...demand, ownerId: demand.ownerId || null };
+    const newId = await add(STORES.demands, finalDemand);
+    return { ...finalDemand, id: newId } as Demand;
 };
 export const updateDemand = (demand: Demand) => update(STORES.demands, demand);
 export const deleteDemand = (id: string) => remove(STORES.demands, id);
 
 // --- Demand Statuses ---
 export const getDemandStatuses = () => getAll<DemandStatus>(STORES.demandStatuses, 'order');
-export const addDemandStatus = async (status: Omit<DemandStatus, 'id'>) => {
+export const addDemandStatus = async (status: Omit<DemandStatus, 'id'>): Promise<DemandStatus> => {
     const newId = await add(STORES.demandStatuses, status);
     return { ...status, id: newId };
 };

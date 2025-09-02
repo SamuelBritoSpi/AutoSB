@@ -64,8 +64,9 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
         ...values,
         priority: values.priority as DemandPriority,
         dueDate: values.dueDate.toISOString(),
+        ownerId: values.ownerId || null, // Garante que ownerId seja nulo em vez de indefinido
       };
-      onUpdateDemand(demandData);
+      onUpdateDemand(demandData as Demand);
       toast({ title: "Demanda Atualizada", description: "A demanda foi atualizada com sucesso." });
     } else {
        const demandData: Omit<Demand, 'id'> = {
@@ -73,8 +74,8 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
         description: values.description,
         priority: values.priority as DemandPriority,
         dueDate: values.dueDate.toISOString(),
-        status: 'Aberto', // Default to first status or a fallback
-        ownerId: values.ownerId,
+        status: 'Aberto',
+        ownerId: values.ownerId || null, // Garante que ownerId seja nulo em vez de indefinido
       };
       onAddDemand(demandData);
       form.reset({ title: '', description: '', priority: 'media', dueDate: new Date(), ownerId: employees?.[0]?.id || '' });
