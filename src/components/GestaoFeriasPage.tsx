@@ -14,8 +14,14 @@ import CalendarView from '@/components/calendar/CalendarView';
 import { useAuth } from './AuthProvider';
 import type { Demand, Vacation, DemandStatus, Employee, MedicalCertificate } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { 
   addDemand, 
   updateDemand as updateDbDemand, 
@@ -46,6 +52,14 @@ export default function GestaoFeriasPage() {
   const [showDemandForm, setShowDemandForm] = useState(false);
   const [showVacationForm, setShowVacationForm] = useState(false);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
+
+  const tabOptions = [
+    { value: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="mr-2 h-5 w-5" /> },
+    { value: "calendar", label: "Calendário", icon: <CalendarIconLucide className="mr-2 h-5 w-5" /> },
+    { value: "demands", label: "Demandas", icon: <ListChecks className="mr-2 h-5 w-5" /> },
+    { value: "vacations", label: "Férias", icon: <CalendarCheck className="mr-2 h-5 w-5" /> },
+    { value: "employees", label: "Funcionários", icon: <Users className="mr-2 h-5 w-5" /> },
+  ];
 
   const handleAddDemand = (demandData: Omit<Demand, 'id'>) => {
     const tempId = `temp-${Date.now()}`;
@@ -247,23 +261,35 @@ export default function GestaoFeriasPage() {
   return (
     <div className="w-full space-y-8 mt-0">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 md:w-5/6 mx-auto">
-            <TabsTrigger value="dashboard">
-            <LayoutDashboard className="mr-2 h-5 w-5" /> Dashboard
-          </TabsTrigger>
-          <TabsTrigger value="calendar">
-            <CalendarIconLucide className="mr-2 h-5 w-5" /> Calendário
-          </TabsTrigger>
-          <TabsTrigger value="demands">
-            <ListChecks className="mr-2 h-5 w-5" /> Demandas
-          </TabsTrigger>
-          <TabsTrigger value="vacations">
-            <CalendarCheck className="mr-2 h-5 w-5" /> Férias
-          </TabsTrigger>
-            <TabsTrigger value="employees">
-            <Users className="mr-2 h-5 w-5" /> Funcionários
-          </TabsTrigger>
-        </TabsList>
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex justify-center">
+            <TabsList className="grid w-full grid-cols-5 md:w-5/6 mx-auto">
+                {tabOptions.map(tab => (
+                    <TabsTrigger key={tab.value} value={tab.value}>
+                        {tab.icon} {tab.label}
+                    </TabsTrigger>
+                ))}
+            </TabsList>
+        </div>
+
+        {/* Mobile Navigation */}
+        <div className="md:hidden flex justify-center px-4">
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                        <Menu className="mr-2 h-5 w-5" />
+                        {tabOptions.find(t => t.value === activeTab)?.label || 'Menu'}
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-[--radix-dropdown-menu-trigger-width]]">
+                    {tabOptions.map(tab => (
+                         <DropdownMenuItem key={tab.value} onSelect={() => setActiveTab(tab.value)}>
+                            {tab.icon} {tab.label}
+                         </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+             </DropdownMenu>
+        </div>
         
         <TabsContent value="dashboard" className="space-y-6 mt-6">
           <DashboardTab demands={demands} employees={employees} certificates={certificates} />
@@ -278,7 +304,7 @@ export default function GestaoFeriasPage() {
             <div className="flex justify-between items-center mb-4">
               <h2 id="demands-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Nova Demanda</h2>
               <Button variant="outline" onClick={() => setShowDemandForm(!showDemandForm)}>
-                <PlusCircle className="mr-2 h-4 w-4" /> {showDemandForm ? 'Ocultar Formulário' : 'Adicionar Demanda'}
+                <PlusCircle className="mr-2 h-4 w-4" /> {showDemandForm ? 'Ocultar' : 'Adicionar'}
               </Button>
             </div>
             {showDemandForm && (
@@ -293,7 +319,7 @@ export default function GestaoFeriasPage() {
             <h2 id="demands-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Demandas</h2>
             <DemandList 
               demands={demands} 
-              onUpdateStatus={handleUpdateDemandStatus} 
+              onUpdateStatus={handleUpdateDemandStatus} _
               onDeleteDemand={handleDeleteDemand}
               onUpdateDemand={handleUpdateDemand}
               employees={employees}
@@ -306,7 +332,7 @@ export default function GestaoFeriasPage() {
               <div className="flex justify-between items-center mb-4">
               <h2 id="vacations-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novas Férias</h2>
               <Button variant="outline" onClick={() => setShowVacationForm(!showVacationForm)}>
-                <PlusCircle className="mr-2 h-4 w-4" /> {showVacationForm ? 'Ocultar Formulário' : 'Adicionar Férias'}
+                <PlusCircle className="mr-2 h-4 w-4" /> {showVacationForm ? 'Ocultar' : 'Adicionar'}
               </Button>
             </div>
             {showVacationForm && (
@@ -332,12 +358,12 @@ export default function GestaoFeriasPage() {
               <div className="flex justify-between items-center mb-4">
               <h2 id="employees-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novo Funcionário</h2>
               <Button variant="outline" onClick={() => setShowEmployeeForm(!showEmployeeForm)}>
-                <PlusCircle className="mr-2 h-4 w-4" /> {showEmployeeForm ? 'Ocultar Formulário' : 'Adicionar Funcionário'}
+                <PlusCircle className="mr-2 h-4 w-4" /> {showEmployeeForm ? 'Ocultar' : 'Adicionar'}
               </Button>
             </div>
             {showEmployeeForm && (
               <EmployeeForm 
-                onAddEmployee={handleAddEmployee} 
+                onAddEmployee={handleAddEmployee} _
                 onClose={() => setShowEmployeeForm(false)} />
             )}
           </section>
