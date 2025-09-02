@@ -37,8 +37,11 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 
 export default function PriorityChart({ demands }: PriorityChartProps) {
     const { resolvedTheme } = useTheme();
+    const { demandStatuses } = useAuth();
     
     const chartData = useMemo(() => {
+        const finalStatus = demandStatuses.find(s => s.label === FINAL_STATUS_LABEL)?.label || FINAL_STATUS_LABEL;
+
         const priorityCounts: Record<Demand['priority'], number> = {
             alta: 0,
             media: 0,
@@ -46,7 +49,7 @@ export default function PriorityChart({ demands }: PriorityChartProps) {
         };
         
         demands.forEach(demand => {
-            if (demand.status !== FINAL_STATUS_LABEL) {
+            if (demand.status !== finalStatus) {
                 priorityCounts[demand.priority]++;
             }
         });
@@ -56,7 +59,7 @@ export default function PriorityChart({ demands }: PriorityChartProps) {
             { name: 'Média', value: priorityCounts.media },
             { name: 'Baixa', value: priorityCounts.baixa },
         ].filter(d => d.value > 0);
-    }, [demands]);
+    }, [demands, demandStatuses]);
 
   if (chartData.length === 0) {
     return (
@@ -99,3 +102,5 @@ export default function PriorityChart({ demands }: PriorityChartProps) {
     </div>
   );
 }
+
+    

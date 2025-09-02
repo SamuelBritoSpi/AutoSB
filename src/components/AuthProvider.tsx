@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { getAuthInstance, getMessagingObject } from '@/lib/firebase-client';
 import { Loader2 } from 'lucide-react';
-import { getAllData } from '@/lib/idb';
+import { getAllData, addDemandStatus, deleteDemandStatus as deleteDbDemandStatus, updateDemand as updateDbDemand } from '@/lib/idb';
 import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from '@/lib/types';
 import { onMessage } from 'firebase/messaging';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +26,8 @@ interface AuthContextType extends AppData {
     setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
     setCertificates: React.Dispatch<React.SetStateAction<MedicalCertificate[]>>;
     setDemandStatuses: React.Dispatch<React.SetStateAction<DemandStatus[]>>;
+    addGlobalDemandStatus: (label: string, icon: string, color: string) => Promise<void>;
+    deleteGlobalDemandStatus: (id: string, demands: Demand[]) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -111,6 +113,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [user, authChecked, pathname, router]);
 
+    const addGlobalDemandStatus = async (label: string, icon: string, color: string) => {
+      const newOrder = demandStatuses.length > 0 ? Math.max(...demandStatuses.map(s => s.order)) + 1 : 0;
+      const tempId = `temp-status-${Date.now()}`;
+      const newStatusData = { label, icon, color, order: newOrder };
+      
+      const optimisticStatus: DemandStatus = { ...newStatusData, id: tempId };
+      setDemandStatuses(prev => [...prev, optimisticStatus]);
+
+      try {
+        const savedStatus = await addDemandStatus(newStatusData);
+        setDemandStatuses(prev => prev.map(s => s.id === tempId ? savedStatus : s));
+        toast({ title: "Status Adicionado", description: `"${label}" foi adicionado com sucesso.` });
+      } catch (error) {
+        toast({ variant: 'destructive', title: "Erro", description: "Não foi possível adicionar o status." });
+        setDemandStatuses(prev => prev.filter(s => s.id !== tempId));
+      }
+    };
+
+    const deleteGlobalDemandStatus = async (id: string, demands: Demand[]) => {
+      const statusToDelete = demandStatuses.find(s => s.id === id);
+      if (!statusToDelete) return;
+      
+      if (demandStatuses.length <= 1) {
+        toast({ variant: 'destructive', title: "Ação não permitida", description: "Deve haver pelo menos um status." });
+        return;
+      }
+      
+      const originalStatuses = [...demandStatuses];
+      const demandsToUpdate = demands.filter(d => d.status === statusToDelete.label);
+      const newStatusLabel = demandStatuses.filter(s => s.id !== id)[0]?.label || 'Aberto';
+
+      setDemandStatuses(prev => prev.filter(s => s.id !== id));
+      if (demandsToUpdate.length > 0) {
+        setDemands(prev => prev.map(d => d.status === statusToDelete.label ? { ...d, status: newStatusLabel } : d));
+      }
+      
+      try {
+        if (demandsToUpdate.length > 0) {
+          const updatePromises = demandsToUpdate.map(d => updateDbDemand({ ...d, status: newStatusLabel }));
+          await Promise.all(updatePromises);
+        }
+        await deleteDbDemandStatus(id);
+        toast({ title: "Status Removido", description: `"${statusToDelete.label}" foi removido.`});
+      } catch (error) {
+        toast({ variant: 'destructive', title: "Erro de Sincronização", description: 'Não foi possível remover o status.' });
+        setDemandStatuses(originalStatuses);
+        // Revert demand statuses if needed
+         if (demandsToUpdate.length > 0) {
+           setDemands(prev => prev.map(d => {
+              const originalDemand = demandsToUpdate.find(upd => upd.id === d.id);
+              return originalDemand ? { ...d, status: originalDemand.status } : d;
+           }));
+         }
+      }
+    };
+
 
     // Determine what to render
     const isLoading = !authChecked || !dataLoaded;
@@ -140,7 +198,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 vacations, setVacations,
                 employees, setEmployees,
                 certificates, setCertificates,
-                demandStatuses, setDemandStatuses
+                demandStatuses, setDemandStatuses,
+                addGlobalDemandStatus,
+                deleteGlobalDemandStatus,
             }}>
                 {children}
             </AuthContext.Provider>
@@ -157,3 +217,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
        </div>
     );
 }
+
+    

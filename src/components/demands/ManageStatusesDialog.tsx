@@ -19,13 +19,11 @@ import { Loader2, PlusCircle, Trash2, X, Palette, Smile, icons, type LucideIcon,
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useAuth } from '../AuthProvider';
 
 interface ManageStatusesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  statuses: DemandStatus[];
-  onAddStatus: (label: string, icon: string, color: string) => void;
-  onDeleteStatus: (id: string) => Promise<void>;
 }
 
 const availableIcons = [
@@ -53,31 +51,27 @@ const fixedStatuses = ["Aberto", "Aguardando Resposta", "Finalizado"];
 export default function ManageStatusesDialog({
   open,
   onOpenChange,
-  statuses,
-  onAddStatus,
-  onDeleteStatus,
 }: ManageStatusesDialogProps) {
   const { toast } = useToast();
+  const { demandStatuses, addGlobalDemandStatus, deleteGlobalDemandStatus, demands } = useAuth();
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [selectedIcon, setSelectedIcon] = useState("Inbox");
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newStatusLabel.trim()) {
       toast({ variant: 'destructive', title: "Erro", description: "O nome do status não pode ser vazio." });
       return;
     }
-    if (statuses.some(s => s.label.toLowerCase() === newStatusLabel.trim().toLowerCase())) {
+    if (demandStatuses.some(s => s.label.toLowerCase() === newStatusLabel.trim().toLowerCase())) {
       toast({ variant: 'destructive', title: "Erro", description: "Este status já existe." });
       return;
     }
 
     setIsAdding(true);
-    
-    // Optimistic UI update
-    onAddStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
+    await addGlobalDemandStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
 
     // Reset form for next entry
     setNewStatusLabel("");
@@ -93,10 +87,7 @@ export default function ManageStatusesDialog({
     }
     setDeletingId(status.id);
     try {
-        await onDeleteStatus(status.id);
-        toast({ title: "Status Removido", description: `"${status.label}" foi removido.`});
-    } catch (error) {
-        // The error toast is handled in the parent component
+        await deleteGlobalDemandStatus(status.id, demands);
     } finally {
         setDeletingId(null);
     }
@@ -115,7 +106,7 @@ export default function ManageStatusesDialog({
           <div className="space-y-2">
             <h4 className="font-medium">Status Atuais</h4>
             <ScrollArea className="h-40 rounded-md border p-2">
-                {statuses.length > 0 ? statuses.map((status) => (
+                {demandStatuses.length > 0 ? demandStatuses.map((status) => (
                     <div key={status.id} className="flex items-center justify-between p-1">
                         <div className="flex items-center gap-2">
                             <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color ? status.color.replace("bg-", "text-") : "")} />
@@ -203,3 +194,5 @@ export default function ManageStatusesDialog({
     </Dialog>
   );
 }
+
+    

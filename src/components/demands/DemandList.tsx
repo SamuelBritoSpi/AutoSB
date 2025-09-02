@@ -11,17 +11,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import DemandForm from './DemandForm';
 import ManageStatusesDialog from './ManageStatusesDialog';
 import { cn } from '@/lib/utils';
+import { useAuth } from '../AuthProvider';
 
 
 interface DemandListProps {
   demands: Demand[];
-  statuses: DemandStatus[];
   onUpdateStatus: (id: string, status: string) => void;
   onDeleteDemand: (id: string) => void;
   onUpdateDemand: (demand: Demand) => void;
   employees: Employee[];
-  onAddStatus: (label: string, icon: string, color: string) => void;
-  onDeleteStatus: (id: string) => Promise<void>;
 }
 
 type SortKey = 'dueDate' | 'priority' | 'description';
@@ -34,14 +32,12 @@ const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
 
 export default function DemandList({ 
   demands, 
-  statuses,
   onUpdateStatus, 
   onDeleteDemand, 
   onUpdateDemand, 
   employees,
-  onAddStatus,
-  onDeleteStatus
 }: DemandListProps) {
+  const { demandStatuses } = useAuth();
   const [sortKey, setSortKey] = useState<SortKey>('dueDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -102,7 +98,7 @@ export default function DemandList({
             </SelectTrigger>
             <SelectContent>
                 <SelectItem value="all">Todos Status</SelectItem>
-              {statuses.map((status) => (
+              {demandStatuses.map((status) => (
                 <SelectItem key={status.id} value={status.label}>
                     <div className='flex items-center gap-2'>
                         <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color ? status.color.replace("bg-", "text-") : "")} />
@@ -137,7 +133,6 @@ export default function DemandList({
             <DemandCard 
               key={demand.id} 
               demand={demand} 
-              statuses={statuses}
               onUpdateStatus={onUpdateStatus}
               onDelete={onDeleteDemand}
               onEdit={handleEdit} 
@@ -165,10 +160,9 @@ export default function DemandList({
       <ManageStatusesDialog
         open={isStatusManagerOpen}
         onOpenChange={setIsStatusManagerOpen}
-        statuses={statuses}
-        onAddStatus={onAddStatus}
-        onDeleteStatus={onDeleteStatus}
       />
     </div>
   );
 }
+
+    

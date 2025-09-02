@@ -12,6 +12,7 @@ import { AlertTriangle, ArrowDownCircle, CalendarDays, CheckCircle2, ChevronDown
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
+import { useAuth } from '../AuthProvider';
 
 
 interface DemandCardProps {
@@ -19,7 +20,6 @@ interface DemandCardProps {
   onUpdateStatus: (id: string, status: string) => void;
   onDelete: (id: string) => void;
   onEdit: (demand: Demand) => void;
-  statuses: DemandStatus[];
   onManageStatuses: () => void;
 }
 
@@ -40,11 +40,12 @@ const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     return IconComponent ? <IconComponent {...props} /> : <Smile {...props}/>;
 };
 
-export default function DemandCard({ demand, onUpdateStatus, onDelete, onEdit, statuses, onManageStatuses }: DemandCardProps) {
+export default function DemandCard({ demand, onUpdateStatus, onDelete, onEdit, onManageStatuses }: DemandCardProps) {
+  const { demandStatuses } = useAuth();
   
   const currentStatus = useMemo(() => {
-    return statuses.find(s => s.label === demand.status);
-  }, [demand.status, statuses]);
+    return demandStatuses.find(s => s.label === demand.status);
+  }, [demand.status, demandStatuses]);
 
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -100,7 +101,7 @@ export default function DemandCard({ demand, onUpdateStatus, onDelete, onEdit, s
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {statuses.map((status) => (
+            {demandStatuses.map((status) => (
               <DropdownMenuItem key={status.id} onClick={() => onUpdateStatus(demand.id, status.label)} disabled={demand.status === status.label}>
                 <LucideIcon name={status.icon} className={cn("mr-2 h-4 w-4", status.color ? status.color.replace("bg-", "text-") : "")} />
                 {status.label}
@@ -116,3 +117,5 @@ export default function DemandCard({ demand, onUpdateStatus, onDelete, onEdit, s
     </Card>
   );
 }
+
+    

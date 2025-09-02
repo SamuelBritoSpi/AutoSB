@@ -34,8 +34,6 @@ import {
   deleteEmployee as deleteDbEmployee,
   addCertificate as addDbCertificate,
   deleteCertificate as deleteDbCertificate,
-  addDemandStatus,
-  deleteDemandStatus as deleteDbDemandStatus,
 } from '@/lib/idb';
 import { sendNotification } from '@/ai/flows/send-notification-flow';
 
@@ -46,7 +44,7 @@ export default function GestaoFeriasPage() {
     vacations, setVacations,
     employees, setEmployees,
     certificates, setCertificates,
-    demandStatuses, setDemandStatuses,
+    demandStatuses,
   } = useAuth();
   
   const { toast } = useToast();
@@ -133,64 +131,6 @@ export default function GestaoFeriasPage() {
       }
     }
   };
-  
-  const handleAddDemandStatus = (label: string, icon: string, color: string) => {
-    const newOrder = demandStatuses.length > 0 ? Math.max(...demandStatuses.map(s => s.order)) + 1 : 0;
-    const tempId = `temp-status-${Date.now()}`;
-    const newStatusData = { label, icon, color, order: newOrder };
-    
-    const optimisticStatus: DemandStatus = { ...newStatusData, id: tempId };
-    setDemandStatuses(prev => [...prev, optimisticStatus]);
-
-    addDemandStatus(newStatusData)
-      .then(savedStatus => {
-        setDemandStatuses(prev => prev.map(s => s.id === tempId ? savedStatus : s));
-        toast({ title: "Status Adicionado", description: `"${label}" foi adicionado com sucesso.` });
-      })
-      .catch(error => {
-        toast({ variant: 'destructive', title: "Erro", description: "Não foi possível adicionar o status." });
-        setDemandStatuses(prev => prev.filter(s => s.id !== tempId));
-      });
-  };
-
-  const handleDeleteDemandStatus = async (id: string) => {
-    const statusToDelete = demandStatuses.find(s => s.id === id);
-    if (!statusToDelete) return;
-    
-    if (demandStatuses.length <= 1) {
-      toast({ variant: 'destructive', title: "Ação não permitida", description: "Deve haver pelo menos um status." });
-      return;
-    }
-    
-    const originalStatuses = [...demandStatuses];
-    const demandsToUpdate = demands.filter(d => d.status === statusToDelete.label);
-    const newStatusLabel = demandStatuses.filter(s => s.id !== id)[0]?.label || 'Recebido'; // Fallback
-
-    setDemandStatuses(prev => prev.filter(s => s.id !== id));
-    if (demandsToUpdate.length > 0) {
-      setDemands(prev => prev.map(d => d.status === statusToDelete.label ? { ...d, status: newStatusLabel } : d));
-    }
-    toast({ title: "Status Removido", description: `"${statusToDelete.label}" foi removido.`});
-    
-    try {
-      if (demandsToUpdate.length > 0) {
-        const updatePromises = demandsToUpdate.map(d => updateDbDemand({ ...d, status: newStatusLabel }));
-        await Promise.all(updatePromises);
-      }
-      await deleteDbDemandStatus(id);
-    } catch (error) {
-      toast({ variant: 'destructive', title: "Erro de Sincronização", description: 'Não foi possível remover o status.' });
-      setDemandStatuses(originalStatuses);
-      // Revert demand statuses if needed
-       if (demandsToUpdate.length > 0) {
-         setDemands(prev => prev.map(d => {
-            const originalDemand = demandsToUpdate.find(upd => upd.id === d.id);
-            return originalDemand ? { ...d, status: originalDemand.status } : d;
-         }));
-       }
-    }
-  };
-
 
   const handleAddVacation = (vacationData: Omit<Vacation, 'id'>) => {
     const tempId = `temp-vacation-${Date.now()}`;
@@ -380,13 +320,10 @@ export default function GestaoFeriasPage() {
             <h2 id="demands-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Demandas</h2>
             <DemandList 
               demands={demands} 
-              statuses={demandStatuses}
               onUpdateStatus={handleUpdateDemandStatus}
               onDeleteDemand={handleDeleteDemand}
               onUpdateDemand={handleUpdateDemand}
               employees={employees}
-              onAddStatus={handleAddDemandStatus}
-              onDeleteStatus={handleDeleteDemandStatus}
             />
           </section>
         </TabsContent>
@@ -448,3 +385,5 @@ export default function GestaoFeriasPage() {
     </div>
   );
 }
+
+    
