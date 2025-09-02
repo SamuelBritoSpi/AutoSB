@@ -22,6 +22,7 @@ interface DemandListProps {
   onUpdateDemand: (demand: Demand) => void;
   onAddStatus: (label: string, icon: string, color: string) => void;
   onDeleteStatus: (id: string) => void;
+  onUpdateStatusDetails: (status: DemandStatus) => void;
 }
 
 type SortKey = 'dueDate' | 'priority' | 'description';
@@ -44,6 +45,7 @@ export default function DemandList({
   onUpdateDemand, 
   onAddStatus,
   onDeleteStatus,
+  onUpdateStatusDetails
 }: DemandListProps) {
   const [sortKey, setSortKey] = useState<SortKey>('dueDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -171,6 +173,7 @@ export default function DemandList({
         demandStatuses={demandStatuses}
         onAddStatus={onAddStatus}
         onDeleteStatus={onDeleteStatus}
+        onUpdateStatus={onUpdateStatusDetails}
         demands={demands}
       />
     </div>

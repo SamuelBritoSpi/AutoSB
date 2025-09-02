@@ -35,6 +35,7 @@ import {
   deleteCertificate as deleteDbCertificate,
   addDemandStatus as addDbDemandStatus,
   deleteDemandStatus as deleteDbDemandStatus,
+  updateDemandStatus as updateDbDemandStatus,
   getAllData,
 } from '@/lib/idb';
 import { sendNotification } from '@/ai/flows/send-notification-flow';
@@ -369,6 +370,21 @@ export default function GestaoFeriasPage() {
       }
     };
 
+    const updateGlobalDemandStatus = (updatedStatus: DemandStatus) => {
+      const originalStatuses = [...demandStatuses];
+      setDemandStatuses(prev => prev.map(s => (s.id === updatedStatus.id ? updatedStatus : s)).sort((a,b) => a.order - b.order));
+      
+      updateDbDemandStatus(updatedStatus)
+          .then(() => {
+              toast({ title: "Status Atualizado", description: `"${updatedStatus.label}" foi atualizado.` });
+          })
+          .catch(error => {
+              console.error("Failed to update status:", error);
+              toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível atualizar o status.' });
+              setDemandStatuses(originalStatuses);
+          });
+    };
+
 
   if (!dataLoaded) {
     return (
@@ -449,6 +465,7 @@ export default function GestaoFeriasPage() {
               onUpdateDemand={handleUpdateDemand}
               onAddStatus={addGlobalDemandStatus}
               onDeleteStatus={deleteGlobalDemandStatus}
+              onUpdateStatusDetails={updateGlobalDemandStatus}
               employees={employees}
             />
           </section>

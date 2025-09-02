@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import type { Demand, DemandStatus } from "@/lib/types";
-import { Loader2, PlusCircle, Trash2, X, Palette, Smile, icons, type LucideIcon, type LucideProps, Lock, Check, ChevronsUpDown } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, X, Palette, Smile, icons, type LucideIcon, type LucideProps, Lock, Check, ChevronsUpDown, Pencil, Save } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,7 @@ interface ManageStatusesDialogProps {
   demands: Demand[];
   onAddStatus: (label: string, icon: string, color: string) => void;
   onDeleteStatus: (id: string) => void;
+  onUpdateStatus: (status: DemandStatus) => void;
 }
 
 const availableIcons = [
@@ -71,6 +72,7 @@ export default function ManageStatusesDialog({
   demands,
   onAddStatus,
   onDeleteStatus,
+  onUpdateStatus,
 }: ManageStatusesDialogProps) {
   const { toast } = useToast();
   const [newStatusLabel, setNewStatusLabel] = useState("");
@@ -79,23 +81,50 @@ export default function ManageStatusesDialog({
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
+  
+  const [editingStatus, setEditingStatus] = useState<DemandStatus | null>(null);
 
-  const handleAdd = () => {
+  useEffect(() => {
+    // Reset form when dialog is opened/closed or editing state changes
+    if (!open || !editingStatus) {
+      setEditingStatus(null);
+      setNewStatusLabel("");
+      setSelectedIcon("Inbox");
+      setSelectedColor(availableColors[0].value);
+    } else {
+      // Pre-fill form if editing
+      setNewStatusLabel(editingStatus.label);
+      setSelectedIcon(editingStatus.icon);
+      setSelectedColor(editingStatus.color);
+    }
+  }, [open, editingStatus]);
+
+
+  const handleSave = () => {
     if (!newStatusLabel.trim()) {
       toast({ variant: 'destructive', title: "Erro", description: "O nome do status não pode ser vazio." });
       return;
     }
-    if (demandStatuses.some(s => s.label.toLowerCase() === newStatusLabel.trim().toLowerCase())) {
-      toast({ variant: 'destructive', title: "Erro", description: "Este status já existe." });
-      return;
-    }
-
+    
     setIsAdding(true);
     try {
-      onAddStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
-      setNewStatusLabel("");
-      setSelectedIcon("Inbox");
-      setSelectedColor(availableColors[0].value);
+      if (editingStatus) {
+        // Update existing status
+        onUpdateStatus({
+          ...editingStatus,
+          label: newStatusLabel.trim(),
+          icon: selectedIcon,
+          color: selectedColor,
+        });
+      } else {
+        // Add new status
+        if (demandStatuses.some(s => s.label.toLowerCase() === newStatusLabel.trim().toLowerCase())) {
+          toast({ variant: 'destructive', title: "Erro", description: "Este status já existe." });
+          return;
+        }
+        onAddStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
+      }
+      setEditingStatus(null); // Reset editing state
     } finally {
       setIsAdding(false);
     }
@@ -114,13 +143,15 @@ export default function ManageStatusesDialog({
     }
   };
 
+  const isFixed = editingStatus ? fixedStatuses.includes(editingStatus.label) : false;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Gerenciar Status</DialogTitle>
           <DialogDescription>
-            Adicione ou remova os status que sua equipe usa para acompanhar as demandas.
+            Adicione, edite ou remova os status para acompanhar as demandas.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -128,15 +159,23 @@ export default function ManageStatusesDialog({
             <h4 className="font-medium">Status Atuais</h4>
             <ScrollArea className="h-40 rounded-md border p-2">
                 {demandStatuses.length > 0 ? demandStatuses.map((status) => (
-                    <div key={status.id} className="flex items-center justify-between p-1">
-                        <div className="flex items-center gap-2 rounded-md px-2.5 py-0.5 text-xs font-semibold">
+                    <div key={status.id} className="flex items-center justify-between p-1 group">
+                        <div className={cn(
+                            "flex items-center gap-2 rounded-md px-2.5 py-0.5 text-xs font-semibold",
+                            editingStatus?.id === status.id && 'bg-accent'
+                          )}>
                             <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color)} />
                             <span className="text-foreground/80">{status.label}</span>
-                             {fixedStatuses.includes(status.label) && <Lock className="h-3 w-3 text-muted-foreground" />}
+                             {fixedStatuses.includes(status.label) && <Lock className="h-3 w-3 text-muted-foreground" title="Status fixo"/>}
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(status)} disabled={deletingId === status.id || fixedStatuses.includes(status.label)}>
-                            {deletingId === status.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-destructive" />}
-                        </Button>
+                        <div className="flex items-center">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingStatus(status)}>
+                                <Pencil className="h-4 w-4 text-blue-600" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(status)} disabled={deletingId === status.id || fixedStatuses.includes(status.label)}>
+                                {deletingId === status.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-destructive" />}
+                            </Button>
+                        </div>
                     </div>
                 )) : (
                     <p className="text-sm text-muted-foreground text-center py-4">Nenhum status cadastrado.</p>
@@ -144,7 +183,7 @@ export default function ManageStatusesDialog({
             </ScrollArea>
           </div>
           <div className="space-y-4 border-t pt-4">
-             <h4 className="font-medium">Adicionar Novo Status</h4>
+             <h4 className="font-medium">{editingStatus ? 'Editar Status' : 'Adicionar Novo Status'}</h4>
             <div className="space-y-2">
                 <Label htmlFor="new-status-label">Nome do Status</Label>
                 <Input
@@ -152,16 +191,19 @@ export default function ManageStatusesDialog({
                     value={newStatusLabel}
                     onChange={(e) => setNewStatusLabel(e.target.value)}
                     placeholder="Ex: Em Aprovação"
-                    disabled={isAdding}
+                    disabled={isAdding || isFixed}
                 />
+                 {isFixed && <p className="text-xs text-muted-foreground">O nome de um status fixo não pode ser alterado.</p>}
             </div>
              <div className="space-y-2">
                 <Label>Ícone</Label>
                 <Popover open={iconPopoverOpen} onOpenChange={setIconPopoverOpen}>
                     <PopoverTrigger asChild>
                         <Button variant="outline" role="combobox" aria-expanded={iconPopoverOpen} className='w-full justify-between'>
-                            <LucideIcon name={selectedIcon} className="mr-2 h-4 w-4" />
-                            {selectedIcon}
+                            <div className="flex items-center gap-2">
+                                <LucideIcon name={selectedIcon} className={cn("h-4 w-4", selectedColor)} />
+                                {selectedIcon}
+                            </div>
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
@@ -210,11 +252,16 @@ export default function ManageStatusesDialog({
                 </div>
               </div>
 
-             <div className="pt-2">
-                <Button onClick={handleAdd} disabled={isAdding || !newStatusLabel.trim()} className='w-full'>
-                    {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4"/>}
-                    Adicionar
+             <div className="pt-2 flex gap-2">
+                <Button onClick={handleSave} disabled={isAdding || !newStatusLabel.trim()} className='w-full'>
+                    {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (editingStatus ? <Save className="mr-2 h-4 w-4" /> : <PlusCircle className="mr-2 h-4 w-4"/>)}
+                    {editingStatus ? 'Salvar Alterações' : 'Adicionar'}
                 </Button>
+                {editingStatus && (
+                    <Button variant="ghost" onClick={() => setEditingStatus(null)}>
+                        Cancelar Edição
+                    </Button>
+                )}
              </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 
 
 
+
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query } from 'firebase/firestore';
 import { getDbInstance } from './firebase-client'; // Use client-specific db
 import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from './types';
@@ -69,6 +70,7 @@ export const addDemandStatus = async (status: Omit<DemandStatus, 'id'>): Promise
     const newId = await add(STORES.demandStatuses, status);
     return { ...status, id: newId };
 };
+export const updateDemandStatus = (status: DemandStatus) => update(STORES.demandStatuses, status);
 export const deleteDemandStatus = (id: string) => remove(STORES.demandStatuses, id);
 
 
