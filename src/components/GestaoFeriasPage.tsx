@@ -414,7 +414,7 @@ export default function GestaoFeriasPage() {
         </div>
         
         <TabsContent value="dashboard" className="space-y-6 mt-6">
-          <DashboardTab demands={demands} employees={employees} certificates={certificates} />
+          <DashboardTab demands={demands} employees={employees} certificates={certificates} demandStatuses={demandStatuses}/>
         </TabsContent>
 
         <TabsContent value="calendar" className="space-y-6 mt-6">

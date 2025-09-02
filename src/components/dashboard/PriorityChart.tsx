@@ -3,7 +3,7 @@
 
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import type { Demand } from '@/lib/types';
+import type { Demand, DemandStatus } from '@/lib/types';
 import { useTheme } from 'next-themes';
 
 
@@ -11,6 +11,7 @@ const FINAL_STATUS_LABEL = 'Finalizado';
 
 interface PriorityChartProps {
   demands: Demand[];
+  demandStatuses: DemandStatus[];
 }
 
 const COLORS: Record<Demand['priority'], string> = {
@@ -34,7 +35,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
-export default function PriorityChart({ demands }: PriorityChartProps) {
+export default function PriorityChart({ demands, demandStatuses }: PriorityChartProps) {
     const { resolvedTheme } = useTheme();
     
     const chartData = useMemo(() => {

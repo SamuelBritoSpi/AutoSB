@@ -46,6 +46,8 @@ export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onD
     return demandStatuses.find(s => s.label === demand.status);
   }, [demand.status, demandStatuses]);
 
+  const textColorClass = currentStatus?.color?.replace('bg-', 'text-');
+
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
@@ -84,8 +86,8 @@ export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onD
          <div className="flex items-center text-sm">
             {currentStatus ? (
               <div className={cn("flex items-center gap-2 rounded-full border px-2.5 py-0.5 text-xs font-semibold", currentStatus.color ? currentStatus.color.replace("bg-", "border-").replace("-500", "/40 dark:border-white/20") : "")}>
-                  <LucideIcon name={currentStatus.icon} className={cn("h-4 w-4", currentStatus.color ? currentStatus.color.replace("bg-", "text-") : "")} />
-                  <span className={cn("text-xs font-semibold", currentStatus.color ? currentStatus.color.replace("bg-", "text-") : "")}>{currentStatus.label}</span>
+                  <LucideIcon name={currentStatus.icon} className={cn("h-4 w-4", textColorClass)} />
+                  <span className={cn("text-xs font-semibold", textColorClass)}>{currentStatus.label}</span>
               </div>
             ) : (
                <Badge variant="secondary">{demand.status}</Badge>

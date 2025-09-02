@@ -2,7 +2,7 @@
 "use client";
 
 import { useMemo } from 'react';
-import type { Demand, Employee, MedicalCertificate } from '@/lib/types';
+import type { Demand, Employee, MedicalCertificate, DemandStatus } from '@/lib/types';
 import StatCard from './StatCard';
 import PriorityChart from './PriorityChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,13 +16,14 @@ interface DashboardTabProps {
   demands: Demand[];
   employees: Employee[];
   certificates: MedicalCertificate[];
+  demandStatuses: DemandStatus[];
 }
 
-// Fixed statuses for dashboard logic
 const FINAL_STATUS_LABEL = 'Finalizado';
 const WAITING_STATUS_LABEL = 'Aguardando Resposta';
 
-export default function DashboardTab({ demands, employees, certificates }: DashboardTabProps) {
+
+export default function DashboardTab({ demands, employees, certificates, demandStatuses }: DashboardTabProps) {
   
   const demandStats = useMemo(() => {
     const done = demands.filter(d => d.status === FINAL_STATUS_LABEL).length;
@@ -68,7 +69,7 @@ export default function DashboardTab({ demands, employees, certificates }: Dashb
             <CardTitle>Demandas por Prioridade</CardTitle>
           </CardHeader>
           <CardContent>
-            <PriorityChart demands={demands} />
+            <PriorityChart demands={demands} demandStatuses={demandStatuses} />
           </CardContent>
         </Card>
 
