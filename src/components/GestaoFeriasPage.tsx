@@ -134,22 +134,25 @@ export default function GestaoFeriasPage() {
     }
   };
   
-  const handleAddDemandStatus = async (label: string) => {
+  const handleAddDemandStatus = (label: string) => {
     const newOrder = demandStatuses.length > 0 ? Math.max(...demandStatuses.map(s => s.order)) + 1 : 0;
     const tempId = `temp-status-${Date.now()}`;
     const newStatusData = { label, order: newOrder };
     
+    // Optimistic UI update
     const optimisticStatus: DemandStatus = { ...newStatusData, id: tempId };
     setDemandStatuses(prev => [...prev, optimisticStatus]);
 
-    try {
-      const savedStatus = await addDemandStatus(newStatusData);
-      setDemandStatuses(prev => prev.map(s => s.id === tempId ? savedStatus : s));
-      toast({ title: "Status Adicionado", description: `"${label}" foi adicionado com sucesso.` });
-    } catch (error) {
-      toast({ variant: 'destructive', title: "Erro", description: "Não foi possível adicionar o status." });
-      setDemandStatuses(prev => prev.filter(s => s.id !== tempId));
-    }
+    // Async database operation
+    addDemandStatus(newStatusData)
+      .then(savedStatus => {
+        setDemandStatuses(prev => prev.map(s => s.id === tempId ? savedStatus : s));
+        toast({ title: "Status Adicionado", description: `"${label}" foi adicionado com sucesso.` });
+      })
+      .catch(error => {
+        toast({ variant: 'destructive', title: "Erro", description: "Não foi possível adicionar o status." });
+        setDemandStatuses(prev => prev.filter(s => s.id !== tempId));
+      });
   };
 
   const handleDeleteDemandStatus = async (id: string) => {

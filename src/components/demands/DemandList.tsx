@@ -19,7 +19,7 @@ interface DemandListProps {
   onDeleteDemand: (id: string) => void;
   onUpdateDemand: (demand: Demand) => void;
   employees: Employee[];
-  onAddStatus: (label: string) => Promise<void>;
+  onAddStatus: (label: string) => void;
   onDeleteStatus: (id: string) => Promise<void>;
 }
 

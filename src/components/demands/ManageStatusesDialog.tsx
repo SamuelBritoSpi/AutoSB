@@ -21,7 +21,7 @@ interface ManageStatusesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   statuses: DemandStatus[];
-  onAddStatus: (label: string) => Promise<void>;
+  onAddStatus: (label: string) => void;
   onDeleteStatus: (id: string) => Promise<void>;
 }
 
@@ -45,11 +45,11 @@ export default function ManageStatusesDialog({
     setIsAdding(true);
     
     // Call the passed-in function, which now handles optimistic UI
-    onAddStatus(newStatusLabel.trim())
-      .finally(() => {
-        setIsAdding(false);
-        setNewStatusLabel("");
-      });
+    onAddStatus(newStatusLabel.trim());
+
+    // Reset the UI immediately
+    setNewStatusLabel("");
+    setIsAdding(false);
   };
 
   const handleDelete = async (status: DemandStatus) => {
