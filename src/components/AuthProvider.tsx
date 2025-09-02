@@ -118,6 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 } catch (error) {
                     console.error("Failed to load data:", error);
+                    setDataLoaded(true); // Set to true even on error to unblock UI
                 }
             } else {
                 setDataLoaded(true); // No user, no data to load
@@ -244,7 +245,3 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
        </div>
     );
 }
-
-    
-
-    
