@@ -136,34 +136,58 @@ export default function GestaoFeriasPage() {
   
   const handleAddDemandStatus = async (label: string) => {
     const newOrder = demandStatuses.length > 0 ? Math.max(...demandStatuses.map(s => s.order)) + 1 : 0;
+    const tempId = `temp-status-${Date.now()}`;
     const newStatusData = { label, order: newOrder };
     
-    const savedStatus = await addDemandStatus(newStatusData);
-    setDemandStatuses(prev => [...prev, savedStatus]);
+    const optimisticStatus: DemandStatus = { ...newStatusData, id: tempId };
+    setDemandStatuses(prev => [...prev, optimisticStatus]);
+
+    try {
+      const savedStatus = await addDemandStatus(newStatusData);
+      setDemandStatuses(prev => prev.map(s => s.id === tempId ? savedStatus : s));
+      toast({ title: "Status Adicionado", description: `"${label}" foi adicionado com sucesso.` });
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Erro", description: "Não foi possível adicionar o status." });
+      setDemandStatuses(prev => prev.filter(s => s.id !== tempId));
+    }
   };
 
   const handleDeleteDemandStatus = async (id: string) => {
     const statusToDelete = demandStatuses.find(s => s.id === id);
     if (!statusToDelete) return;
     
-    // Prevent deletion if it's the only status
     if (demandStatuses.length <= 1) {
       toast({ variant: 'destructive', title: "Ação não permitida", description: "Deve haver pelo menos um status." });
       return;
     }
     
-    // Update demands that have the status being deleted
+    const originalStatuses = [...demandStatuses];
     const demandsToUpdate = demands.filter(d => d.status === statusToDelete.label);
-    const newStatusLabel = demandStatuses[0].label; // Fallback to the first status
+    const newStatusLabel = demandStatuses.filter(s => s.id !== id)[0]?.label || 'Recebido'; // Fallback
+
+    setDemandStatuses(prev => prev.filter(s => s.id !== id));
     if (demandsToUpdate.length > 0) {
-      const updatePromises = demandsToUpdate.map(d => updateDbDemand({ ...d, status: newStatusLabel }));
-      await Promise.all(updatePromises);
       setDemands(prev => prev.map(d => d.status === statusToDelete.label ? { ...d, status: newStatusLabel } : d));
     }
+    toast({ title: "Status Removido", description: `"${statusToDelete.label}" foi removido.`});
     
-    // Delete the status
-    await deleteDbDemandStatus(id);
-    setDemandStatuses(prev => prev.filter(s => s.id !== id));
+    try {
+      if (demandsToUpdate.length > 0) {
+        const updatePromises = demandsToUpdate.map(d => updateDbDemand({ ...d, status: newStatusLabel }));
+        await Promise.all(updatePromises);
+      }
+      await deleteDbDemandStatus(id);
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Erro de Sincronização", description: 'Não foi possível remover o status.' });
+      setDemandStatuses(originalStatuses);
+      // Revert demand statuses if needed
+       if (demandsToUpdate.length > 0) {
+         setDemands(prev => prev.map(d => {
+            const originalDemand = demandsToUpdate.find(upd => upd.id === d.id);
+            return originalDemand ? { ...d, status: originalDemand.status } : d;
+         }));
+       }
+    }
   };
 
 

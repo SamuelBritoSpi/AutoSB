@@ -37,21 +37,19 @@ export default function ManageStatusesDialog({
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleAdd = async () => {
+  const handleAdd = () => {
     if (!newStatusLabel.trim()) {
       toast({ variant: 'destructive', title: "Erro", description: "O nome do status não pode ser vazio." });
       return;
     }
     setIsAdding(true);
-    try {
-      await onAddStatus(newStatusLabel.trim());
-      setNewStatusLabel("");
-      toast({ title: "Status Adicionado", description: `"${newStatusLabel.trim()}" foi adicionado com sucesso.` });
-    } catch (error) {
-      toast({ variant: 'destructive', title: "Erro", description: "Não foi possível adicionar o status." });
-    } finally {
-      setIsAdding(false);
-    }
+    
+    // Call the passed-in function, which now handles optimistic UI
+    onAddStatus(newStatusLabel.trim())
+      .finally(() => {
+        setIsAdding(false);
+        setNewStatusLabel("");
+      });
   };
 
   const handleDelete = async (status: DemandStatus) => {
@@ -62,9 +60,8 @@ export default function ManageStatusesDialog({
     setDeletingId(status.id);
     try {
         await onDeleteStatus(status.id);
-        toast({ title: "Status Removido", description: `"${status.label}" foi removido.`});
     } catch (error) {
-        toast({ variant: 'destructive', title: "Erro", description: "Não foi possível remover o status." });
+        // The error toast is handled in the parent component
     } finally {
         setDeletingId(null);
     }
@@ -82,7 +79,7 @@ export default function ManageStatusesDialog({
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <h4 className="font-medium">Status Atuais</h4>
-            <div className="space-y-2 rounded-md border p-2">
+            <div className="space-y-2 rounded-md border p-2 min-h-[6rem]">
                 {statuses.length > 0 ? statuses.map((status) => (
                     <div key={status.id} className="flex items-center justify-between">
                         <span>{status.label}</span>
@@ -91,7 +88,7 @@ export default function ManageStatusesDialog({
                         </Button>
                     </div>
                 )) : (
-                    <p className="text-sm text-muted-foreground text-center">Nenhum status cadastrado.</p>
+                    <p className="text-sm text-muted-foreground text-center py-4">Nenhum status cadastrado.</p>
                 )}
             </div>
           </div>
@@ -103,8 +100,10 @@ export default function ManageStatusesDialog({
                 value={newStatusLabel}
                 onChange={(e) => setNewStatusLabel(e.target.value)}
                 placeholder="Ex: Em Aprovação"
+                onKeyPress={(e) => e.key === 'Enter' && handleAdd()}
+                disabled={isAdding}
                 />
-                <Button onClick={handleAdd} disabled={isAdding}>
+                <Button onClick={handleAdd} disabled={isAdding || !newStatusLabel.trim()}>
                     {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4"/>}
                     Adicionar
                 </Button>
@@ -120,4 +119,3 @@ export default function ManageStatusesDialog({
     </Dialog>
   );
 }
-
