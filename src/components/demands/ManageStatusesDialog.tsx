@@ -18,6 +18,7 @@ import type { DemandStatus } from "@/lib/types";
 import { Loader2, PlusCircle, Trash2, X, Palette, Smile, icons, type LucideIcon, type LucideProps } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ScrollArea } from '../ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface ManageStatusesDialogProps {
   open: boolean;
