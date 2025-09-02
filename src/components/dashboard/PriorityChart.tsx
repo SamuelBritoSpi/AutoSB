@@ -36,26 +36,30 @@ export default function PriorityChart({ demands }: PriorityChartProps) {
     const { resolvedTheme } = useTheme();
     const { demandStatuses } = useAuth();
     
-    const lastStatus = useMemo(() => demandStatuses.slice(-1)[0]?.label, [demandStatuses]);
+    const finalStatusLabel = useMemo(() => {
+        if (demandStatuses.length === 0) return 'finalizado'; // Fallback
+        return demandStatuses[demandStatuses.length - 1].label;
+    }, [demandStatuses]);
 
     const chartData = useMemo(() => {
-        const finalizadoStatus = lastStatus || 'finalizado';
         const priorityCounts: Record<Demand['priority'], number> = {
-        alta: 0,
-        media: 0,
-        baixa: 0,
+            alta: 0,
+            media: 0,
+            baixa: 0,
         };
+        
         demands.forEach(demand => {
-        if (demand.status !== finalizadoStatus) {
-            priorityCounts[demand.priority]++;
-        }
+            if (demand.status !== finalStatusLabel) {
+                priorityCounts[demand.priority]++;
+            }
         });
+        
         return [
-        { name: 'Alta', value: priorityCounts.alta },
-        { name: 'Média', value: priorityCounts.media },
-        { name: 'Baixa', value: priorityCounts.baixa },
+            { name: 'Alta', value: priorityCounts.alta },
+            { name: 'Média', value: priorityCounts.media },
+            { name: 'Baixa', value: priorityCounts.baixa },
         ].filter(d => d.value > 0);
-    }, [demands, lastStatus]);
+    }, [demands, finalStatusLabel]);
 
   if (chartData.length === 0) {
     return (

@@ -22,23 +22,24 @@ interface DashboardTabProps {
 export default function DashboardTab({ demands, employees, certificates }: DashboardTabProps) {
   const { demandStatuses } = useAuth();
   
-  const lastStatus = useMemo(() => demandStatuses.slice(-1)[0]?.label, [demandStatuses]);
+  const finalStatusLabel = useMemo(() => {
+    if (demandStatuses.length === 0) return 'finalizado'; // Fallback
+    return demandStatuses[demandStatuses.length - 1].label;
+  }, [demandStatuses]);
 
   const demandStats = useMemo(() => {
-    const finalizadoStatus = lastStatus || 'finalizado';
-    const newDemands = demands.filter(d => d.status !== finalizadoStatus).length;
     const waiting = demands.filter(d => d.status.toLowerCase().includes('aguardando')).length;
-    const done = demands.filter(d => d.status === finalizadoStatus).length;
-    return { newDemands, waiting, done };
-  }, [demands, lastStatus]);
+    const done = demands.filter(d => d.status === finalStatusLabel).length;
+    const openDemands = demands.length - done;
+    return { openDemands, waiting, done };
+  }, [demands, finalStatusLabel]);
 
   const upcomingDemands = useMemo(() => {
-    const finalizadoStatus = lastStatus || 'finalizado';
     return demands
-      .filter(d => d.status !== finalizadoStatus && parseISO(d.dueDate) >= new Date())
+      .filter(d => d.status !== finalStatusLabel && parseISO(d.dueDate) >= new Date())
       .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())
       .slice(0, 5);
-  }, [demands, lastStatus]);
+  }, [demands, finalStatusLabel]);
 
   const highRiskEmployees = useMemo(() => {
     return employees
@@ -58,7 +59,7 @@ export default function DashboardTab({ demands, employees, certificates }: Dashb
     <div className="space-y-6">
       {/* Cards de Estatísticas */}
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Demandas em Aberto" value={demandStats.newDemands} icon={<Hourglass className="h-5 w-5 text-muted-foreground" />} />
+        <StatCard title="Demandas em Aberto" value={demandStats.openDemands} icon={<Hourglass className="h-5 w-5 text-muted-foreground" />} />
         <StatCard title="Aguardando Resposta" value={demandStats.waiting} icon={<Mailbox className="h-5 w-5 text-muted-foreground" />} />
         <StatCard title="Finalizadas" value={demandStats.done} icon={<CheckCircle2 className="h-5 w-5 text-muted-foreground" />} />
       </div>
