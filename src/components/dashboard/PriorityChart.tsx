@@ -7,6 +7,9 @@ import type { Demand } from '@/lib/types';
 import { useTheme } from 'next-themes';
 import { useAuth } from '../AuthProvider';
 
+
+const FINAL_STATUS_LABEL = 'Finalizado';
+
 interface PriorityChartProps {
   demands: Demand[];
 }
@@ -34,13 +37,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 
 export default function PriorityChart({ demands }: PriorityChartProps) {
     const { resolvedTheme } = useTheme();
-    const { demandStatuses } = useAuth();
     
-    const finalStatusLabel = useMemo(() => {
-        if (demandStatuses.length === 0) return 'finalizado'; // Fallback
-        return demandStatuses[demandStatuses.length - 1].label;
-    }, [demandStatuses]);
-
     const chartData = useMemo(() => {
         const priorityCounts: Record<Demand['priority'], number> = {
             alta: 0,
@@ -49,7 +46,7 @@ export default function PriorityChart({ demands }: PriorityChartProps) {
         };
         
         demands.forEach(demand => {
-            if (demand.status !== finalStatusLabel) {
+            if (demand.status !== FINAL_STATUS_LABEL) {
                 priorityCounts[demand.priority]++;
             }
         });
@@ -59,7 +56,7 @@ export default function PriorityChart({ demands }: PriorityChartProps) {
             { name: 'Média', value: priorityCounts.media },
             { name: 'Baixa', value: priorityCounts.baixa },
         ].filter(d => d.value > 0);
-    }, [demands, finalStatusLabel]);
+    }, [demands]);
 
   if (chartData.length === 0) {
     return (

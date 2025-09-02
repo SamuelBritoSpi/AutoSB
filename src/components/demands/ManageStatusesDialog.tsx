@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import type { DemandStatus } from "@/lib/types";
-import { Loader2, PlusCircle, Trash2, X, Palette, Smile, icons, type LucideIcon, type LucideProps } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, X, Palette, Smile, icons, type LucideIcon, type LucideProps, Lock } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -46,6 +46,9 @@ const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     return IconComponent ? <IconComponent {...props} /> : <Smile {...props}/>;
 };
 
+// Define the fixed statuses that cannot be deleted.
+const fixedStatuses = ["Aberto", "Aguardando Resposta", "Finalizado"];
+
 
 export default function ManageStatusesDialog({
   open,
@@ -66,10 +69,17 @@ export default function ManageStatusesDialog({
       toast({ variant: 'destructive', title: "Erro", description: "O nome do status não pode ser vazio." });
       return;
     }
+    if (statuses.some(s => s.label.toLowerCase() === newStatusLabel.trim().toLowerCase())) {
+      toast({ variant: 'destructive', title: "Erro", description: "Este status já existe." });
+      return;
+    }
+
     setIsAdding(true);
     
+    // Optimistic UI update
     onAddStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
 
+    // Reset form for next entry
     setNewStatusLabel("");
     setSelectedIcon("Inbox");
     setSelectedColor("bg-blue-500");
@@ -77,13 +87,14 @@ export default function ManageStatusesDialog({
   };
 
   const handleDelete = async (status: DemandStatus) => {
-    if (statuses.length <= 1) {
-        toast({ variant: 'destructive', title: "Ação não permitida", description: "Deve haver pelo menos um status." });
-        return;
+    if (fixedStatuses.includes(status.label)) {
+      toast({ variant: 'destructive', title: "Ação não permitida", description: "Este é um status fixo e não pode ser excluído." });
+      return;
     }
     setDeletingId(status.id);
     try {
         await onDeleteStatus(status.id);
+        toast({ title: "Status Removido", description: `"${status.label}" foi removido.`});
     } catch (error) {
         // The error toast is handled in the parent component
     } finally {
@@ -109,8 +120,9 @@ export default function ManageStatusesDialog({
                         <div className="flex items-center gap-2">
                             <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color ? status.color.replace("bg-", "text-") : "")} />
                             <span>{status.label}</span>
+                             {fixedStatuses.includes(status.label) && <Lock className="h-3 w-3 text-muted-foreground" />}
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(status)} disabled={deletingId === status.id}>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(status)} disabled={deletingId === status.id || fixedStatuses.includes(status.label)}>
                             {deletingId === status.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-destructive" />}
                         </Button>
                     </div>

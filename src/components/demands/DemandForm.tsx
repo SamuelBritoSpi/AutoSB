@@ -39,8 +39,7 @@ interface DemandFormProps {
 
 export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand, onClose, employees }: DemandFormProps) {
   const { toast } = useToast();
-  const { demandStatuses } = useAuth();
-
+  
   const form = useForm<DemandFormValues>({
     resolver: zodResolver(demandSchema),
     defaultValues: existingDemand ? {
@@ -74,7 +73,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
         description: values.description,
         priority: values.priority as DemandPriority,
         dueDate: values.dueDate.toISOString(),
-        status: demandStatuses?.[0]?.label || 'Recebido', // Default to first status or a fallback
+        status: 'Aberto', // Default to first status or a fallback
         ownerId: values.ownerId,
       };
       onAddDemand(demandData);

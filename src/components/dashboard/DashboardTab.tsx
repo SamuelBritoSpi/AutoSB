@@ -19,27 +19,25 @@ interface DashboardTabProps {
   certificates: MedicalCertificate[];
 }
 
-export default function DashboardTab({ demands, employees, certificates }: DashboardTabProps) {
-  const { demandStatuses } = useAuth();
-  
-  const finalStatusLabel = useMemo(() => {
-    if (demandStatuses.length === 0) return 'finalizado'; // Fallback
-    return demandStatuses[demandStatuses.length - 1].label;
-  }, [demandStatuses]);
+// Fixed statuses for dashboard logic
+const FINAL_STATUS_LABEL = 'Finalizado';
+const WAITING_STATUS_LABEL = 'Aguardando Resposta';
 
+export default function DashboardTab({ demands, employees, certificates }: DashboardTabProps) {
+  
   const demandStats = useMemo(() => {
-    const waiting = demands.filter(d => d.status.toLowerCase().includes('aguardando')).length;
-    const done = demands.filter(d => d.status === finalStatusLabel).length;
+    const done = demands.filter(d => d.status === FINAL_STATUS_LABEL).length;
+    const waiting = demands.filter(d => d.status === WAITING_STATUS_LABEL).length;
     const openDemands = demands.length - done;
     return { openDemands, waiting, done };
-  }, [demands, finalStatusLabel]);
+  }, [demands]);
 
   const upcomingDemands = useMemo(() => {
     return demands
-      .filter(d => d.status !== finalStatusLabel && parseISO(d.dueDate) >= new Date())
+      .filter(d => d.status !== FINAL_STATUS_LABEL && parseISO(d.dueDate) >= new Date())
       .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())
       .slice(0, 5);
-  }, [demands, finalStatusLabel]);
+  }, [demands]);
 
   const highRiskEmployees = useMemo(() => {
     return employees
