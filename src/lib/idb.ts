@@ -2,6 +2,7 @@
 
 
 
+
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query } from 'firebase/firestore';
 import { getDbInstance } from './firebase-client'; // Use client-specific db
 import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from './types';
@@ -162,3 +163,5 @@ export async function importData(data: AllData): Promise<void> {
 
     await batch.commit();
 }
+
+    

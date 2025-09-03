@@ -37,11 +37,12 @@ import {
   deleteDemandStatus as deleteDbDemandStatus,
   updateDemandStatus as updateDbDemandStatus,
   getAllData,
+  getDemandStatuses,
 } from '@/lib/idb';
 import { sendNotification } from '@/ai/flows/send-notification-flow';
 
 // Define the fixed statuses that should always exist.
-const FIXED_STATUSES: Record<string, Omit<DemandStatus, 'id' | 'label'>> = {
+const FIXED_STATUSES: Record<string, Omit<DemandStatus, 'id'>> = {
   "Aberto": { order: 0, icon: "Inbox", color: "text-gray-500" },
   "Aguardando Resposta": { order: 1, icon: "MailQuestion", color: "text-yellow-500" },
   "Finalizado": { order: 99, icon: "CheckCircle2", color: "text-green-500" },
@@ -71,27 +72,30 @@ export default function GestaoFeriasPage() {
         setEmployees(initialData.employees);
         setCertificates(initialData.certificates);
 
-        // Ensure fixed statuses exist
-        const existingLabels = new Set(initialData.demandStatuses.map(s => s.label));
-        let statuses = [...initialData.demandStatuses];
-        
-        const updatePromises: Promise<any>[] = [];
+        // This is a more robust way to ensure fixed statuses exist.
+        const ensureFixedStatuses = async (currentStatuses: DemandStatus[]): Promise<DemandStatus[]> => {
+          const existingLabels = new Set(currentStatuses.map(s => s.label));
+          const statusesToAdd: Omit<DemandStatus, 'id'>[] = [];
+          
+          for (const [label, props] of Object.entries(FIXED_STATUSES)) {
+              if (!existingLabels.has(label)) {
+                  statusesToAdd.push({ label, ...props });
+              }
+          }
 
-        for (const [label, props] of Object.entries(FIXED_STATUSES)) {
-            if (!existingLabels.has(label)) {
-                const newStatusData: Omit<DemandStatus, 'id'> = { label, ...props };
-                const promise = addDbDemandStatus(newStatusData).then(savedStatus => {
-                    statuses.push(savedStatus);
-                });
-                updatePromises.push(promise);
-            }
-        }
+          if (statusesToAdd.length > 0) {
+            // Add missing statuses to the database
+            await Promise.all(statusesToAdd.map(statusData => addDbDemandStatus(statusData)));
+            // Fetch all statuses again to get a fresh list with correct IDs
+            return getDemandStatuses();
+          }
+
+          return currentStatuses;
+        };
         
-        if (updatePromises.length > 0) {
-            await Promise.all(updatePromises);
-        }
+        const finalStatuses = await ensureFixedStatuses(initialData.demandStatuses);
+        setDemandStatuses(finalStatuses.sort((a, b) => a.order - b.order));
         
-        setDemandStatuses(statuses.sort((a, b) => a.order - b.order));
       } catch (error) {
         console.error("Failed to load initial data", error);
         toast({ variant: 'destructive', title: "Erro ao Carregar Dados", description: "Não foi possível buscar os dados do servidor."})
@@ -527,3 +531,5 @@ export default function GestaoFeriasPage() {
     </div>
   );
 }
+
+    
