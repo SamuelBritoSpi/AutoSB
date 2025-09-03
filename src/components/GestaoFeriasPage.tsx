@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DemandForm from '@/components/demands/DemandForm';
 import DemandList from '@/components/demands/DemandList';
@@ -48,6 +48,44 @@ const FIXED_STATUSES: Record<string, Omit<DemandStatus, 'id'>> = {
   "Finalizado": { order: 99, icon: "CheckCircle2", color: "text-green-500" },
 };
 
+// --- Initialization Logic with Lock ---
+// This lock prevents the initialization from running multiple times in React's strict mode
+let isInitializing = false;
+
+async function ensureFixedStatuses(): Promise<DemandStatus[]> {
+    if (isInitializing) {
+        // If another initialization is already running, just fetch the latest statuses.
+        return getDemandStatuses();
+    }
+    isInitializing = true;
+
+    try {
+        const currentStatuses = await getDemandStatuses();
+        const existingLabels = new Set(currentStatuses.map(s => s.label));
+        const statusesToAdd: Omit<DemandStatus, 'id'>[] = [];
+
+        for (const [label, props] of Object.entries(FIXED_STATUSES)) {
+            if (!existingLabels.has(label)) {
+                statusesToAdd.push({ label, ...props });
+            }
+        }
+
+        if (statusesToAdd.length > 0) {
+            // Add only the missing statuses to the database
+            await Promise.all(statusesToAdd.map(statusData => addDbDemandStatus(statusData)));
+            // Fetch all statuses again to get a fresh list with correct IDs
+            return getDemandStatuses();
+        }
+
+        // If no statuses were added, return the ones we already fetched
+        return currentStatuses;
+    } finally {
+        // Release the lock
+        isInitializing = false;
+    }
+}
+
+
 export default function GestaoFeriasPage() {
   const { toast } = useToast();
 
@@ -66,36 +104,23 @@ export default function GestaoFeriasPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Run the status check first, protected by the lock
+        const finalStatuses = await ensureFixedStatuses();
+        setDemandStatuses(finalStatuses.sort((a, b) => a.order - b.order));
+        
+        // Load the rest of the data
         const initialData = await getAllData();
         setDemands(initialData.demands);
         setVacations(initialData.vacations);
         setEmployees(initialData.employees);
         setCertificates(initialData.certificates);
 
-        // This is a more robust way to ensure fixed statuses exist.
-        const ensureFixedStatuses = async (currentStatuses: DemandStatus[]): Promise<DemandStatus[]> => {
-          const existingLabels = new Set(currentStatuses.map(s => s.label));
-          const statusesToAdd: Omit<DemandStatus, 'id'>[] = [];
-          
-          for (const [label, props] of Object.entries(FIXED_STATUSES)) {
-              if (!existingLabels.has(label)) {
-                  statusesToAdd.push({ label, ...props });
-              }
-          }
+        // This check is important: if ensureFixedStatuses ran and fetched new data,
+        // we might have a slightly newer list than what getAllData returned.
+        // We re-set the state to be sure we have the absolute latest.
+        const freshStatuses = await getDemandStatuses();
+        setDemandStatuses(freshStatuses.sort((a, b) => a.order - b.order));
 
-          if (statusesToAdd.length > 0) {
-            // Add missing statuses to the database
-            await Promise.all(statusesToAdd.map(statusData => addDbDemandStatus(statusData)));
-            // Fetch all statuses again to get a fresh list with correct IDs
-            return getDemandStatuses();
-          }
-
-          return currentStatuses;
-        };
-        
-        const finalStatuses = await ensureFixedStatuses(initialData.demandStatuses);
-        setDemandStatuses(finalStatuses.sort((a, b) => a.order - b.order));
-        
       } catch (error) {
         console.error("Failed to load initial data", error);
         toast({ variant: 'destructive', title: "Erro ao Carregar Dados", description: "Não foi possível buscar os dados do servidor."})
@@ -531,5 +556,3 @@ export default function GestaoFeriasPage() {
     </div>
   );
 }
-
-    
