@@ -43,10 +43,11 @@ import { sendNotification } from '@/ai/flows/send-notification-flow';
 
 // Define the fixed statuses that should always exist.
 const FIXED_STATUSES: Record<string, Omit<DemandStatus, 'id'>> = {
-  "Aberto": { order: 0, icon: "Inbox", color: "text-blue-500" },
-  "Aguardando Resposta": { order: 1, icon: "MailQuestion", color: "text-yellow-500" },
-  "Finalizado": { order: 99, icon: "CheckCircle2", color: "text-green-500" },
+  "Aberto": { label: "Aberto", order: 0, icon: "Inbox", color: "text-blue-500" },
+  "Aguardando Resposta": { label: "Aguardando Resposta", order: 1, icon: "MailQuestion", color: "text-yellow-500" },
+  "Finalizado": { label: "Finalizado", order: 99, icon: "CheckCircle2", color: "text-green-500" },
 };
+
 
 // --- Initialization Logic with Lock ---
 // This lock prevents the initialization from running multiple times in React's strict mode
@@ -66,7 +67,7 @@ async function ensureFixedStatuses(): Promise<DemandStatus[]> {
 
         for (const [label, props] of Object.entries(FIXED_STATUSES)) {
             if (!existingLabels.has(label)) {
-                statusesToAdd.push({ label, ...props });
+                statusesToAdd.push({ ...props });
             }
         }
 
