@@ -47,7 +47,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
       description: existingDemand.description,
       priority: existingDemand.priority,
       dueDate: parseISO(existingDemand.dueDate),
-      ownerId: existingDemand.ownerId,
+      ownerId: existingDemand.ownerId || undefined,
     } : {
       title: '',
       description: '',
