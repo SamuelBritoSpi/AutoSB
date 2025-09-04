@@ -44,15 +44,15 @@ const availableIcons = [
 ];
 
 const availableColors = [
-    { label: "Cinza", value: "text-gray-500" },
-    { label: "Vermelho", value: "text-red-500" },
-    { label: "Laranja", value: "text-orange-500" },
-    { label: "Amarelo", value: "text-yellow-500" },
-    { label: "Verde", value: "text-green-500" },
-    { label: "Azul", value: "text-blue-500" },
-    { label: "Roxo", value: "text-purple-500" },
-    { label: "Rosa", value: "text-pink-500" },
-]
+    { label: "Cinza", textColor: "text-gray-500", bgColor: "bg-gray-500" },
+    { label: "Vermelho", textColor: "text-red-500", bgColor: "bg-red-500" },
+    { label: "Laranja", textColor: "text-orange-500", bgColor: "bg-orange-500" },
+    { label: "Amarelo", textColor: "text-yellow-500", bgColor: "bg-yellow-500" },
+    { label: "Verde", textColor: "text-green-500", bgColor: "bg-green-500" },
+    { label: "Azul", textColor: "text-blue-500", bgColor: "bg-blue-500" },
+    { label: "Roxo", textColor: "text-purple-500", bgColor: "bg-purple-500" },
+    { label: "Rosa", textColor: "text-pink-500", bgColor: "bg-pink-500" },
+];
 
 const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     const IconComponent = (icons as any)[name];
@@ -78,7 +78,7 @@ export default function ManageStatusesDialog({
   const { toast } = useToast();
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [selectedIcon, setSelectedIcon] = useState("Inbox");
-  const [selectedColor, setSelectedColor] = useState(availableColors[0].value);
+  const [selectedColor, setSelectedColor] = useState(availableColors[0].textColor);
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [iconPopoverOpen, setIconPopoverOpen] = useState(false);
@@ -91,7 +91,7 @@ export default function ManageStatusesDialog({
       setEditingStatus(null);
       setNewStatusLabel("");
       setSelectedIcon("Inbox");
-      setSelectedColor(availableColors[0].value);
+      setSelectedColor(availableColors[0].textColor);
     } else {
       // Pre-fill form if editing
       setNewStatusLabel(editingStatus.label);
@@ -250,15 +250,15 @@ export default function ManageStatusesDialog({
                 <div className="flex flex-wrap gap-2">
                     {availableColors.map(color => (
                         <Button 
-                          key={color.value}
+                          key={color.textColor}
                           variant="outline"
                           size="icon"
                           className={cn("w-8 h-8 rounded-full", {
-                            'ring-2 ring-primary ring-offset-2': selectedColor === color.value
+                            'ring-2 ring-primary ring-offset-2': selectedColor === color.textColor
                           })}
-                          onClick={() => setSelectedColor(color.value)}
+                          onClick={() => setSelectedColor(color.textColor)}
                         >
-                            <div className={cn("w-5 h-5 rounded-full", color.value.replace('text-', 'bg-'))} />
+                            <div className={cn("w-5 h-5 rounded-full", color.bgColor)} />
                         </Button>
                     ))}
                 </div>
