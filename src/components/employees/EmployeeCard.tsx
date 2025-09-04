@@ -66,7 +66,7 @@ export default function EmployeeCard({ employee, certificates, onDelete, onEdit,
         <div className="text-sm">
             <p className='font-semibold'>Resumo dos Atestados (60 dias):</p>
             <p className="text-muted-foreground">
-                Dias Acumulados: <span className="font-bold">{analysis.totalDaysInWindow}</span>
+                Dias Acumulados (mesma doença): <span className="font-bold">{analysis.totalDaysInWindow} / {analysis.limit}</span>
             </p>
              <p className={`font-bold ${analysis.status === 'Normal' ? 'text-green-600' : 'text-red-600'}`}>
                 Status: {analysis.status}
