@@ -56,6 +56,7 @@ export interface MedicalCertificate {
   isHalfDay: boolean; // para atestados de meio turno
   originalReceived: boolean; // para controle do recebimento do atestado original
   fileURL: string | null; // URL from Firebase Storage
+  cid?: string; // Código da Classificação Internacional de Doenças
 }
 
 // Tipos para Folha de Ponto

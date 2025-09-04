@@ -43,7 +43,7 @@ import { sendNotification } from '@/ai/flows/send-notification-flow';
 
 // Define the fixed statuses that should always exist.
 const FIXED_STATUSES: Record<string, Omit<DemandStatus, 'id'>> = {
-  "Aberto": { order: 0, icon: "Inbox", color: "text-gray-500" },
+  "Aberto": { order: 0, icon: "Inbox", color: "text-blue-500" },
   "Aguardando Resposta": { order: 1, icon: "MailQuestion", color: "text-yellow-500" },
   "Finalizado": { order: 99, icon: "CheckCircle2", color: "text-green-500" },
 };

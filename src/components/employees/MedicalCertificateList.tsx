@@ -48,7 +48,7 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
         <AlertTitle>Análise do Período (Últimos 60 dias)</AlertTitle>
         <AlertDescription>
           <p>
-            Total de dias de atestado acumulados: <span className="font-bold">{analysis.totalDaysInWindow} / {analysis.limit}</span>
+            Total de dias de atestado (mesma doença): <span className="font-bold">{analysis.totalDaysInWindow} / {analysis.limit}</span>
           </p>
           <p>
             Status: <span className="font-bold">{analysis.status}</span>
@@ -72,6 +72,7 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
               <TableRow>
                 <TableHead>Data</TableHead>
                 <TableHead>Dias</TableHead>
+                <TableHead>CID</TableHead>
                 <TableHead>Original</TableHead>
                 <TableHead>Anexo</TableHead>
                 <TableHead className="text-right">Ação</TableHead>
@@ -84,6 +85,9 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
                     <TableCell>{format(parseISO(cert.certificateDate), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
                     <TableCell>
                       {cert.isHalfDay ? <Badge variant="secondary">Meio Turno</Badge> : `${cert.days} dia(s)`}
+                    </TableCell>
+                     <TableCell>
+                      {cert.cid ? <Badge variant="outline">{cert.cid.toUpperCase()}</Badge> : 'N/A'}
                     </TableCell>
                     <TableCell>{cert.originalReceived ? 'Sim' : 'Não'}</TableCell>
                     <TableCell>
@@ -104,7 +108,7 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">Nenhum atestado registrado.</TableCell>
+                  <TableCell colSpan={6} className="h-24 text-center">Nenhum atestado registrado.</TableCell>
                 </TableRow>
               )}
             </TableBody>

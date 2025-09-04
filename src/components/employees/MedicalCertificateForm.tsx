@@ -15,12 +15,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, PlusCircle, Paperclip, Camera, Loader2 } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Paperclip, Camera, Loader2, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRef, useState } from 'react';
 import CertificateScanner from './CertificateScanner';
 import { getStorageInstance } from '@/lib/firebase-client';
 import { ref, uploadString, getDownloadURL, deleteObject, uploadBytes } from 'firebase/storage';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -31,6 +32,7 @@ const certificateSchema = z.object({
   days: z.coerce.number().min(0, "Número de dias deve ser positivo."),
   isHalfDay: z.boolean().default(false),
   originalReceived: z.boolean().default(false),
+  cid: z.string().optional(),
   file: z.any()
     .optional()
     .refine((files) => !files || files?.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Tamanho máximo do arquivo é 5MB.`)
@@ -65,6 +67,7 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
       days: 1,
       isHalfDay: false,
       originalReceived: false,
+      cid: '',
     },
   });
   
@@ -106,6 +109,7 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
           isHalfDay: values.isHalfDay,
           originalReceived: values.originalReceived,
           fileURL: fileURL,
+          cid: values.cid || undefined,
         };
         
         onAddCertificate(certificateData);
@@ -184,6 +188,33 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
             )}
           />
         </div>
+
+        <FormField
+            control={form.control}
+            name="cid"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                    CID (Opcional)
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger type="button"><Info className="h-4 w-4 text-muted-foreground"/></TooltipTrigger>
+                            <TooltipContent>
+                                <p className="max-w-xs">
+                                    O código CID (ex: J06.9) ajuda a agrupar atestados da mesma doença. Deixe em branco se não souber.
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex: J06.9" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
         <div className="flex items-center space-x-4">
             <FormField
                 control={form.control}
