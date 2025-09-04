@@ -1,22 +1,22 @@
 
 "use client";
 
-import type { Vacation } from '@/lib/types';
+import type { Vacation, Employee } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, PlusCircle, X } from 'lucide-react';
 
 const vacationSchema = z.object({
-  employeeName: z.string().min(1, { message: "Nome do funcionário é obrigatório." }),
+  employeeId: z.string().min(1, { message: "Selecione um funcionário." }),
   startDate: z.date({ required_error: "Data de início é obrigatória." }),
   endDate: z.date({ required_error: "Data de término é obrigatória." }),
 }).refine(data => data.endDate >= data.startDate, {
@@ -31,39 +31,44 @@ interface VacationFormProps {
   existingVacation?: Vacation | null;
   onUpdateVacation?: (vacation: Vacation) => void;
   onClose?: () => void;
+  employees: Employee[];
 }
 
-export default function VacationForm({ onAddVacation, existingVacation, onUpdateVacation, onClose }: VacationFormProps) {
+export default function VacationForm({ onAddVacation, existingVacation, onUpdateVacation, onClose, employees }: VacationFormProps) {
 
   const form = useForm<VacationFormValues>({
     resolver: zodResolver(vacationSchema),
     defaultValues: existingVacation ? {
-      employeeName: existingVacation.employeeName,
+      employeeId: existingVacation.employeeId,
       startDate: parseISO(existingVacation.startDate),
       endDate: parseISO(existingVacation.endDate),
     } : {
-      employeeName: '',
+      employeeId: '',
     },
   });
 
   const onSubmit = (values: VacationFormValues) => {
+    const selectedEmployee = employees.find(e => e.id === values.employeeId);
+    if (!selectedEmployee) return;
 
     if (existingVacation && onUpdateVacation) {
-      const vacationData = {
+      const vacationData: Vacation = {
         id: existingVacation.id,
-        employeeName: values.employeeName,
+        employeeId: selectedEmployee.id,
+        employeeName: selectedEmployee.name,
         startDate: values.startDate.toISOString(),
         endDate: values.endDate.toISOString(),
       };
       onUpdateVacation(vacationData);
     } else {
-       const vacationData = {
-        employeeName: values.employeeName,
+       const vacationData: Omit<Vacation, 'id'> = {
+        employeeId: selectedEmployee.id,
+        employeeName: selectedEmployee.name,
         startDate: values.startDate.toISOString(),
         endDate: values.endDate.toISOString(),
       };
       onAddVacation(vacationData);
-      form.reset({ employeeName: '' });
+      form.reset({ employeeId: '', startDate: undefined, endDate: undefined });
     }
     if(onClose) onClose();
   };
@@ -71,19 +76,28 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow mb-6">
-        <FormField
-          control={form.control}
-          name="employeeName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome do Funcionário</FormLabel>
-              <FormControl>
-                <Input placeholder="Digite o nome do funcionário" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+         <FormField
+            control={form.control}
+            name="employeeId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Funcionário</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!existingVacation}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o funcionário" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {employees.map(employee => (
+                      <SelectItem key={employee.id} value={employee.id}>{employee.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
@@ -159,7 +173,7 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
         </div>
         <div className="flex gap-2">
           <Button type="submit" className="w-full md:w-auto">
-            <PlusCircle className="mr-2 h-4 w-4" /> {existingVacation ? 'Atualizar Férias' : 'Registrar Férias'}
+            <PlusCircle className="mr-2 h-4 w-4" /> {existingVacation ? 'Atualizar Período' : 'Registrar Férias'}
           </Button>
           {onClose && !existingVacation && (
             <Button type="button" variant="outline" onClick={onClose} className="w-full md:w-auto">

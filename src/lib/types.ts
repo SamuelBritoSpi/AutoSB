@@ -34,7 +34,8 @@ export interface Demand {
 
 export interface Vacation {
   id:string;
-  employeeName: string;
+  employeeId: string; // Link to the Employee
+  employeeName: string; // Denormalized for easy display
   startDate: string; // ISO string for date
   endDate: string; // ISO string for date
 }

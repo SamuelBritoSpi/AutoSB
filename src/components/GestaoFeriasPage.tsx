@@ -513,6 +513,7 @@ export default function GestaoFeriasPage() {
               <VacationForm 
                 onAddVacation={handleAddVacation} 
                 onClose={() => setShowVacationForm(false)} 
+                employees={employees}
               />
             )}
           </section>
@@ -520,7 +521,7 @@ export default function GestaoFeriasPage() {
             <h2 id="vacations-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Calendário de Férias</h2>
             <VacationList 
               vacations={vacations} 
-              demands={demands}
+              employees={employees}
               onDeleteVacation={handleDeleteVacation}
               onUpdateVacation={handleUpdateVacation}
             />
