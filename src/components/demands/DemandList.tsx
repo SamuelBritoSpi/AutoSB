@@ -36,6 +36,8 @@ const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     return <IconComponent {...props} />;
 };
 
+const FINAL_STATUS_LABEL = "Finalizado";
+
 export default function DemandList({ 
   demands, 
   demandStatuses,
@@ -49,7 +51,7 @@ export default function DemandList({
 }: DemandListProps) {
   const [sortKey, setSortKey] = useState<SortKey>('dueDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('active');
   
   const [editingDemand, setEditingDemand] = useState<Demand | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -71,7 +73,9 @@ export default function DemandList({
   const sortedAndFilteredDemands = useMemo(() => {
     let result = [...demands];
 
-    if (statusFilter !== 'all') {
+    if (statusFilter === 'active') {
+      result = result.filter(d => d.status !== FINAL_STATUS_LABEL);
+    } else if (statusFilter !== 'all') {
       result = result.filter(d => d.status === statusFilter);
     }
 
@@ -106,6 +110,7 @@ export default function DemandList({
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
+                <SelectItem value="active">Demandas Ativas</SelectItem>
                 <SelectItem value="all">Todos Status</SelectItem>
               {demandStatuses.map((status) => (
                 <SelectItem key={status.id} value={status.label}>
