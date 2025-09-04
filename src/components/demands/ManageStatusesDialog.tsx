@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 
 interface ManageStatusesDialogProps {
@@ -166,7 +167,18 @@ export default function ManageStatusesDialog({
                           )}>
                             <LucideIcon name={status.icon} className={cn("h-4 w-4", status.color)} />
                             <span className="text-foreground/80">{status.label}</span>
-                             {fixedStatuses.includes(status.label) && <Lock className="h-3 w-3 text-muted-foreground" title="Status fixo"/>}
+                             {fixedStatuses.includes(status.label) && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Lock className="h-3 w-3 text-muted-foreground ml-1" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Status fixo</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                             )}
                         </div>
                         <div className="flex items-center">
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingStatus(status)}>
