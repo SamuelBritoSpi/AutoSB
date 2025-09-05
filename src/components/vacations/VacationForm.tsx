@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Vacation, Employee } from '@/lib/types';
+import type { Vacation, Employee, AbsenceType } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -15,10 +15,18 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, PlusCircle, X } from 'lucide-react';
 
+const absenceTypes: Record<AbsenceType, string> = {
+  ferias: 'Férias',
+  licenca_premio: 'Licença Prêmio',
+  licenca_medica: 'Licença Médica',
+  licenca_maternidade: 'Licença Maternidade',
+};
+
 const vacationSchema = z.object({
   employeeId: z.string().min(1, { message: "Selecione um funcionário." }),
   startDate: z.date({ required_error: "Data de início é obrigatória." }),
   endDate: z.date({ required_error: "Data de término é obrigatória." }),
+  type: z.enum(['ferias', 'licenca_premio', 'licenca_medica', 'licenca_maternidade'], { message: "Tipo de afastamento é obrigatório."}),
 }).refine(data => data.endDate >= data.startDate, {
   message: "Data de término não pode ser anterior à data de início.",
   path: ["endDate"],
@@ -42,8 +50,10 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
       employeeId: existingVacation.employeeId,
       startDate: parseISO(existingVacation.startDate),
       endDate: parseISO(existingVacation.endDate),
+      type: existingVacation.type || 'ferias',
     } : {
       employeeId: '',
+      type: 'ferias',
     },
   });
 
@@ -58,6 +68,7 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
         employeeName: selectedEmployee.name,
         startDate: values.startDate.toISOString(),
         endDate: values.endDate.toISOString(),
+        type: values.type,
       };
       onUpdateVacation(vacationData);
     } else {
@@ -66,9 +77,10 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
         employeeName: selectedEmployee.name,
         startDate: values.startDate.toISOString(),
         endDate: values.endDate.toISOString(),
+        type: values.type,
       };
       onAddVacation(vacationData);
-      form.reset({ employeeId: '', startDate: undefined, endDate: undefined });
+      form.reset({ employeeId: '', startDate: undefined, endDate: undefined, type: 'ferias' });
     }
     if(onClose) onClose();
   };
@@ -76,6 +88,7 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow mb-6">
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
          <FormField
             control={form.control}
             name="employeeId"
@@ -98,6 +111,29 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo de Afastamento</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {Object.entries(absenceTypes).map(([key, value]) => (
+                      <SelectItem key={key} value={key}>{value}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
@@ -173,7 +209,7 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
         </div>
         <div className="flex gap-2">
           <Button type="submit" className="w-full md:w-auto">
-            <PlusCircle className="mr-2 h-4 w-4" /> {existingVacation ? 'Atualizar Período' : 'Registrar Férias'}
+            <PlusCircle className="mr-2 h-4 w-4" /> {existingVacation ? 'Atualizar Período' : 'Registrar Afastamento'}
           </Button>
           {onClose && !existingVacation && (
             <Button type="button" variant="outline" onClick={onClose} className="w-full md:w-auto">

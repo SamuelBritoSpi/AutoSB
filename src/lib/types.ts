@@ -1,5 +1,4 @@
 
-
 export type DemandPriority = 'alta' | 'media' | 'baixa';
 
 // O DemandStatus agora é uma string simples, já que os valores virão do banco.
@@ -32,12 +31,15 @@ export interface Demand {
   ownerId?: string | null; // ID of the employee responsible for the demand
 }
 
+export type AbsenceType = 'ferias' | 'licenca_premio' | 'licenca_medica' | 'licenca_maternidade';
+
 export interface Vacation {
   id:string;
   employeeId: string; // Link to the Employee
   employeeName: string; // Denormalized for easy display
   startDate: string; // ISO string for date
   endDate: string; // ISO string for date
+  type: AbsenceType;
 }
 
 export type ContractType = 'efetivo' | 'reda' | 'terceirizado';
