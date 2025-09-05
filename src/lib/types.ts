@@ -1,4 +1,5 @@
 
+
 export type DemandPriority = 'alta' | 'media' | 'baixa';
 
 // O DemandStatus agora é uma string simples, já que os valores virão do banco.

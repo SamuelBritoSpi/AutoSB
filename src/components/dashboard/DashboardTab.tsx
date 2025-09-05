@@ -2,28 +2,30 @@
 "use client";
 
 import { useMemo } from 'react';
-import type { Demand, Employee, MedicalCertificate, DemandStatus } from '@/lib/types';
+import type { Demand, Employee, MedicalCertificate, DemandStatus, Vacation } from '@/lib/types';
 import StatCard from './StatCard';
 import PriorityChart from './PriorityChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Mailbox, Hourglass } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Mailbox, Hourglass, CalendarOff } from 'lucide-react';
+import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeCertificates } from '@/lib/certificate-logic';
+import { Badge } from '../ui/badge';
 
 interface DashboardTabProps {
   demands: Demand[];
   employees: Employee[];
   certificates: MedicalCertificate[];
   demandStatuses: DemandStatus[];
+  vacations: Vacation[];
 }
 
 const FINAL_STATUS_LABEL = 'Finalizado';
 const WAITING_STATUS_LABEL = 'Aguardando Resposta';
 
 
-export default function DashboardTab({ demands, employees, certificates, demandStatuses }: DashboardTabProps) {
+export default function DashboardTab({ demands, employees, certificates, demandStatuses, vacations }: DashboardTabProps) {
   
   const demandStats = useMemo(() => {
     const done = demands.filter(d => d.status === FINAL_STATUS_LABEL).length;
@@ -52,6 +54,25 @@ export default function DashboardTab({ demands, employees, certificates, demandS
       .filter(e => e.status !== 'Normal')
       .sort((a,b) => b.totalDaysInWindow - a.totalDaysInWindow);
   }, [employees, certificates]);
+
+  const currentMonthAbsences = useMemo(() => {
+    const today = new Date();
+    const start = startOfMonth(today);
+    const end = endOfMonth(today);
+
+    return vacations.filter(v => {
+      if(v.status !== 'confirmado') return false;
+
+      const vacationStart = parseISO(v.startDate);
+      const vacationEnd = parseISO(v.endDate);
+      
+      return isWithinInterval(vacationStart, { start, end }) ||
+             isWithinInterval(vacationEnd, { start, end }) ||
+             (vacationStart < start && vacationEnd > end);
+
+    }).sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+  }, [vacations]);
+
 
   return (
     <div className="space-y-6">
@@ -144,6 +165,40 @@ export default function DashboardTab({ demands, employees, certificates, demandS
             </CardContent>
          </Card>
        )}
+
+      {/* Afastamentos do Mês */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <CalendarOff className="h-5 w-5 mr-2" />
+            Afastamentos em {format(new Date(), 'MMMM', { locale: ptBR })}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+           {currentMonthAbsences.length > 0 ? (
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Funcionário</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Período</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {currentMonthAbsences.map(v => (
+                        <TableRow key={v.id}>
+                            <TableCell className="font-medium">{v.employeeName}</TableCell>
+                            <TableCell><Badge variant="secondary" className="capitalize">{v.type.replace('_', ' ')}</Badge></TableCell>
+                            <TableCell>{format(parseISO(v.startDate), 'dd/MM')} - {format(parseISO(v.endDate), 'dd/MM')}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+                </Table>
+            ) : (
+                <p className="text-center text-muted-foreground py-4">Nenhum afastamento confirmado para o mês atual.</p>
+            )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
