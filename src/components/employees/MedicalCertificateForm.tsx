@@ -102,16 +102,20 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
             toast({ title: "Upload Concluído", description: "O anexo do atestado foi salvo." });
         }
         
-        const certificateData: Omit<MedicalCertificate, 'id'> = {
+        const certificateData: Omit<MedicalCertificate, 'id' | 'cid'> & { cid?: string } = {
           employeeId,
           certificateDate: values.certificateDate.toISOString(),
           days: values.isHalfDay ? 0.5 : values.days,
           isHalfDay: values.isHalfDay,
           originalReceived: values.originalReceived,
           fileURL: fileURL,
-          cid: values.cid || undefined,
         };
         
+        // Only add CID if it has a value, to prevent sending `undefined` to Firestore
+        if (values.cid) {
+          certificateData.cid = values.cid;
+        }
+
         onAddCertificate(certificateData);
         
         form.reset();

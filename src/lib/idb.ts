@@ -4,6 +4,7 @@
 
 
 
+
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query } from 'firebase/firestore';
 import { getDbInstance } from './firebase-client'; // Use client-specific db
 import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from './types';
@@ -100,8 +101,13 @@ export const deleteEmployee = (id: string) => remove(STORES.employees, id);
 // --- Medical Certificates ---
 export const getCertificates = () => getAll<MedicalCertificate>(STORES.certificates);
 export const addCertificate = async (certificate: Omit<MedicalCertificate, 'id'>) => {
-    const newId = await add(STORES.certificates, certificate);
-    return { ...certificate, id: newId };
+    // Ensure `cid` is not undefined before sending to Firestore
+    const dataToSave = { ...certificate };
+    if (dataToSave.cid === undefined) {
+      delete (dataToSave as any).cid;
+    }
+    const newId = await add(STORES.certificates, dataToSave);
+    return { ...dataToSave, id: newId } as MedicalCertificate;
 };
 export const updateCertificate = (certificate: MedicalCertificate) => update(STORES.certificates, certificate);
 export const deleteCertificate = (id: string) => remove(STORES.certificates, id);
