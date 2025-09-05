@@ -96,7 +96,7 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Ajustar e Confirmar Período</DialogTitle>
+              <DialogTitle>Ajustar e Marcar como Usufruído</DialogTitle>
             </DialogHeader>
             <VacationForm
               existingVacation={editingVacation}

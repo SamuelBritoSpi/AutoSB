@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { User, CalendarRange, Edit, Trash2, Plane, Gift, Stethoscope, Baby, MoreVertical, CheckCircle, XCircle, Clock, Undo, Pencil } from 'lucide-react';
+import { User, CalendarRange, Edit, Trash2, Plane, Gift, Stethoscope, Baby, MoreVertical, CheckCircle, XCircle, Clock, Undo, Pencil, CalendarCheck, CalendarX } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { Badge } from '../ui/badge';
 import { useMemo } from 'react';
@@ -37,8 +37,8 @@ const absenceTypeDetails: Record<AbsenceType, { label: string, icon: React.React
 
 const absenceStatusDetails: Record<AbsenceStatus, { label: string, icon: React.ReactNode, className: string }> = {
     planejado: { label: 'Planejado', icon: <Clock className="h-3 w-3" />, className: 'text-blue-600 bg-blue-100 dark:text-blue-200 dark:bg-blue-900/50' },
-    confirmado: { label: 'Confirmado', icon: <CheckCircle className="h-3 w-3" />, className: 'text-green-600 bg-green-100 dark:text-green-300 dark:bg-green-900/50' },
-    cancelado: { label: 'Cancelado', icon: <XCircle className="h-3 w-3" />, className: 'text-red-600 bg-red-100 dark:text-red-300 dark:bg-red-900/50 line-through' },
+    confirmado: { label: 'Usufruído', icon: <CalendarCheck className="h-3 w-3" />, className: 'text-green-600 bg-green-100 dark:text-green-300 dark:bg-green-900/50' },
+    cancelado: { label: 'Não Usufruído', icon: <CalendarX className="h-3 w-3" />, className: 'text-red-600 bg-red-100 dark:text-red-300 dark:bg-red-900/50 line-through' },
 };
 
 
@@ -120,13 +120,13 @@ export default function EmployeeVacationCard({ employee, vacations, onDelete, on
                                 {vacation.status === 'planejado' && (
                                   <>
                                     <DropdownMenuItem onClick={() => onUpdate({ ...vacation, status: 'confirmado' })}>
-                                        <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Confirmar
+                                        <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> Marcar como Usufruído
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => onEdit(vacation)}>
-                                        <Pencil className="mr-2 h-4 w-4 text-blue-500" /> Confirmar com Ajuste
+                                        <Pencil className="mr-2 h-4 w-4 text-blue-500" /> Ajustar e Marcar como Usufruído
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => onUpdate({ ...vacation, status: 'cancelado' })} className='text-amber-600 focus:text-amber-700'>
-                                        <XCircle className="mr-2 h-4 w-4" /> Cancelar Agendamento
+                                        <CalendarX className="mr-2 h-4 w-4" /> Marcar como Não Usufruído
                                     </DropdownMenuItem>
                                   </>
                                 )}
