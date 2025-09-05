@@ -32,6 +32,8 @@ export interface Demand {
 }
 
 export type AbsenceType = 'ferias' | 'licenca_premio' | 'licenca_medica' | 'licenca_maternidade';
+export type AbsenceStatus = 'planejado' | 'confirmado' | 'cancelado';
+
 
 export interface Vacation {
   id:string;
@@ -40,6 +42,7 @@ export interface Vacation {
   startDate: string; // ISO string for date
   endDate: string; // ISO string for date
   type: AbsenceType;
+  status: AbsenceStatus; // 'planejado', 'confirmado', 'cancelado'
 }
 
 export type ContractType = 'efetivo' | 'reda' | 'terceirizado';

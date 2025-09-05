@@ -25,6 +25,11 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
     setEditingVacation(vacation);
     setIsEditDialogOpen(true);
   };
+  
+  const handleUpdateAndClose = (vacation: Vacation) => {
+    onUpdateVacation({ ...vacation, status: 'confirmado' });
+    closeEditDialog();
+  };
 
   const closeEditDialog = () => {
     setIsEditDialogOpen(false);
@@ -57,7 +62,7 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card rounded-lg shadow">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Férias Agendadas por Funcionário</h3>
+          <h3 className="text-lg font-semibold">Afastamentos por Funcionário</h3>
         </div>
         <div className="relative w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -71,7 +76,7 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
       </div>
 
       {employeesWithVacations.length === 0 ? (
-        <p className="text-center text-muted-foreground py-10">Nenhum registro de férias encontrado para a busca.</p>
+        <p className="text-center text-muted-foreground py-10">Nenhum registro de afastamento encontrado para a busca.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {employeesWithVacations.map((employee) => (
@@ -80,6 +85,7 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
               employee={employee}
               vacations={employee.vacations}
               onDelete={onDeleteVacation}
+              onUpdate={onUpdateVacation}
               onEdit={handleEdit}
             />
           ))}
@@ -90,11 +96,11 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Editar Período de Férias</DialogTitle>
+              <DialogTitle>Ajustar e Confirmar Período</DialogTitle>
             </DialogHeader>
             <VacationForm
               existingVacation={editingVacation}
-              onUpdateVacation={onUpdateVacation}
+              onUpdateVacation={handleUpdateAndClose} // Special handler for edit dialog
               onClose={closeEditDialog}
               employees={employees}
               onAddVacation={()=>{}} 

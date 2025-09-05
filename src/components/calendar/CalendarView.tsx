@@ -30,7 +30,10 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     const events = new Map<string, { demands: Demand[], vacations: Vacation[] }>();
 
     demands.forEach(demand => {
-      if (demand.status === 'finalizado') return;
+      // Assuming 'Finalizado' is the status for completed demands
+      const finalStatus = 'Finalizado'; 
+      if (demand.status === finalStatus) return;
+
       const dateKey = startOfDay(parseISO(demand.dueDate)).toISOString();
       if (!events.has(dateKey)) {
         events.set(dateKey, { demands: [], vacations: [] });
@@ -39,6 +42,9 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     });
 
     vacations.forEach(vacation => {
+      // Only include vacations that are not 'cancelado'
+      if (vacation.status === 'cancelado') return;
+      
       const interval = eachDayOfInterval({
         start: parseISO(vacation.startDate),
         end: parseISO(vacation.endDate)
@@ -58,6 +64,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
   const vacationDays = useMemo(() => {
     const dates: Date[] = [];
     vacations.forEach(v => {
+        if (v.status === 'cancelado') return;
         const interval = eachDayOfInterval({
           start: parseISO(v.startDate),
           end: parseISO(v.endDate)
@@ -159,7 +166,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                                    <div key={v.id} className="flex items-start gap-2">
                                        <UserCheck className="h-4 w-4 mt-0.5 text-blue-500" />
                                        <div>
-                                            <p className="text-sm font-medium">Férias</p>
+                                            <p className="text-sm font-medium">{v.type === 'ferias' ? 'Férias' : 'Licença'}</p>
                                             <p className="text-sm text-muted-foreground">{v.employeeName}</p>
                                        </div>
                                    </div>
@@ -188,7 +195,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 <div className="space-y-3">
                     <div className="flex items-center">
                         <div className="w-5 h-5 rounded-md bg-blue-500/80 mr-3" />
-                        <span className="text-sm">Dia de Férias</span>
+                        <span className="text-sm">Dia de Afastamento</span>
                     </div>
                     <div className="flex items-center">
                         <div className="day-deadline-dot bg-destructive mr-3" />
