@@ -89,7 +89,7 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {employees.map(employee => (
+                    {employees.sort((a, b) => a.name.localeCompare(b.name)).map(employee => (
                       <SelectItem key={employee.id} value={employee.id}>{employee.name}</SelectItem>
                     ))}
                   </SelectContent>
