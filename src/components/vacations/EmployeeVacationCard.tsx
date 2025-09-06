@@ -4,9 +4,9 @@
 import type { Employee, Vacation, AbsenceType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { format, parseISO, isFuture } from 'date-fns';
+import { format, parseISO, isFuture, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { User, CalendarRange, Plane, Gift, Stethoscope, Baby, CheckCircle, Clock, History } from 'lucide-react';
+import { User, CalendarRange, Plane, Gift, Stethoscope, Baby, CheckCircle, Clock, History, XCircle } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { Badge } from '../ui/badge';
 import { useMemo } from 'react';
@@ -31,18 +31,19 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
 
   const { nextAbsence, summaryByMonth } = useMemo(() => {
     const summary: Record<string, number> = {};
-    let nextAbsence: Vacation | null = null;
     
-    // Sort vacations: planned future ones first, then others by date
-    const sortedVacations = [...vacations].sort((a,b) => {
-        const aIsFuturePlanned = a.status === 'planejado' && isFuture(parseISO(a.startDate));
-        const bIsFuturePlanned = b.status === 'planejado' && isFuture(parseISO(b.startDate));
-        if (aIsFuturePlanned && !bIsFuturePlanned) return -1;
-        if (!aIsFuturePlanned && bIsFuturePlanned) return 1;
-        return parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime();
-    });
-    
-    nextAbsence = sortedVacations[0] || null;
+    // 1. Separate future planned absences from all others
+    const futurePlanned = vacations
+        .filter(v => v.status === 'planejado' && isFuture(parseISO(v.startDate)))
+        .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+        
+    // 2. Sort past/current absences by most recent start date
+    const pastOrCurrent = vacations
+        .filter(v => !futurePlanned.includes(v))
+        .sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
+
+    // 3. The next absence is the closest future one, or the most recent past one if no future ones exist.
+    const nextAbsence: Vacation | null = futurePlanned[0] || pastOrCurrent[0] || null;
 
     vacations.forEach(vacation => {
         if (vacation.status === 'cancelado') return;
@@ -64,6 +65,20 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
         summaryByMonth: Object.entries(summary).map(([month, days]) => ({ month, days }))
     };
   }, [vacations]);
+  
+  const getStatusIcon = (absence: Vacation | null) => {
+    if (!absence) return null;
+    switch(absence.status) {
+        case 'planejado':
+            return <Clock className="h-4 w-4 text-blue-500" />;
+        case 'confirmado':
+            return <CheckCircle className="h-4 w-4 text-green-500" />;
+        case 'cancelado':
+            return <XCircle className="h-4 w-4 text-red-500" />;
+        default:
+            return null;
+    }
+  }
 
 
   return (
@@ -85,11 +100,11 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
       </CardHeader>
       <CardContent className="flex-grow space-y-3">
         <Separator />
-        <h4 className="text-sm font-semibold text-primary">Próximo Afastamento</h4>
+        <h4 className="text-sm font-semibold text-primary">Afastamento Relevante</h4>
         {nextAbsence ? (
             <div className='text-sm space-y-2'>
                 <div className='flex items-center gap-2'>
-                    {nextAbsence.status === 'planejado' ? <Clock className="h-4 w-4 text-blue-500" /> : <CheckCircle className="h-4 w-4 text-green-500" />}
+                    {getStatusIcon(nextAbsence)}
                     <span>
                         {format(parseISO(nextAbsence.startDate), "dd/MM/yy")} a {format(parseISO(nextAbsence.endDate), "dd/MM/yy")}
                     </span>
@@ -111,4 +126,3 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
     </Card>
   );
 }
-
