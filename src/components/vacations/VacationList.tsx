@@ -1,13 +1,14 @@
 
 "use client";
 
-import type { Vacation, Demand, Employee } from '@/lib/types';
+import type { Vacation, Employee } from '@/lib/types';
 import EmployeeVacationCard from './EmployeeVacationCard';
 import { CalendarDays, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import React, { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import VacationForm from './VacationForm';
+import VacationHistoryDialog from './VacationHistoryDialog';
 
 interface VacationListProps {
   vacations: Vacation[];
@@ -20,10 +21,15 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
   const [searchTerm, setSearchTerm] = useState('');
   const [editingVacation, setEditingVacation] = useState<Vacation | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [historyEmployee, setHistoryEmployee] = useState<Employee | null>(null);
   
   const handleEdit = (vacation: Vacation) => {
     setEditingVacation(vacation);
     setIsEditDialogOpen(true);
+  };
+
+  const handleOpenHistory = (employee: Employee) => {
+    setHistoryEmployee(employee);
   };
   
   const handleUpdateAndClose = (vacation: Vacation) => {
@@ -84,14 +90,13 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
               key={employee.id} 
               employee={employee}
               vacations={employee.vacations}
-              onDelete={onDeleteVacation}
-              onUpdate={onUpdateVacation}
-              onEdit={handleEdit}
+              onOpenHistory={() => handleOpenHistory(employee)}
             />
           ))}
         </div>
       )}
 
+      {/* Edit Dialog - Used for "Ajustar e Marcar..." */}
       {editingVacation && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[600px]">
@@ -100,7 +105,7 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
             </DialogHeader>
             <VacationForm
               existingVacation={editingVacation}
-              onUpdateVacation={handleUpdateAndClose} // Special handler for edit dialog
+              onUpdateVacation={handleUpdateAndClose}
               onClose={closeEditDialog}
               employees={employees}
               onAddVacation={()=>{}} 
@@ -108,6 +113,27 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
           </DialogContent>
         </Dialog>
       )}
+
+      {/* History Dialog */}
+      <Dialog open={!!historyEmployee} onOpenChange={(isOpen) => !isOpen && setHistoryEmployee(null)}>
+         <DialogContent className="sm:max-w-3xl">
+            <DialogHeader>
+               <DialogTitle>Histórico de Afastamentos de {historyEmployee?.name}</DialogTitle>
+               <DialogDescription>
+                  Gerencie todos os períodos de afastamento planejados e realizados.
+               </DialogDescription>
+            </DialogHeader>
+            {historyEmployee && (
+              <VacationHistoryDialog
+                vacations={vacations.filter(v => v.employeeId === historyEmployee.id)}
+                onUpdate={onUpdateVacation}
+                onDelete={onDeleteVacation}
+                onEdit={handleEdit}
+              />
+            )}
+         </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
