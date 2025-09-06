@@ -62,7 +62,7 @@ const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     return <IconComponent {...props} />;
 };
 
-// Define the fixed statuses that cannot be deleted.
+// Define os status fixos que não podem ser excluídos.
 const fixedStatuses = ["Aberto", "Aguardando Resposta", "Finalizado"];
 
 
@@ -86,14 +86,14 @@ export default function ManageStatusesDialog({
   const [editingStatus, setEditingStatus] = useState<DemandStatus | null>(null);
 
   useEffect(() => {
-    // Reset form when dialog is opened/closed or editing state changes
+    // Reseta o formulário quando o diálogo é aberto/fechado ou o estado de edição muda
     if (!open || !editingStatus) {
       setEditingStatus(null);
       setNewStatusLabel("");
       setSelectedIcon("Inbox");
       setSelectedColor(availableColors[0].textColor);
     } else {
-      // Pre-fill form if editing
+      // Preenche o formulário se estiver editando
       setNewStatusLabel(editingStatus.label);
       setSelectedIcon(editingStatus.icon);
       setSelectedColor(editingStatus.color);
@@ -110,7 +110,7 @@ export default function ManageStatusesDialog({
     setIsAdding(true);
     try {
       if (editingStatus) {
-        // Update existing status
+        // Atualiza status existente
         onUpdateStatus({
           ...editingStatus,
           label: newStatusLabel.trim(),
@@ -118,14 +118,14 @@ export default function ManageStatusesDialog({
           color: selectedColor,
         });
       } else {
-        // Add new status
+        // Adiciona novo status
         if (demandStatuses.some(s => s.label.toLowerCase() === newStatusLabel.trim().toLowerCase())) {
           toast({ variant: 'destructive', title: "Erro", description: "Este status já existe." });
           return;
         }
         onAddStatus(newStatusLabel.trim(), selectedIcon, selectedColor);
       }
-      setEditingStatus(null); // Reset editing state
+      setEditingStatus(null); // Reseta o estado de edição
     } finally {
       setIsAdding(false);
     }

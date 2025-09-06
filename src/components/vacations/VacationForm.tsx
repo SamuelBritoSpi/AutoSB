@@ -63,7 +63,7 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
 
     if (existingVacation && onUpdateVacation) {
       const vacationData: Vacation = {
-        ...existingVacation, // Preserve existing status
+        ...existingVacation, // Preserva o status existente
         employeeId: selectedEmployee.id,
         employeeName: selectedEmployee.name,
         startDate: values.startDate.toISOString(),
@@ -78,7 +78,7 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
         startDate: values.startDate.toISOString(),
         endDate: values.endDate.toISOString(),
         type: values.type,
-        status: 'planejado', // Always set new vacations as 'planejado'
+        status: 'planejado', // Sempre define novos afastamentos como 'planejado'
       };
       onAddVacation(vacationData);
       form.reset({ employeeId: '', startDate: undefined, endDate: undefined, type: 'ferias' });

@@ -1,6 +1,6 @@
 // @/lib/firebase-client.ts
-// This file is designated for client-side Firebase initialization and usage.
-// It should not be imported into server-side code (like Genkit flows or API routes).
+// Este arquivo é designado para a inicialização e uso do Firebase no lado do cliente.
+// Não deve ser importado em código do lado do servidor (como fluxos Genkit ou rotas de API).
 
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, enableIndexedDbPersistence, type Firestore } from 'firebase/firestore';
@@ -8,7 +8,7 @@ import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { getAuth, type Auth } from "firebase/auth";
 import { getMessaging, type Messaging } from "firebase/messaging";
 
-// It's crucial to ensure these variables are loaded correctly from Vercel.
+// É crucial garantir que essas variáveis sejam carregadas corretamente da Vercel.
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -20,7 +20,7 @@ const firebaseConfig = {
 
 export const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
-// A single instance of the Firebase app, initialized lazily.
+// Uma única instância do aplicativo Firebase, inicializada de forma preguiçosa (lazy).
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
@@ -28,19 +28,19 @@ let storage: FirebaseStorage;
 let messaging: Messaging | null = null;
 
 /**
- * Initializes and returns the Firebase App instance, ensuring it's only created once.
- * This function should only be called on the client side.
+ * Inicializa e retorna a instância do Firebase App, garantindo que ela seja criada apenas uma vez.
+ * Esta função deve ser chamada apenas no lado do cliente.
  */
 function getFirebaseApp(): FirebaseApp {
-    // This check is critical. If projectId is missing, the env vars are not loaded.
+    // Esta verificação é crítica. Se o projectId estiver ausente, as variáveis de ambiente não foram carregadas.
     if (!firebaseConfig.projectId) {
-        // Log warning instead of throwing error to prevent app crash
-        console.warn("Firebase config is missing. Some features may not work properly. Please set up your Vercel environment variables.");
-        // Return a mock app or throw error based on environment
+        // Registra um aviso em vez de lançar um erro para evitar que o aplicativo quebre
+        console.warn("A configuração do Firebase está ausente. Alguns recursos podem não funcionar corretamente. Por favor, configure suas variáveis de ambiente da Vercel.");
+        // Retorna um aplicativo simulado ou lança um erro com base no ambiente
         if (process.env.NODE_ENV === 'development') {
-            throw new Error("Firebase config is missing. Ensure you have set up your environment variables correctly.");
+            throw new Error("A configuração do Firebase está ausente. Certifique-se de ter configurado suas variáveis de ambiente corretamente.");
         }
-        // In production, we'll create a minimal config to prevent crashes
+        // Em produção, criaremos uma configuração mínima para evitar falhas
         const fallbackConfig = {
             apiKey: "fallback",
             authDomain: "fallback.firebaseapp.com",
@@ -70,7 +70,7 @@ export function getAuthInstance(): Auth {
         try {
             auth = getAuth(getFirebaseApp());
         } catch (error) {
-            console.error("Failed to initialize Firebase Auth:", error);
+            console.error("Falha ao inicializar o Firebase Auth:", error);
             throw error;
         }
     }
@@ -85,13 +85,13 @@ export function getDbInstance(): Firestore {
                 enableIndexedDbPersistence(db);
             } catch (err: any) {
                 if (err.code === 'failed-precondition') {
-                    console.warn("Firestore persistence failed: multiple tabs open.");
+                    console.warn("Persistência do Firestore falhou: múltiplas abas abertas.");
                 } else if (err.code === 'unimplemented') {
-                    console.warn("Firestore persistence not supported in this browser.");
+                    console.warn("Persistência do Firestore não suportada neste navegador.");
                 }
             }
         } catch (error) {
-            console.error("Failed to initialize Firestore:", error);
+            console.error("Falha ao inicializar o Firestore:", error);
             throw error;
         }
     }
@@ -103,7 +103,7 @@ export function getStorageInstance(): FirebaseStorage {
         try {
             storage = getStorage(getFirebaseApp());
         } catch (error) {
-            console.error("Failed to initialize Firebase Storage:", error);
+            console.error("Falha ao inicializar o Firebase Storage:", error);
             throw error;
         }
     }
@@ -117,15 +117,15 @@ export function getMessagingObject(): Messaging | null {
     if (!messaging) {
       try {
         const firebaseApp = getFirebaseApp();
-        // Check if projectId exists and is not fallback before initializing messaging
+        // Verifica se o projectId existe e não é o de fallback antes de inicializar o messaging
         if (firebaseApp.options.projectId && firebaseApp.options.projectId !== 'fallback-project') {
             messaging = getMessaging(firebaseApp);
         } else {
-            console.warn("Firebase App not fully configured for messaging due to missing or fallback projectId.");
+            console.warn("Firebase App não configurado completamente para mensagens devido a projectId ausente ou de fallback.");
             return null;
         }
       } catch (error) {
-        console.warn("Could not initialize messaging:", error);
+        console.warn("Não foi possível inicializar o serviço de mensagens:", error);
         messaging = null;
       }
     }

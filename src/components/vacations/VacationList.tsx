@@ -96,7 +96,7 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
         </div>
       )}
 
-      {/* Edit Dialog - Used for "Ajustar e Marcar..." */}
+      {/* Diálogo de Edição - Usado para "Ajustar e Marcar..." */}
       {editingVacation && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[600px]">
@@ -114,7 +114,7 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
         </Dialog>
       )}
 
-      {/* History Dialog */}
+      {/* Diálogo de Histórico */}
       <Dialog open={!!historyEmployee} onOpenChange={(isOpen) => !isOpen && setHistoryEmployee(null)}>
          <DialogContent className="sm:max-w-3xl">
             <DialogHeader>

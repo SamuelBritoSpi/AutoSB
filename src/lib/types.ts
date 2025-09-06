@@ -18,8 +18,8 @@ export interface DemandStatus {
   id: string;
   label: string;
   order: number; // Para manter uma ordem consistente
-  icon: string; // Lucide icon name
-  color: string; // Tailwind CSS class name e.g., 'text-blue-500'
+  icon: string; // Nome do ícone Lucide
+  color: string; // Classe CSS do Tailwind, ex: 'text-blue-500'
 }
 
 export interface Demand {
@@ -27,9 +27,9 @@ export interface Demand {
   title: string; 
   description: string;
   priority: DemandPriority;
-  dueDate: string; // ISO string for date
+  dueDate: string; // String ISO para data
   status: string; // Armazena o 'label' do status
-  ownerId?: string | null; // ID of the employee responsible for the demand
+  ownerId?: string | null; // ID do funcionário responsável pela demanda
 }
 
 export type AbsenceType = 'ferias' | 'licenca_premio' | 'licenca_medica' | 'licenca_maternidade';
@@ -38,10 +38,10 @@ export type AbsenceStatus = 'planejado' | 'confirmado' | 'cancelado';
 
 export interface Vacation {
   id:string;
-  employeeId: string; // Link to the Employee
-  employeeName: string; // Denormalized for easy display
-  startDate: string; // ISO string for date
-  endDate: string; // ISO string for date
+  employeeId: string; // Vínculo com o Funcionário
+  employeeName: string; // Denormalizado para fácil exibição
+  startDate: string; // String ISO para data
+  endDate: string; // String ISO para data
   type: AbsenceType;
   status: AbsenceStatus; // 'planejado', 'confirmado', 'cancelado'
 }
@@ -52,17 +52,17 @@ export interface Employee {
   id: string;
   name: string;
   contractType: ContractType;
-  fcmTokens?: string[]; // For push notifications
+  fcmTokens?: string[]; // Para notificações push
 }
 
 export interface MedicalCertificate {
   id: string;
   employeeId: string;
-  certificateDate: string; // ISO string for date
+  certificateDate: string; // String ISO para data
   days: number;
   isHalfDay: boolean; // para atestados de meio turno
   originalReceived: boolean; // para controle do recebimento do atestado original
-  fileURL: string | null; // URL from Firebase Storage
+  fileURL: string | null; // URL do Firebase Storage
   cid?: string; // Código da Classificação Internacional de Doenças
 }
 

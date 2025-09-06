@@ -18,9 +18,9 @@ interface CalendarViewProps {
 }
 
 const priorityColors: Record<Demand['priority'], string> = {
-  alta: 'bg-destructive', // red
-  media: 'bg-[hsl(var(--status-warning))]', // yellow
-  baixa: 'bg-[hsl(var(--status-success))]', // green
+  alta: 'bg-destructive', // vermelho
+  media: 'bg-[hsl(var(--status-warning))]', // amarelo
+  baixa: 'bg-[hsl(var(--status-success))]', // verde
 };
 
 export default function CalendarView({ demands, vacations }: CalendarViewProps) {
@@ -30,7 +30,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     const events = new Map<string, { demands: Demand[], vacations: Vacation[] }>();
 
     demands.forEach(demand => {
-      // Assuming 'Finalizado' is the status for completed demands
+      // Assumindo que 'Finalizado' é o status para demandas completas
       const finalStatus = 'Finalizado'; 
       if (demand.status === finalStatus) return;
 
@@ -42,7 +42,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     });
 
     vacations.forEach(vacation => {
-      // Only include vacations that are not 'cancelado'
+      // Inclui apenas afastamentos que não foram 'cancelado'
       if (vacation.status === 'cancelado') return;
       
       const interval = eachDayOfInterval({
@@ -150,11 +150,11 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                         className="w-80 z-20"
                         style={{
                             position: 'absolute',
-                            // Basic positioning logic, might need refinement
+                            // Lógica básica de posicionamento, pode precisar de refinamento
                             top: `${(hoveredDate?.getDay() ?? 0) * 10}px`, 
                             left: '50%',
                         }}
-                        onOpenAutoFocus={(e) => e.preventDefault()} // prevent focus stealing
+                        onOpenAutoFocus={(e) => e.preventDefault()} // previne que o foco seja roubado
                         onMouseEnter={() => setHoveredDate(hoveredDate)}
                         onMouseLeave={() => setHoveredDate(null)}
                      >

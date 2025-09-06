@@ -8,24 +8,24 @@ export interface CertificateAnalysis {
 }
 
 /**
- * Normalizes a CID code to its main category.
- * Examples: 'J06.9' -> 'J06', 'M54' -> 'M54', 'F32.10' -> 'F32'
- * @param cid The full CID code.
- * @returns The main category of the CID.
+ * Normaliza um código CID para sua categoria principal.
+ * Exemplos: 'J06.9' -> 'J06', 'M54' -> 'M54', 'F32.10' -> 'F32'
+ * @param cid O código CID completo.
+ * @returns A categoria principal do CID.
  */
 function getCidGroup(cid: string): string {
-  if (!cid) return 'sem-cid'; // Group for certificates without a CID
-  // Takes the first letter and the two following numbers.
+  if (!cid) return 'sem-cid'; // Agrupa atestados sem CID
+  // Pega a primeira letra e os dois números seguintes.
   const match = cid.toUpperCase().match(/^[A-Z]\d{2}/);
   return match ? match[0] : cid.toUpperCase();
 }
 
 
 /**
- * Analyzes medical certificates for an employee based on their contract type.
- * @param certificates - An array of the employee's medical certificates.
- * @param contractType - The employee's contract type.
- * @returns An analysis object with the total days in the window and the status.
+ * Analisa os atestados médicos de um funcionário com base no seu tipo de contrato.
+ * @param certificates - Uma matriz de atestados médicos do funcionário.
+ * @param contractType - O tipo de contrato do funcionário.
+ * @returns Um objeto de análise com o total de dias na janela e o status.
  */
 export function analyzeCertificates(
   certificates: MedicalCertificate[],
@@ -40,7 +40,7 @@ export function analyzeCertificates(
   const today = new Date();
   const sixtyDaysAgo = addDays(today, -60);
 
-  // Filter for certificates within the last 60 days
+  // Filtra por atestados nos últimos 60 dias
   const certsInWindow = certificates.filter(cert => {
     const certDate = parseISO(cert.certificateDate);
     return certDate >= sixtyDaysAgo && certDate <= today;
@@ -50,7 +50,7 @@ export function analyzeCertificates(
      return { totalDaysInWindow: 0, status: 'Normal', limit };
   }
 
-  // Group certificates by their CID group
+  // Agrupa os atestados pelo seu grupo de CID
   const daysByCidGroup = new Map<string, number>();
 
   certsInWindow.forEach(cert => {
@@ -60,7 +60,7 @@ export function analyzeCertificates(
     daysByCidGroup.set(group, currentDays + certDays);
   });
 
-  // Find the maximum number of days from any single CID group
+  // Encontra o número máximo de dias de qualquer grupo de CID
   let maxDays = 0;
   if (daysByCidGroup.size > 0) {
     maxDays = Math.max(...Array.from(daysByCidGroup.values()));
@@ -72,7 +72,7 @@ export function analyzeCertificates(
   }
 
   return {
-    totalDaysInWindow: Math.round(maxDays * 10) / 10, // Round to one decimal place for half days
+    totalDaysInWindow: Math.round(maxDays * 10) / 10, // Arredonda para uma casa decimal para meios dias
     status,
     limit,
   };

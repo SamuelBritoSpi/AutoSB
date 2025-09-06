@@ -45,20 +45,20 @@ export default function CertificateScanner({ onCapture }: CertificateScannerProp
 
     getCameraPermission();
 
-    // Cleanup function to stop the camera stream when the component unmounts
+    // Função de limpeza para parar a stream da câmera quando o componente é desmontado
     return () => {
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
         }
     };
-  }, []); // Run only once
+  }, []); // Executa apenas uma vez
 
   const handleCapture = () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       
-      // Set canvas dimensions to match video
+      // Define as dimensões do canvas para corresponder ao vídeo
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
@@ -68,7 +68,7 @@ export default function CertificateScanner({ onCapture }: CertificateScannerProp
       const dataUri = canvas.toDataURL('image/jpeg');
       setCapturedImage(dataUri);
 
-      // Stop the video stream after capture
+      // Para o stream de vídeo após a captura
        if (stream) {
             stream.getTracks().forEach(track => track.stop());
         }

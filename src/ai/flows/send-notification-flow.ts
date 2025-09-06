@@ -1,19 +1,19 @@
 
 'use server';
 /**
- * @fileOverview A flow for sending a push notification via FCM.
+ * @fileOverview Um fluxo para enviar notificações push via FCM.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin SDK
-// This should only happen once
+// Inicializa o Firebase Admin SDK
+// Isso deve acontecer apenas uma vez
 if (!admin.apps.length) {
-    // In a production environment, you would use service account credentials
-    // stored securely (e.g., as environment variables or secrets).
-    // For development, this will try to use application default credentials.
+    // Em um ambiente de produção, você usaria credenciais de conta de serviço
+    // armazenadas de forma segura (ex: como variáveis de ambiente ou segredos).
+    // Para desenvolvimento, isso tentará usar as credenciais padrão da aplicação.
     admin.initializeApp({
       projectId: 'gestofrias',
     });
@@ -21,9 +21,9 @@ if (!admin.apps.length) {
 
 
 const SendNotificationInputSchema = z.object({
-  token: z.string().describe('The FCM device token to send the notification to.'),
-  title: z.string().describe('The title of the notification.'),
-  body: z.string().describe('The body content of the notification.'),
+  token: z.string().describe('O token do dispositivo FCM para o qual enviar a notificação.'),
+  title: z.string().describe('O título da notificação.'),
+  body: z.string().describe('O corpo do conteúdo da notificação.'),
 });
 export type SendNotificationInput = z.infer<typeof SendNotificationInputSchema>;
 

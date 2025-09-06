@@ -92,10 +92,10 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
             const storageRef = ref(storage, fileName);
 
             if (typeof fileToUpload === 'string') {
-                // It's a data URI from the scanner
+                // É uma data URI do scanner
                 await uploadString(storageRef, fileToUpload, 'data_url');
             } else {
-                // It's a File object from input
+                // É um objeto File do input
                 await uploadBytes(storageRef, fileToUpload);
             }
             fileURL = await getDownloadURL(storageRef);
@@ -111,7 +111,7 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
           fileURL: fileURL,
         };
         
-        // Only add CID if it has a value, to prevent sending `undefined` to Firestore
+        // Adiciona CID apenas se tiver valor, para evitar enviar `undefined` para o Firestore
         if (values.cid) {
           certificateData.cid = values.cid;
         }
@@ -133,7 +133,7 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
 
   const handleCapture = (imageUri: string) => {
     setScannedImageUri(imageUri);
-    form.setValue('file', null); // Clear file input if scan is used
+    form.setValue('file', null); // Limpa o input de arquivo se a digitalização for usada
     setIsScannerOpen(false);
     toast({ title: "Imagem Capturada", description: "A imagem do atestado foi capturada com sucesso." });
   }

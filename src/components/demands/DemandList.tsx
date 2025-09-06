@@ -166,7 +166,7 @@ export default function DemandList({
               existingDemand={editingDemand}
               onUpdateDemand={onUpdateDemand}
               onClose={closeEditDialog}
-              onAddDemand={()=>{}} // Not used in edit mode
+              onAddDemand={()=>{}} // Não usado no modo de edição
               employees={employees}
             />
           </DialogContent>
