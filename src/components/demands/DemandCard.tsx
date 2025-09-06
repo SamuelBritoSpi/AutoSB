@@ -50,7 +50,7 @@ export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onD
   }, [demand.status, demandStatuses]);
 
   return (
-    <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle className="font-headline text-xl mb-1">{demand.title.substring(0,50)}{demand.title.length > 50 ? '...' : ''}</CardTitle>
@@ -77,7 +77,7 @@ export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onD
           </div>
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 flex-grow">
         <p className="text-foreground text-base">{demand.description}</p>
         <Separator />
         <div className="flex items-center text-sm text-muted-foreground">
