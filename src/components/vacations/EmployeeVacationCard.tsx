@@ -4,7 +4,7 @@
 import type { Employee, Vacation, AbsenceType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { format, parseISO, isFuture, isPast } from 'date-fns';
+import { format, parseISO, isFuture, isPast, isWithinInterval, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { User, CalendarRange, Plane, Gift, Stethoscope, Baby, CheckCircle, Clock, History, XCircle } from 'lucide-react';
 import { Separator } from '../ui/separator';
@@ -31,19 +31,7 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
 
   const { nextAbsence, summaryByMonth } = useMemo(() => {
     const summary: Record<string, number> = {};
-    
-    // 1. Separate future planned absences from all others
-    const futurePlanned = vacations
-        .filter(v => v.status === 'planejado' && isFuture(parseISO(v.startDate)))
-        .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
-        
-    // 2. Sort past/current absences by most recent start date
-    const pastOrCurrent = vacations
-        .filter(v => !futurePlanned.includes(v))
-        .sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
-
-    // 3. The next absence is the closest future one, or the most recent past one if no future ones exist.
-    const nextAbsence: Vacation | null = futurePlanned[0] || pastOrCurrent[0] || null;
+    const today = startOfDay(new Date());
 
     vacations.forEach(vacation => {
         if (vacation.status === 'cancelado') return;
@@ -60,9 +48,47 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
         }
     });
 
+    const summaryByMonthData = Object.entries(summary).map(([month, days]) => ({ month, days }));
+    
+    if (vacations.length === 0) {
+      return { nextAbsence: null, summaryByMonth: summaryByMonthData };
+    }
+
+    // 1. Check for an absence happening today
+    const currentAbsence = vacations.find(v => 
+        v.status !== 'cancelado' &&
+        isWithinInterval(today, { start: parseISO(v.startDate), end: parseISO(v.endDate) })
+    );
+
+    if (currentAbsence) {
+        return { nextAbsence: currentAbsence, summaryByMonth: summaryByMonthData };
+    }
+    
+    // 2. Find the closest future planned absence
+    const futurePlanned = vacations
+        .filter(v => v.status === 'planejado' && isFuture(parseISO(v.startDate)))
+        .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+        
+    if (futurePlanned.length > 0) {
+        return { nextAbsence: futurePlanned[0], summaryByMonth: summaryByMonthData };
+    }
+
+    // 3. Find the most recent past/completed absence
+    const pastOrCurrent = vacations
+        .filter(v => v.status !== 'planejado') // Confirmed or Cancelled
+        .sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
+    
+    if (pastOrCurrent.length > 0) {
+        return { nextAbsence: pastOrCurrent[0], summaryByMonth: summaryByMonthData };
+    }
+    
+    // 4. Fallback to the most recent one if only planned absences exist, but all are in the past
+    const anyAbsence = [...vacations].sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
+
+
     return { 
-        nextAbsence, 
-        summaryByMonth: Object.entries(summary).map(([month, days]) => ({ month, days }))
+        nextAbsence: anyAbsence[0] || null, 
+        summaryByMonth: summaryByMonthData
     };
   }, [vacations]);
   
@@ -105,7 +131,7 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
             <div className='text-sm space-y-2'>
                 <div className='flex items-center gap-2'>
                     {getStatusIcon(nextAbsence)}
-                    <span>
+                    <span className={cn(nextAbsence.status === 'cancelado' && 'line-through')}>
                         {format(parseISO(nextAbsence.startDate), "dd/MM/yy")} a {format(parseISO(nextAbsence.endDate), "dd/MM/yy")}
                     </span>
                 </div>
