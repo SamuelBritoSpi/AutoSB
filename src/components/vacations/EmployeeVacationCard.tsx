@@ -54,7 +54,7 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
       return { nextAbsence: null, summaryByMonth: summaryByMonthData };
     }
 
-    // 1. Check for an absence happening today
+    // 1. Verifica se há um afastamento acontecendo hoje
     const currentAbsence = vacations.find(v => 
         v.status !== 'cancelado' &&
         isWithinInterval(today, { start: parseISO(v.startDate), end: parseISO(v.endDate) })
@@ -64,7 +64,7 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
         return { nextAbsence: currentAbsence, summaryByMonth: summaryByMonthData };
     }
     
-    // 2. Find the closest future planned absence
+    // 2. Encontra o afastamento planejado futuro mais próximo
     const futurePlanned = vacations
         .filter(v => v.status === 'planejado' && isFuture(parseISO(v.startDate)))
         .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
@@ -73,16 +73,16 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
         return { nextAbsence: futurePlanned[0], summaryByMonth: summaryByMonthData };
     }
 
-    // 3. Find the most recent past/completed absence
+    // 3. Encontra o afastamento passado/concluído mais recente
     const pastOrCurrent = vacations
-        .filter(v => v.status !== 'planejado') // Confirmed or Cancelled
+        .filter(v => v.status !== 'planejado') // Confirmado ou Cancelado
         .sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
     
     if (pastOrCurrent.length > 0) {
         return { nextAbsence: pastOrCurrent[0], summaryByMonth: summaryByMonthData };
     }
     
-    // 4. Fallback to the most recent one if only planned absences exist, but all are in the past
+    // 4. Fallback para o mais recente se houver apenas afastamentos planejados, mas todos estiverem no passado
     const anyAbsence = [...vacations].sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
 
 
@@ -105,6 +105,9 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
             return null;
     }
   }
+  
+  // Lógica defensiva para obter os detalhes do tipo de ausência
+  const typeDetails = nextAbsence ? (absenceTypeDetails[nextAbsence.type] || { label: 'Desconhecido', icon: null, variant: 'secondary' }) : null;
 
 
   return (
@@ -127,7 +130,7 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
       <CardContent className="flex-grow space-y-3">
         <Separator />
         <h4 className="text-sm font-semibold text-primary">Afastamento Relevante</h4>
-        {nextAbsence ? (
+        {nextAbsence && typeDetails ? (
             <div className='text-sm space-y-2'>
                 <div className='flex items-center gap-2'>
                     {getStatusIcon(nextAbsence)}
@@ -135,9 +138,9 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
                         {format(parseISO(nextAbsence.startDate), "dd/MM/yy")} a {format(parseISO(nextAbsence.endDate), "dd/MM/yy")}
                     </span>
                 </div>
-                 <Badge variant={absenceTypeDetails[nextAbsence.type].variant} className="capitalize">
-                    {absenceTypeDetails[nextAbsence.type].icon}
-                    <span className='ml-1'>{absenceTypeDetails[nextAbsence.type].label}</span>
+                 <Badge variant={typeDetails.variant} className="capitalize">
+                    {typeDetails.icon}
+                    <span className='ml-1'>{typeDetails.label}</span>
                 </Badge>
             </div>
         ) : (
