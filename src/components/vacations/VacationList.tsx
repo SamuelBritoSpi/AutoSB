@@ -11,6 +11,7 @@ import VacationForm from './VacationForm';
 import VacationHistoryDialog from './VacationHistoryDialog';
 import ReportDialog from '../reports/ReportDialog';
 import { Button } from '../ui/button';
+import { Card, CardHeader } from '../ui/card';
 
 interface VacationListProps {
   vacations: Vacation[];
@@ -68,26 +69,32 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card rounded-lg shadow">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Afastamentos por Funcionário</h3>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <div className="relative w-full sm:w-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Buscar por funcionário..." 
-              className="pl-10 w-full sm:w-[250px]" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+      <Card className="shadow">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-3">
+              <CalendarDays className="h-8 w-8 text-primary" />
+              <h2 id="vacations-list-title" className="text-3xl font-headline font-semibold text-primary">
+                Afastamentos por Funcionário
+              </h2>
+            </div>
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <div className="relative w-full flex-grow">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar por funcionário..." 
+                  className="pl-10 w-full" 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Button variant="secondary" onClick={() => setIsReportDialogOpen(true)} className="w-full sm:w-auto">
+                <FileText className="mr-2 h-4 w-4" /> Gerar Relatório
+              </Button>
+            </div>
           </div>
-          <Button variant="secondary" onClick={() => setIsReportDialogOpen(true)} className="w-full sm:w-auto">
-            <FileText className="mr-2 h-4 w-4" /> Gerar Relatório
-          </Button>
-        </div>
-      </div>
+        </CardHeader>
+      </Card>
 
       {employeesWithVacations.length === 0 ? (
         <p className="text-center text-muted-foreground py-10">Nenhum registro de afastamento encontrado para a busca.</p>
@@ -152,3 +159,5 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
     </div>
   );
 }
+
+    

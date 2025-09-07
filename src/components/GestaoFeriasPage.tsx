@@ -13,7 +13,7 @@ import DashboardTab from '@/components/dashboard/DashboardTab';
 import CalendarView from '@/components/calendar/CalendarView';
 import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu, Loader2 } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu, Loader2, ListPlus, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -509,8 +509,13 @@ export default function GestaoFeriasPage() {
 
         <TabsContent value="vacations" className="space-y-6 mt-6">
           <section aria-labelledby="vacations-form-section-title">
-              <div className="flex justify-between items-center mb-4">
-              <h2 id="vacations-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novas Férias</h2>
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-3">
+                  <ListPlus className="h-8 w-8 text-primary" />
+                  <h2 id="vacations-form-section-title" className="text-3xl font-headline font-semibold text-primary">
+                      Registrar Afastamento
+                  </h2>
+              </div>
               <Button variant="outline" onClick={() => setShowVacationForm(!showVacationForm)}>
                 <PlusCircle className="mr-2 h-4 w-4" /> {showVacationForm ? 'Ocultar' : 'Adicionar'}
               </Button>
@@ -523,8 +528,7 @@ export default function GestaoFeriasPage() {
               />
             )}
           </section>
-          <section aria-labelledby="vacations-list-title">
-            <h2 id="vacations-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Calendário de Férias</h2>
+          <section aria-labelledby="vacations-list-title" className="mt-8">
             <VacationList 
               vacations={vacations} 
               employees={employees}
@@ -564,3 +568,5 @@ export default function GestaoFeriasPage() {
     </div>
   );
 }
+
+    
