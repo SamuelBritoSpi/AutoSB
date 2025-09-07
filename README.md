@@ -2,31 +2,33 @@
 
 ## Sobre o Projeto
 
-O AutoSB é uma aplicação web projetada para auxiliar na gestão de tarefas diárias, organização de férias de funcionários e, principalmente, no controle detalhado de atestados médicos, seguindo regras específicas da legislação trabalhista.
+O AutoSB é uma aplicação web moderna e inteligente, projetada para otimizar a gestão de tarefas, organizar afastamentos de funcionários (férias, licenças) e, principalmente, controlar detalhadamente atestados médicos, com análise automatizada baseada em regras da legislação trabalhista.
 
-Construída com as tecnologias mais modernas, a aplicação utiliza Firebase para autenticação segura e armazenamento de dados em tempo real na nuvem, garantindo acesso de qualquer lugar e funcionamento offline.
+Construída com as tecnologias mais recentes, a aplicação utiliza Firebase para autenticação segura e armazenamento de dados em tempo real na nuvem, garantindo acesso de qualquer lugar e funcionamento offline. A sessão de usuário é encerrada automaticamente ao fechar o navegador, garantindo maior segurança.
 
 ## Tecnologias Utilizadas
 
-- **Next.js**: Framework React para construção da interface.
+- **Next.js**: Framework React para uma interface rápida e moderna (App Router).
 - **TypeScript**: Para um código mais seguro e robusto.
-- **Tailwind CSS**: Para estilização rápida e moderna.
-- **ShadCN/UI**: Componentes de UI pré-construídos e acessíveis.
-- **Firebase**: Para autenticação, banco de dados (Firestore) e armazenamento de arquivos.
-- **Zod**: Para validação de esquemas e formulários.
+- **Tailwind CSS**: Para estilização ágil e customizável.
+- **ShadCN/UI**: Componentes de UI pré-construídos, acessíveis e elegantes.
+- **Firebase**: Para autenticação, banco de dados (Firestore com persistência offline) e armazenamento de arquivos (Storage).
+- **Zod**: Para validação de esquemas de dados e formulários.
 - **date-fns**: Para manipulação e formatação de datas.
 
 ## Funcionalidades Principais
 
 ### 1. Gestão de Demandas
 - **Criação e Edição**: Registre novas tarefas com título, descrição, prioridade (alta, média, baixa) e data de entrega.
-- **Controle de Status**: Acompanhe o progresso de cada demanda com um fluxo de trabalho customizável (`Recebido`, `Em Análise`, `Aguardando SEC`, `Aguardando CSH`, `Finalizado`, etc.).
+- **Controle de Status Customizável**: Acompanhe o progresso de cada demanda com um fluxo de trabalho personalizável (`Aberto`, `Aguardando Resposta`, `Finalizado`, etc.).
 - **Filtros e Ordenação**: Organize sua lista de demandas por status, data ou prioridade para focar no que é mais importante.
 
-### 2. Gestão de Férias
-- **Registro Simplificado**: Adicione rapidamente os períodos de férias dos funcionários.
-- **Busca Rápida**: Encontre facilmente os registros de férias pesquisando pelo nome do funcionário.
-- **Visão em Calendário**: Visualize as férias e os prazos das demandas em um calendário unificado.
+### 2. Gestão de Afastamentos (Férias e Licenças)
+- **Registro Simplificado**: Adicione rapidamente os períodos de afastamento dos funcionários (férias, licença prêmio, médica, etc.).
+- **Visão Inteligente**: O card de cada funcionário exibe o afastamento mais relevante (o que está acontecendo hoje, o próximo agendado ou o último ocorrido).
+- **Histórico Completo**: Acesse um histórico detalhado de todos os afastamentos de um funcionário em um clique, com opções para gerenciar cada registro.
+- **Gerenciamento de Status**: Altere o status de cada afastamento de forma clara (`Planejado`, `Usufruído`, `Não Usufruído`).
+- **Visão em Calendário**: Visualize todos os afastamentos e os prazos das demandas em um calendário unificado.
 
 ### 3. Gestão de Funcionários e Atestados Médicos
 - **Cadastro de Funcionários**: Mantenha uma lista de funcionários com nome e tipo de contrato (`Efetivo`, `REDA`, `Terceirizado`).
@@ -35,11 +37,12 @@ Construída com as tecnologias mais modernas, a aplicação utiliza Firebase par
     - Anexe uma cópia digital do atestado, seja enviando um arquivo ou **escaneando com a câmera** do dispositivo.
     - Controle o recebimento do atestado físico original.
 - **Análise Automatizada (Regras Trabalhistas)**:
-    - O sistema **calcula automaticamente** a soma de dias de atestado nos últimos 60 dias.
-    - Ele alerta quando o limite é atingido (10 dias para efetivos, 15 para REDA/terceirizados), indicando a necessidade de encaminhamento ao **INSS** ou **processo SEI**.
+    - O sistema **calcula automaticamente** a soma de dias de atestado da mesma doença (por grupo de CID) nos últimos 60 dias.
+    - Ele alerta no dashboard quando o limite é atingido (10 dias para efetivos, 15 para REDA/terceirizados), indicando a necessidade de encaminhamento ao **INSS** ou **processo SEI**.
 
-### 4. Segurança dos Dados
-- **Armazenamento na Nuvem (Firestore)**: Seus dados ficam salvos de forma segura no Firebase. Você pode acessá-los de qualquer computador com seu login e senha.
+### 4. Segurança e Acesso
+- **Armazenamento na Nuvem (Firestore)**: Seus dados ficam salvos de forma segura no Firebase.
+- **Persistência de Sessão**: O login expira automaticamente quando o navegador é fechado, protegendo o acesso não autorizado.
 - **Backup Automático**: O Firebase gerencia a segurança e a disponibilidade dos seus dados.
 
 ## Como Publicar na Web (Deploy com Vercel)
