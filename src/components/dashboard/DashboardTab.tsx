@@ -2,16 +2,18 @@
 "use client";
 
 import { useMemo } from 'react';
-import type { Demand, Employee, MedicalCertificate, DemandStatus, Vacation } from '@/lib/types';
+import type { Demand, Employee, MedicalCertificate, DemandStatus, Vacation, AbsenceType, AbsenceStatus } from '@/lib/types';
 import StatCard from './StatCard';
 import PriorityChart from './PriorityChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Mailbox, Hourglass, CalendarOff } from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Mailbox, Hourglass, CalendarOff, Plane, Gift, Stethoscope, Baby, Clock, CalendarCheck, CalendarX } from 'lucide-react';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeCertificates } from '@/lib/certificate-logic';
 import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
+
 
 interface DashboardTabProps {
   demands: Demand[];
@@ -23,6 +25,19 @@ interface DashboardTabProps {
 
 const FINAL_STATUS_LABEL = 'Finalizado';
 const WAITING_STATUS_LABEL = 'Aguardando Resposta';
+
+const absenceTypeDetails: Record<AbsenceType, { label: string, icon: React.ReactNode }> = {
+    ferias: { label: 'Férias', icon: <Plane className="h-4 w-4" /> },
+    licenca_premio: { label: 'Licença Prêmio', icon: <Gift className="h-4 w-4" /> },
+    licenca_medica: { label: 'Licença Médica', icon: <Stethoscope className="h-4 w-4" /> },
+    licenca_maternidade: { label: 'Licença Maternidade', icon: <Baby className="h-4 w-4" /> },
+};
+
+const absenceStatusDetails: Record<AbsenceStatus, { label: string, icon: React.ReactNode, className: string }> = {
+    planejado: { label: 'Planejado', icon: <Clock className="h-3 w-3" />, className: 'text-blue-600' },
+    confirmado: { label: 'Usufruído', icon: <CalendarCheck className="h-3 w-3" />, className: 'text-green-600' },
+    cancelado: { label: 'Não Usufruído', icon: <CalendarX className="h-3 w-3" />, className: 'text-red-600' },
+};
 
 
 export default function DashboardTab({ demands, employees, certificates, demandStatuses, vacations }: DashboardTabProps) {
@@ -61,11 +76,13 @@ export default function DashboardTab({ demands, employees, certificates, demandS
     const end = endOfMonth(today);
 
     return vacations.filter(v => {
-      if(v.status !== 'confirmado') return false;
+      // Inclui afastamentos planejados e confirmados, mas não cancelados.
+      if(v.status === 'cancelado') return false;
 
       const vacationStart = parseISO(v.startDate);
       const vacationEnd = parseISO(v.endDate);
       
+      // Verifica se o intervalo do afastamento sobrepõe o mês atual.
       return isWithinInterval(vacationStart, { start, end }) ||
              isWithinInterval(vacationEnd, { start, end }) ||
              (vacationStart < start && vacationEnd > end);
@@ -181,21 +198,36 @@ export default function DashboardTab({ demands, employees, certificates, demandS
                     <TableRow>
                         <TableHead>Funcionário</TableHead>
                         <TableHead>Tipo</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Período</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {currentMonthAbsences.map(v => (
+                    {currentMonthAbsences.map(v => {
+                       const typeDetails = absenceTypeDetails[v.type] || { label: v.type, icon: null };
+                       const statusDetails = absenceStatusDetails[v.status] || { label: v.status, icon: null, className: '' };
+                       return (
                         <TableRow key={v.id}>
                             <TableCell className="font-medium">{v.employeeName}</TableCell>
-                            <TableCell><Badge variant="secondary" className="capitalize">{v.type.replace('_', ' ')}</Badge></TableCell>
+                            <TableCell>
+                                <Badge variant="secondary" className="capitalize">
+                                    {typeDetails.label}
+                                </Badge>
+                            </TableCell>
+                            <TableCell>
+                                <span className={cn('flex items-center gap-1.5 text-sm font-medium', statusDetails.className)}>
+                                    {statusDetails.icon}
+                                    {statusDetails.label}
+                                </span>
+                            </TableCell>
                             <TableCell>{format(parseISO(v.startDate), 'dd/MM')} - {format(parseISO(v.endDate), 'dd/MM')}</TableCell>
                         </TableRow>
-                    ))}
+                       );
+                    })}
                 </TableBody>
                 </Table>
             ) : (
-                <p className="text-center text-muted-foreground py-4">Nenhum afastamento confirmado para o mês atual.</p>
+                <p className="text-center text-muted-foreground py-4">Nenhum afastamento confirmado ou planejado para o mês atual.</p>
             )}
         </CardContent>
       </Card>
