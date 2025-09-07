@@ -109,6 +109,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                     </PopoverTrigger>
                     <Calendar
                         mode="single"
+                        showOutsideDays={false}
                         className="p-0"
                         classNames={{
                             months: "w-full",
@@ -118,8 +119,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                             head_row: "flex justify-around mb-2",
                             head_cell: "text-muted-foreground rounded-md w-full font-normal text-sm",
                             row: "flex w-full mt-2 justify-around",
-                            cell: "h-14 w-full text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                            day: "h-full w-full p-0",
+                            cell: "h-14 w-14 text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                            day: "h-14 w-14 p-0 font-normal aria-selected:opacity-100",
                             day_today: "bg-accent text-accent-foreground rounded-lg",
                             day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-lg",
                             day_outside: "day-outside text-muted-foreground opacity-90 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
