@@ -480,7 +480,7 @@ export default function GestaoFeriasPage() {
           <section aria-labelledby="demands-form-section-title">
              <Card className="shadow-sm">
                 <CardHeader>
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <CardTitle className="text-xl font-headline text-primary flex items-center gap-3">
                             <ListPlus className="h-6 w-6" />
                             Registrar Nova Demanda
@@ -524,7 +524,7 @@ export default function GestaoFeriasPage() {
           <section aria-labelledby="vacations-form-section">
              <Card className="shadow-sm">
                 <CardHeader>
-                  <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <CardTitle className="text-xl font-headline text-primary flex items-center gap-3">
                       <ListPlus className="h-6 w-6" />
                       Novo Afastamento
@@ -559,7 +559,7 @@ export default function GestaoFeriasPage() {
           <section aria-labelledby="employees-form-section-title">
               <Card className="shadow-sm">
                   <CardHeader>
-                      <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                           <CardTitle className="text-xl font-headline text-primary flex items-center gap-3">
                               <UserPlus className="h-6 w-6" />
                               Registrar Novo Funcionário
