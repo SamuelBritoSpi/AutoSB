@@ -120,11 +120,18 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                             row: "flex w-full mt-2 justify-around",
                             cell: "h-16 w-full text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                             day: "h-full w-full p-1",
+                            day_today: "bg-accent text-accent-foreground",
+                            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                            day_range_end: "day-range-end",
+                            day_outside: "day-outside text-muted-foreground opacity-90 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+                            day_disabled: "text-muted-foreground opacity-50",
+                            day_hidden: "invisible",
+                            // Use a prop específica do react-day-picker para estilizar o modificador
+                            day_modifier_vacation: "bg-blue-100 dark:bg-blue-900/50 rounded-md",
                         }}
                         modifiers={{ 
                             vacation: (date) => vacationDays.has(startOfDay(date).toISOString()),
                         }}
-                        modifiersClassNames={{ vacation: 'day-vacation' }}
                         components={{
                             Day: ({ date }) => {
                                 const dateKey = startOfDay(date).toISOString();
@@ -194,7 +201,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 <h3 className="font-semibold text-lg text-primary">Legenda</h3>
                 <div className="space-y-3">
                     <div className="flex items-center">
-                        <div className="w-5 h-5 rounded-md bg-blue-200 dark:bg-blue-900/50 mr-3 border border-blue-300 dark:border-blue-800" />
+                        <div className="w-5 h-5 rounded-md bg-blue-100 dark:bg-blue-900/50 mr-3 border border-blue-300 dark:border-blue-800" />
                         <span className="text-sm">Dia de Afastamento</span>
                     </div>
                     <div className="flex items-center">

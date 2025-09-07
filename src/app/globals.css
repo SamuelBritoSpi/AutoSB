@@ -120,27 +120,6 @@
 
 /* Custom styles for the calendar view */
 @layer components {
-  /* Dia de Afastamento (Férias, etc.) */
-  .day-vacation {
-    @apply bg-blue-200 text-blue-900;
-  }
-  .dark .day-vacation {
-    @apply bg-blue-900/50 text-blue-100;
-  }
-
-  /* Garante que o dia de hoje seja destacado mesmo se for um afastamento */
-  .day-vacation.rdp-day_today {
-    @apply !bg-blue-300 ring-2 ring-primary;
-  }
-  .dark .day-vacation.rdp-day_today {
-    @apply !bg-blue-800/60;
-  }
-
-  /* Garante que um dia selecionado tenha precedência visual */
-  .day-vacation[aria-selected="true"] {
-     @apply !bg-primary !text-primary-foreground;
-  }
-
   .day-deadline-dots {
     @apply absolute bottom-1 left-1/2 -translate-x-1/2 flex space-x-1;
   }
