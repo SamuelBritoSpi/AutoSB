@@ -53,41 +53,35 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
     if (vacations.length === 0) {
       return { nextAbsence: null, summaryByMonth: summaryByMonthData };
     }
+    
+    let relevantAbsence: Vacation | null = null;
 
-    // 1. Verifica se há um afastamento acontecendo hoje
+    // Prioridade 1: Verificar se há um afastamento acontecendo hoje.
     const currentAbsence = vacations.find(v => 
         v.status !== 'cancelado' &&
         isWithinInterval(today, { start: parseISO(v.startDate), end: parseISO(v.endDate) })
     );
 
     if (currentAbsence) {
-        return { nextAbsence: currentAbsence, summaryByMonth: summaryByMonthData };
+        relevantAbsence = currentAbsence;
+    } else {
+        // Prioridade 2: Encontrar o afastamento planejado futuro mais próximo.
+        const futurePlanned = vacations
+            .filter(v => v.status === 'planejado' && isFuture(parseISO(v.startDate)))
+            .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+            
+        if (futurePlanned.length > 0) {
+            relevantAbsence = futurePlanned[0];
+        } else {
+            // Prioridade 3: Fallback para o afastamento mais recente (passado ou atual).
+             const anyAbsence = [...vacations]
+                .sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
+             relevantAbsence = anyAbsence[0] || null;
+        }
     }
     
-    // 2. Encontra o afastamento planejado futuro mais próximo
-    const futurePlanned = vacations
-        .filter(v => v.status === 'planejado' && isFuture(parseISO(v.startDate)))
-        .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
-        
-    if (futurePlanned.length > 0) {
-        return { nextAbsence: futurePlanned[0], summaryByMonth: summaryByMonthData };
-    }
-
-    // 3. Encontra o afastamento passado/concluído mais recente
-    const pastOrCurrent = vacations
-        .filter(v => v.status !== 'planejado') // Confirmado ou Cancelado
-        .sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
-    
-    if (pastOrCurrent.length > 0) {
-        return { nextAbsence: pastOrCurrent[0], summaryByMonth: summaryByMonthData };
-    }
-    
-    // 4. Fallback para o mais recente se houver apenas afastamentos planejados, mas todos estiverem no passado
-    const anyAbsence = [...vacations].sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
-
-
     return { 
-        nextAbsence: anyAbsence[0] || null, 
+        nextAbsence: relevantAbsence,
         summaryByMonth: summaryByMonthData
     };
   }, [vacations]);
