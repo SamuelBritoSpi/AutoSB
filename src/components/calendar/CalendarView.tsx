@@ -80,7 +80,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     const dayEvents = eventsByDate.get(dateKey);
 
     return (
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full flex items-center justify-center">
         <span>{props.date.getDate()}</span>
         {dayEvents && dayEvents.demands.length > 0 && (
           <div className="day-deadline-dots">
@@ -133,9 +133,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                                 <div
                                     onMouseEnter={() => hasEvents && setHoveredDate(dayProps.date)}
                                     onMouseLeave={() => setHoveredDate(null)}
-                                    className={cn("h-full w-full rounded-md flex items-center justify-center flex-col", {
+                                    className={cn("h-full w-full rounded-md", {
                                         "cursor-pointer": hasEvents,
-                                        "bg-accent/50 dark:bg-accent/30": isVacation && hasEvents
                                     })}
                                 >
                                     <DayContent {...dayProps} />
@@ -194,7 +193,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 <h3 className="font-semibold text-lg text-primary">Legenda</h3>
                 <div className="space-y-3">
                     <div className="flex items-center">
-                        <div className="w-5 h-5 rounded-md bg-blue-500/80 mr-3" />
+                        <div className="w-5 h-5 rounded-full bg-blue-500/80 mr-3" />
                         <span className="text-sm">Dia de Afastamento</span>
                     </div>
                     <div className="flex items-center">
