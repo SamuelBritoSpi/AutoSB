@@ -73,8 +73,8 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
-              <CalendarDays className="h-8 w-8 text-primary" />
-              <h2 id="vacations-list-title" className="text-3xl font-headline font-semibold text-primary">
+              <CalendarDays className="h-6 w-6 text-primary" />
+              <h2 id="vacations-list-title" className="text-2xl font-headline font-semibold text-primary">
                 Afastamentos por Funcionário
               </h2>
             </div>

@@ -13,7 +13,7 @@ import DashboardTab from '@/components/dashboard/DashboardTab';
 import CalendarView from '@/components/calendar/CalendarView';
 import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu, Loader2, ListPlus, Edit } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -478,7 +478,10 @@ export default function GestaoFeriasPage() {
         <TabsContent value="demands" className="space-y-6 mt-6">
           <section aria-labelledby="demands-form-section-title">
             <div className="flex justify-between items-center mb-4">
-              <h2 id="demands-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Nova Demanda</h2>
+              <div className="flex items-center gap-3">
+                  <ListPlus className="h-6 w-6 text-primary" />
+                  <h2 id="demands-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Nova Demanda</h2>
+              </div>
               <Button variant="outline" onClick={() => setShowDemandForm(!showDemandForm)}>
                 <PlusCircle className="mr-2 h-4 w-4" /> {showDemandForm ? 'Ocultar' : 'Adicionar'}
               </Button>
@@ -492,7 +495,10 @@ export default function GestaoFeriasPage() {
             )}
           </section>
           <section aria-labelledby="demands-list-title">
-            <h2 id="demands-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Demandas</h2>
+            <div className="flex items-center gap-3 my-6">
+                <ClipboardList className="h-6 w-6 text-primary" />
+                <h2 id="demands-list-title" className="text-2xl font-headline font-semibold text-primary">Lista de Demandas</h2>
+            </div>
             <DemandList 
               demands={demands}
               demandStatuses={demandStatuses}
@@ -511,8 +517,8 @@ export default function GestaoFeriasPage() {
           <section aria-labelledby="vacations-form-section-title">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-3">
-                  <ListPlus className="h-8 w-8 text-primary" />
-                  <h2 id="vacations-form-section-title" className="text-3xl font-headline font-semibold text-primary">
+                  <ListPlus className="h-6 w-6 text-primary" />
+                  <h2 id="vacations-form-section-title" className="text-2xl font-headline font-semibold text-primary">
                       Registrar Afastamento
                   </h2>
               </div>
@@ -541,7 +547,10 @@ export default function GestaoFeriasPage() {
         <TabsContent value="employees" className="space-y-6 mt-6">
           <section aria-labelledby="employees-form-section-title">
               <div className="flex justify-between items-center mb-4">
-              <h2 id="employees-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novo Funcionário</h2>
+                <div className="flex items-center gap-3">
+                  <UserPlus className="h-6 w-6 text-primary" />
+                  <h2 id="employees-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novo Funcionário</h2>
+                </div>
               <Button variant="outline" onClick={() => setShowEmployeeForm(!showEmployeeForm)}>
                 <PlusCircle className="mr-2 h-4 w-4" /> {showEmployeeForm ? 'Ocultar' : 'Adicionar'}
               </Button>
@@ -553,7 +562,10 @@ export default function GestaoFeriasPage() {
             )}
           </section>
           <section aria-labelledby="employees-list-title">
-            <h2 id="employees-list-title" className="text-2xl font-headline font-semibold my-6 text-primary">Lista de Funcionários</h2>
+             <div className="flex items-center gap-3 my-6">
+                <Users className="h-6 w-6 text-primary" />
+                <h2 id="employees-list-title" className="text-2xl font-headline font-semibold text-primary">Lista de Funcionários</h2>
+            </div>
             <EmployeeList 
               employees={employees}
               certificates={certificates}
