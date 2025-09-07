@@ -9,7 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { Briefcase, LogIn, Loader2 } from 'lucide-react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { 
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserSessionPersistence 
+} from 'firebase/auth';
 import { getAuthInstance } from '@/lib/firebase-client';
 
 
@@ -24,6 +28,10 @@ export default function LoginPage() {
     setIsLoading(true);
     const auth = getAuthInstance();
     try {
+      // Define a persistência da autenticação para a sessão atual do navegador.
+      // Isso garante que o usuário seja desconectado ao fechar o navegador.
+      await setPersistence(auth, browserSessionPersistence);
+      
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: 'Login bem-sucedido!',
