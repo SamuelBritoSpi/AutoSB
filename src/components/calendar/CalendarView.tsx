@@ -77,8 +77,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
       <div className="relative w-full h-full flex items-center justify-center">
         <span>{props.date.getDate()}</span>
         <div className="absolute bottom-0.5 flex space-x-1">
-          {dayEvents?.vacations.length > 0 && <Plane className="h-3 w-3 text-blue-500" />}
-          {dayEvents?.demands.length > 0 && (
+          {dayEvents && dayEvents.vacations.length > 0 && <Plane className="h-3 w-3 text-blue-500" />}
+          {dayEvents && dayEvents.demands.length > 0 && (
              hasHighPriorityDemand 
                 ? <AlertTriangle className="h-3 w-3 text-destructive" />
                 : <ClipboardCheck className="h-3 w-3 text-amber-600" />
@@ -127,6 +127,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                             day_outside: "day-outside text-muted-foreground opacity-90",
                             day_disabled: "text-muted-foreground opacity-50",
                             day_hidden: "invisible",
+                            vacation: 'bg-accent',
                         }}
                          modifiers={{ 
                             vacation: (date) => vacationDays.has(startOfDay(date).toISOString()),
@@ -197,7 +198,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 <h3 className="font-semibold text-lg text-primary">Legenda</h3>
                 <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-md bg-accent flex items-center justify-center">
                            <Plane className="h-3 w-3 text-blue-500" />
                         </div>
                         <span className="text-sm">Dia de Afastamento</span>
