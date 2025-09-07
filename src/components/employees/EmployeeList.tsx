@@ -4,12 +4,13 @@
 import type { Employee, MedicalCertificate } from '@/lib/types';
 import EmployeeCard from './EmployeeCard';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { FileText, Search } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import EmployeeForm from './EmployeeForm';
 import MedicalCertificateList from './MedicalCertificateList';
 import { Button } from '../ui/button';
+import ReportDialog from '../reports/ReportDialog';
 
 interface EmployeeListProps {
   employees: Employee[];
@@ -31,6 +32,7 @@ export default function EmployeeList({
   const [searchTerm, setSearchTerm] = useState('');
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [managingCertificatesFor, setManagingCertificatesFor] = useState<Employee | null>(null);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
   const handleEdit = (employee: Employee) => {
     setEditingEmployee(employee);
@@ -56,8 +58,11 @@ export default function EmployeeList({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end items-center gap-4 p-4 bg-card rounded-lg shadow">
-        <div className="relative w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card rounded-lg shadow">
+         <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold">Buscar e Gerar Relatórios</h3>
+        </div>
+        <div className="relative w-full sm:w-auto flex gap-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por nome..."
@@ -65,6 +70,9 @@ export default function EmployeeList({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+           <Button variant="secondary" onClick={() => setIsReportDialogOpen(true)} className="w-full sm:w-auto">
+              <FileText className="mr-2 h-4 w-4" /> Relatório de Atestados
+            </Button>
         </div>
       </div>
 
@@ -118,6 +126,14 @@ export default function EmployeeList({
               )}
           </DialogContent>
       </Dialog>
+
+      <ReportDialog
+        open={isReportDialogOpen}
+        onOpenChange={setIsReportDialogOpen}
+        reportType="certificates"
+        employees={employees}
+        certificates={certificates}
+      />
     </div>
   );
 }

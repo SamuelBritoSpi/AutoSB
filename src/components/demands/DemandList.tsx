@@ -5,12 +5,13 @@ import type { Demand, DemandStatus, Employee } from '@/lib/types';
 import DemandCard from './DemandCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { ListFilter, ArrowDownAZ, ArrowUpAZ, CalendarClock, AlertOctagon, type LucideIcon, type LucideProps, icons, Smile } from 'lucide-react';
+import { ListFilter, ArrowDownAZ, ArrowUpAZ, CalendarClock, AlertOctagon, type LucideIcon, type LucideProps, icons, Smile, FileText } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import DemandForm from './DemandForm';
 import ManageStatusesDialog from './ManageStatusesDialog';
 import { cn } from '@/lib/utils';
+import ReportDialog from '../reports/ReportDialog';
 
 
 interface DemandListProps {
@@ -56,6 +57,7 @@ export default function DemandList({
   const [editingDemand, setEditingDemand] = useState<Demand | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isStatusManagerOpen, setIsStatusManagerOpen] = useState(false);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
   const priorityOrder: Record<Demand['priority'], number> = { 'alta': 1, 'media': 2, 'baixa': 3 };
 
@@ -136,6 +138,9 @@ export default function DemandList({
             {sortOrder === 'asc' ? <ArrowDownAZ className="h-4 w-4 mr-2" /> : <ArrowUpAZ className="h-4 w-4 mr-2" />}
             {sortOrder === 'asc' ? 'Asc' : 'Desc'}
           </Button>
+           <Button variant="secondary" onClick={() => setIsReportDialogOpen(true)} className="w-full sm:w-auto">
+              <FileText className="mr-2 h-4 w-4" /> Gerar Relatório
+            </Button>
         </div>
       </div>
 
@@ -180,6 +185,14 @@ export default function DemandList({
         onDeleteStatus={onDeleteStatus}
         onUpdateStatus={onUpdateStatusDetails}
         demands={demands}
+      />
+      <ReportDialog
+        open={isReportDialogOpen}
+        onOpenChange={setIsReportDialogOpen}
+        reportType="demands"
+        demands={demands}
+        demandStatuses={demandStatuses}
+        employees={employees}
       />
     </div>
   );

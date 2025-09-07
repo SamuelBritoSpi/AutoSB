@@ -3,12 +3,14 @@
 
 import type { Vacation, Employee } from '@/lib/types';
 import EmployeeVacationCard from './EmployeeVacationCard';
-import { CalendarDays, Search } from 'lucide-react';
+import { CalendarDays, FileText, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import VacationForm from './VacationForm';
 import VacationHistoryDialog from './VacationHistoryDialog';
+import ReportDialog from '../reports/ReportDialog';
+import { Button } from '../ui/button';
 
 interface VacationListProps {
   vacations: Vacation[];
@@ -22,6 +24,7 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
   const [editingVacation, setEditingVacation] = useState<Vacation | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [historyEmployee, setHistoryEmployee] = useState<Employee | null>(null);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   
   const handleEdit = (vacation: Vacation) => {
     setEditingVacation(vacation);
@@ -70,14 +73,19 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
           <CalendarDays className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-semibold">Afastamentos por Funcionário</h3>
         </div>
-        <div className="relative w-full sm:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar por funcionário..." 
-            className="pl-10 w-full sm:w-[250px]" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-wrap gap-2">
+          <div className="relative w-full sm:w-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Buscar por funcionário..." 
+              className="pl-10 w-full sm:w-[250px]" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button variant="secondary" onClick={() => setIsReportDialogOpen(true)} className="w-full sm:w-auto">
+            <FileText className="mr-2 h-4 w-4" /> Gerar Relatório
+          </Button>
         </div>
       </div>
 
@@ -133,7 +141,14 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
             )}
          </DialogContent>
       </Dialog>
-
+      
+      <ReportDialog
+        open={isReportDialogOpen}
+        onOpenChange={setIsReportDialogOpen}
+        reportType="vacations"
+        employees={employees}
+        vacations={vacations}
+      />
     </div>
   );
 }
