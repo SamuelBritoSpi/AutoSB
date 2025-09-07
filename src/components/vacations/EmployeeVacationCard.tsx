@@ -1,12 +1,12 @@
 
 "use client";
 
-import type { Employee, Vacation, AbsenceType } from '@/lib/types';
+import type { Employee, Vacation, AbsenceType, AbsenceStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, parseISO, isFuture, isPast, isWithinInterval, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { User, CalendarRange, Plane, Gift, Stethoscope, Baby, CheckCircle, Clock, History, XCircle } from 'lucide-react';
+import { User, CalendarRange, Plane, Gift, Stethoscope, Baby, CheckCircle, Clock, History, XCircle, CalendarCheck, CalendarX } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { Badge } from '../ui/badge';
 import { useMemo } from 'react';
@@ -24,6 +24,12 @@ const absenceTypeDetails: Record<AbsenceType, { label: string, icon: React.React
     licenca_premio: { label: 'Licença Prêmio', icon: <Gift className="h-3 w-3" />, variant: 'secondary' },
     licenca_medica: { label: 'Licença Médica', icon: <Stethoscope className="h-3 w-3" />, variant: 'outline' },
     licenca_maternidade: { label: 'Licença Maternidade', icon: <Baby className="h-3 w-3" />, variant: 'outline' },
+};
+
+const absenceStatusDetails: Record<AbsenceStatus, { label: string, icon: React.ReactNode, className: string }> = {
+    planejado: { label: 'Planejado', icon: <Clock className="h-4 w-4 text-blue-500" />, className: 'text-blue-600' },
+    confirmado: { label: 'Usufruído', icon: <CalendarCheck className="h-4 w-4 text-green-500" />, className: 'text-green-600' },
+    cancelado: { label: 'Não Usufruído', icon: <CalendarX className="h-4 w-4 text-red-500" />, className: 'text-red-600' },
 };
 
 
@@ -50,33 +56,36 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
 
     const summaryByMonthData = Object.entries(summary).map(([month, days]) => ({ month, days }));
     
-    if (vacations.length === 0) {
+    // 1. Filtra apenas os afastamentos que não foram cancelados
+    const activeVacations = vacations.filter(v => v.status !== 'cancelado');
+
+    if (activeVacations.length === 0) {
       return { nextAbsence: null, summaryByMonth: summaryByMonthData };
     }
     
     let relevantAbsence: Vacation | null = null;
 
     // Prioridade 1: Verificar se há um afastamento acontecendo hoje.
-    const currentAbsence = vacations.find(v => 
-        v.status !== 'cancelado' &&
+    const currentAbsence = activeVacations.find(v => 
         isWithinInterval(today, { start: parseISO(v.startDate), end: parseISO(v.endDate) })
     );
 
     if (currentAbsence) {
         relevantAbsence = currentAbsence;
     } else {
-        // Prioridade 2: Encontrar o afastamento planejado futuro mais próximo.
-        const futurePlanned = vacations
-            .filter(v => v.status === 'planejado' && isFuture(parseISO(v.startDate)))
+        // Prioridade 2: Encontrar o afastamento futuro mais próximo.
+        const futureAbsences = activeVacations
+            .filter(v => isFuture(parseISO(v.startDate)))
             .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
             
-        if (futurePlanned.length > 0) {
-            relevantAbsence = futurePlanned[0];
+        if (futureAbsences.length > 0) {
+            relevantAbsence = futureAbsences[0];
         } else {
-            // Prioridade 3: Fallback para o afastamento mais recente (passado ou atual).
-             const anyAbsence = [...vacations]
-                .sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
-             relevantAbsence = anyAbsence[0] || null;
+            // Prioridade 3: Fallback para o afastamento mais recente (passado).
+             const pastAbsences = activeVacations
+                .filter(v => isPast(parseISO(v.endDate)))
+                .sort((a,b) => parseISO(b.endDate).getTime() - parseISO(a.endDate).getTime());
+             relevantAbsence = pastAbsences[0] || null;
         }
     }
     
@@ -88,16 +97,8 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
   
   const getStatusIcon = (absence: Vacation | null) => {
     if (!absence) return null;
-    switch(absence.status) {
-        case 'planejado':
-            return <Clock className="h-4 w-4 text-blue-500" />;
-        case 'confirmado':
-            return <CheckCircle className="h-4 w-4 text-green-500" />;
-        case 'cancelado':
-            return <XCircle className="h-4 w-4 text-red-500" />;
-        default:
-            return null;
-    }
+    const details = absenceStatusDetails[absence.status];
+    return details ? details.icon : null;
   }
   
   // Lógica defensiva para obter os detalhes do tipo de ausência
