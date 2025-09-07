@@ -35,11 +35,12 @@ const absenceStatusDetails: Record<AbsenceStatus, { label: string, icon: React.R
 
 export default function EmployeeVacationCard({ employee, vacations, onOpenHistory }: EmployeeVacationCardProps) {
 
-  const { nextAbsence, summaryByMonth } = useMemo(() => {
+  const { relevantAbsence, summaryByMonth } = useMemo(() => {
     const summary: Record<string, number> = {};
     const today = startOfDay(new Date());
 
     vacations.forEach(vacation => {
+        // O cálculo do resumo de dias por mês continua ignorando os cancelados.
         if (vacation.status === 'cancelado') return;
         
         const start = parseISO(vacation.startDate);
@@ -56,41 +57,37 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
 
     const summaryByMonthData = Object.entries(summary).map(([month, days]) => ({ month, days }));
     
-    // 1. Filtra apenas os afastamentos que não foram cancelados
-    const activeVacations = vacations.filter(v => v.status !== 'cancelado');
-
-    if (activeVacations.length === 0) {
-      return { nextAbsence: null, summaryByMonth: summaryByMonthData };
+    if (vacations.length === 0) {
+      return { relevantAbsence: null, summaryByMonth: summaryByMonthData };
     }
     
-    let relevantAbsence: Vacation | null = null;
+    let absenceToShow: Vacation | null = null;
 
-    // Prioridade 1: Verificar se há um afastamento acontecendo hoje.
-    const currentAbsence = activeVacations.find(v => 
+    // Prioridade 1: Verificar se há um afastamento acontecendo hoje (independente do status).
+    const currentAbsence = vacations.find(v => 
         isWithinInterval(today, { start: parseISO(v.startDate), end: parseISO(v.endDate) })
     );
 
     if (currentAbsence) {
-        relevantAbsence = currentAbsence;
+        absenceToShow = currentAbsence;
     } else {
-        // Prioridade 2: Encontrar o afastamento futuro mais próximo.
-        const futureAbsences = activeVacations
+        // Prioridade 2: Encontrar o afastamento futuro mais próximo (independente do status).
+        const futureAbsences = vacations
             .filter(v => isFuture(parseISO(v.startDate)))
             .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
             
         if (futureAbsences.length > 0) {
-            relevantAbsence = futureAbsences[0];
+            absenceToShow = futureAbsences[0];
         } else {
-            // Prioridade 3: Fallback para o afastamento mais recente (passado).
-             const pastAbsences = activeVacations
-                .filter(v => isPast(parseISO(v.endDate)))
+            // Prioridade 3: Fallback para o afastamento mais recente (passado, independente do status).
+             const pastAbsences = vacations
                 .sort((a,b) => parseISO(b.endDate).getTime() - parseISO(a.endDate).getTime());
-             relevantAbsence = pastAbsences[0] || null;
+             absenceToShow = pastAbsences[0] || null;
         }
     }
     
     return { 
-        nextAbsence: relevantAbsence,
+        relevantAbsence: absenceToShow,
         summaryByMonth: summaryByMonthData
     };
   }, [vacations]);
@@ -102,7 +99,7 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
   }
   
   // Lógica defensiva para obter os detalhes do tipo de ausência
-  const typeDetails = nextAbsence ? (absenceTypeDetails[nextAbsence.type] || { label: 'Desconhecido', icon: null, variant: 'secondary' }) : null;
+  const typeDetails = relevantAbsence ? (absenceTypeDetails[relevantAbsence.type] || { label: 'Desconhecido', icon: null, variant: 'secondary' }) : null;
 
 
   return (
@@ -125,12 +122,12 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
       <CardContent className="flex-grow space-y-3">
         <Separator />
         <h4 className="text-sm font-semibold text-primary">Afastamento Relevante</h4>
-        {nextAbsence && typeDetails ? (
+        {relevantAbsence && typeDetails ? (
             <div className='text-sm space-y-2'>
                 <div className='flex items-center gap-2'>
-                    {getStatusIcon(nextAbsence)}
-                    <span className={cn(nextAbsence.status === 'cancelado' && 'line-through')}>
-                        {format(parseISO(nextAbsence.startDate), "dd/MM/yy")} a {format(parseISO(nextAbsence.endDate), "dd/MM/yy")}
+                    {getStatusIcon(relevantAbsence)}
+                    <span className={cn(relevantAbsence.status === 'cancelado' && 'line-through')}>
+                        {format(parseISO(relevantAbsence.startDate), "dd/MM/yy")} a {format(parseISO(relevantAbsence.endDate), "dd/MM/yy")}
                     </span>
                 </div>
                  <Badge variant={typeDetails.variant} className="capitalize">
