@@ -478,21 +478,27 @@ export default function GestaoFeriasPage() {
 
         <TabsContent value="demands" className="space-y-6 mt-6">
           <section aria-labelledby="demands-form-section-title">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-3">
-                  <ListPlus className="h-6 w-6 text-primary" />
-                  <h2 id="demands-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Nova Demanda</h2>
-              </div>
-              <Button variant="outline" onClick={() => setShowDemandForm(!showDemandForm)}>
-                <PlusCircle className="mr-2 h-4 w-4" /> {showDemandForm ? 'Ocultar' : 'Adicionar'}
-              </Button>
-            </div>
+             <Card className="shadow-sm">
+                <CardHeader>
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+                        <CardTitle className="text-xl font-headline text-primary flex items-center gap-3">
+                            <ListPlus className="h-6 w-6" />
+                            Registrar Nova Demanda
+                        </CardTitle>
+                        <Button variant="outline" onClick={() => setShowDemandForm(!showDemandForm)}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> {showDemandForm ? 'Ocultar Formulário' : 'Adicionar Nova'}
+                        </Button>
+                    </div>
+                </CardHeader>
+            </Card>
             {showDemandForm && (
-              <DemandForm 
-                onAddDemand={handleAddDemand} 
-                onClose={() => setShowDemandForm(false)} 
-                employees={employees}
-              />
+              <div className="mt-4">
+                <DemandForm 
+                  onAddDemand={handleAddDemand} 
+                  onClose={() => setShowDemandForm(false)} 
+                  employees={employees}
+                />
+              </div>
             )}
           </section>
           <section aria-labelledby="demands-list-title">
@@ -551,20 +557,26 @@ export default function GestaoFeriasPage() {
 
         <TabsContent value="employees" className="space-y-6 mt-6">
           <section aria-labelledby="employees-form-section-title">
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-3">
-                  <UserPlus className="h-6 w-6 text-primary" />
-                  <h2 id="employees-form-section-title" className="text-2xl font-headline font-semibold text-primary">Registrar Novo Funcionário</h2>
+              <Card className="shadow-sm">
+                  <CardHeader>
+                      <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+                          <CardTitle className="text-xl font-headline text-primary flex items-center gap-3">
+                              <UserPlus className="h-6 w-6" />
+                              Registrar Novo Funcionário
+                          </CardTitle>
+                          <Button variant="outline" onClick={() => setShowEmployeeForm(!showEmployeeForm)}>
+                              <PlusCircle className="mr-2 h-4 w-4" /> {showEmployeeForm ? 'Ocultar Formulário' : 'Adicionar Novo'}
+                          </Button>
+                      </div>
+                  </CardHeader>
+              </Card>
+              {showEmployeeForm && (
+                <div className="mt-4">
+                  <EmployeeForm 
+                    onAddEmployee={handleAddEmployee}
+                    onClose={() => setShowEmployeeForm(false)} />
                 </div>
-              <Button variant="outline" onClick={() => setShowEmployeeForm(!showEmployeeForm)}>
-                <PlusCircle className="mr-2 h-4 w-4" /> {showEmployeeForm ? 'Ocultar' : 'Adicionar'}
-              </Button>
-            </div>
-            {showEmployeeForm && (
-              <EmployeeForm 
-                onAddEmployee={handleAddEmployee}
-                onClose={() => setShowEmployeeForm(false)} />
-            )}
+              )}
           </section>
           <section aria-labelledby="employees-list-title">
              <div className="flex items-center gap-3 my-6">
@@ -585,5 +597,7 @@ export default function GestaoFeriasPage() {
     </div>
   );
 }
+
+    
 
     
