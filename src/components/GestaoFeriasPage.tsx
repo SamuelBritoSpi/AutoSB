@@ -40,6 +40,7 @@ import {
   getDemandStatuses,
 } from '@/lib/idb';
 import { sendNotification } from '@/ai/flows/send-notification-flow';
+import { Card, CardHeader, CardTitle } from './ui/card';
 
 // Define the fixed statuses that should always exist.
 const FIXED_STATUSES: Record<string, Omit<DemandStatus, 'id'>> = {
@@ -514,24 +515,28 @@ export default function GestaoFeriasPage() {
         </TabsContent>
 
         <TabsContent value="vacations" className="space-y-6 mt-6">
-          <section aria-labelledby="vacations-form-section-title">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-3">
-                  <ListPlus className="h-6 w-6 text-primary" />
-                  <h2 id="vacations-form-section-title" className="text-2xl font-headline font-semibold text-primary">
-                      Registrar Afastamento
-                  </h2>
-              </div>
-              <Button variant="outline" onClick={() => setShowVacationForm(!showVacationForm)}>
-                <PlusCircle className="mr-2 h-4 w-4" /> {showVacationForm ? 'Ocultar' : 'Adicionar'}
-              </Button>
-            </div>
-            {showVacationForm && (
-              <VacationForm 
-                onAddVacation={handleAddVacation} 
-                onClose={() => setShowVacationForm(false)} 
-                employees={employees}
-              />
+          <section aria-labelledby="vacations-form-section">
+             <Card className="shadow-sm">
+                <CardHeader>
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+                    <CardTitle className="text-xl font-headline text-primary flex items-center gap-3">
+                      <ListPlus className="h-6 w-6" />
+                      Novo Afastamento
+                    </CardTitle>
+                    <Button variant="outline" onClick={() => setShowVacationForm(!showVacationForm)}>
+                      <PlusCircle className="mr-2 h-4 w-4" /> {showVacationForm ? 'Ocultar Formulário' : 'Registrar Novo'}
+                    </Button>
+                  </div>
+                </CardHeader>
+             </Card>
+             {showVacationForm && (
+                <div className="mt-4">
+                    <VacationForm 
+                        onAddVacation={handleAddVacation} 
+                        onClose={() => setShowVacationForm(false)} 
+                        employees={employees}
+                    />
+                </div>
             )}
           </section>
           <section aria-labelledby="vacations-list-title" className="mt-8">
