@@ -121,17 +121,18 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                             row: "flex w-full mt-2 justify-around",
                             cell: "h-14 w-14 text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                             day: "h-14 w-14 p-0 font-normal aria-selected:opacity-100",
-                            day_today: "bg-accent text-accent-foreground rounded-lg",
-                            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-lg",
-                            day_outside: "day-outside text-muted-foreground opacity-90 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+                            day_today: "bg-accent text-accent-foreground rounded-full",
+                            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-full",
+                            day_outside: "day-outside text-muted-foreground opacity-90",
                             day_disabled: "text-muted-foreground opacity-50",
                             day_hidden: "invisible",
+                            vacation: "bg-accent rounded-full",
                         }}
                          modifiers={{ 
                             vacation: (date) => vacationDays.has(startOfDay(date).toISOString()),
-                        }}
+                         }}
                          modifiersClassNames={{
-                            vacation: 'border-2 border-primary rounded-lg',
+                            vacation: 'vacation',
                          }}
                         components={{
                             Day: ({ date }) => {
@@ -202,7 +203,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 <h3 className="font-semibold text-lg text-primary">Legenda</h3>
                 <div className="space-y-3">
                     <div className="flex items-center">
-                        <div className="w-5 h-5 rounded-lg border-2 border-primary mr-3" />
+                        <div className="w-5 h-5 rounded-full bg-accent mr-3" />
                         <span className="text-sm">Dia de Afastamento</span>
                     </div>
                     <div className="flex items-center">
