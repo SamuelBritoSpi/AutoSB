@@ -36,7 +36,7 @@ const absenceTypeDetails: Record<AbsenceType, { label: string, icon: React.React
 const absenceStatusDetails: Record<AbsenceStatus, { label: string, icon: React.ReactNode, className: string }> = {
     planejado: { label: 'Planejado', icon: <Clock className="h-3 w-3" />, className: 'text-blue-600 bg-blue-100 dark:text-blue-200 dark:bg-blue-900/50' },
     confirmado: { label: 'Usufruído', icon: <CalendarCheck className="h-3 w-3" />, className: 'text-green-600 bg-green-100 dark:text-green-300 dark:bg-green-900/50' },
-    cancelado: { label: 'Não Usufruído', icon: <CalendarX className="h-3 w-3" />, className: 'text-red-600 bg-red-100 dark:text-red-300 dark:bg-red-900/50 line-through' },
+    cancelado: { label: 'Não Usufruído', icon: <CalendarX className="h-3 w-3" />, className: 'text-red-600 bg-red-100 dark:text-red-300 dark:bg-red-900/50' },
 };
 
 
@@ -58,7 +58,7 @@ export default function VacationHistoryDialog({ vacations, onDelete, onUpdate, o
                     return (
                         <div key={vacation.id} className={cn("p-3 border rounded-lg flex items-center justify-between group", vacation.status === 'cancelado' && 'bg-muted/50')}>
                             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 flex-grow">
-                                <div className={cn("flex items-center text-sm", statusDetails.className, "p-2 rounded-md font-medium")}>
+                                <div className={cn("flex items-center text-sm p-2 rounded-md font-medium", statusDetails.className, vacation.status === 'cancelado' && 'line-through')}>
                                     <span className="flex items-center gap-2">
                                         {statusDetails.icon} {statusDetails.label}
                                     </span>

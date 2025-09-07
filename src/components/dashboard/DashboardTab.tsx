@@ -76,9 +76,6 @@ export default function DashboardTab({ demands, employees, certificates, demandS
     const end = endOfMonth(today);
 
     return vacations.filter(v => {
-      // Inclui afastamentos planejados e confirmados, mas não cancelados.
-      if(v.status === 'cancelado') return false;
-
       const vacationStart = parseISO(v.startDate);
       const vacationEnd = parseISO(v.endDate);
       
@@ -215,7 +212,7 @@ export default function DashboardTab({ demands, employees, certificates, demandS
                                 </Badge>
                             </TableCell>
                             <TableCell>
-                                <span className={cn('flex items-center gap-1.5 text-sm font-medium', statusDetails.className)}>
+                                <span className={cn('flex items-center gap-1.5 text-sm font-medium', statusDetails.className, v.status === 'cancelado' && 'line-through')}>
                                     {statusDetails.icon}
                                     {statusDetails.label}
                                 </span>
@@ -227,10 +224,11 @@ export default function DashboardTab({ demands, employees, certificates, demandS
                 </TableBody>
                 </Table>
             ) : (
-                <p className="text-center text-muted-foreground py-4">Nenhum afastamento confirmado ou planejado para o mês atual.</p>
+                <p className="text-center text-muted-foreground py-4">Nenhum afastamento agendado para o mês atual.</p>
             )}
         </CardContent>
       </Card>
     </div>
   );
 }
+
