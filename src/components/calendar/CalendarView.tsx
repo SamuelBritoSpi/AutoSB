@@ -6,7 +6,7 @@ import type { Demand, Vacation } from '@/lib/types';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { addDays, eachDayOfInterval, isSameDay, parseISO, startOfDay } from 'date-fns';
+import { eachDayOfInterval, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { Calendar as CalendarIcon, ClipboardCheck, UserCheck } from 'lucide-react';
@@ -62,20 +62,20 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
   }, [demands, vacations]);
   
   const vacationDays = useMemo(() => {
-    const dates: Date[] = [];
+    const dates = new Set<string>();
     vacations.forEach(v => {
         if (v.status === 'cancelado') return;
         const interval = eachDayOfInterval({
           start: parseISO(v.startDate),
           end: parseISO(v.endDate)
         });
-        dates.push(...interval);
+        interval.forEach(day => dates.add(startOfDay(day).toISOString()));
     });
     return dates;
   }, [vacations]);
 
 
-  const DayContent = (props: { date: Date, displayMonth: Date }) => {
+  const DayContent = (props: { date: Date }) => {
     const dateKey = startOfDay(props.date).toISOString();
     const dayEvents = eventsByDate.get(dateKey);
 
@@ -118,26 +118,27 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                             head_row: "flex justify-around mb-2",
                             head_cell: "text-muted-foreground rounded-md w-full font-normal text-sm",
                             row: "flex w-full mt-2 justify-around",
-                            cell: "h-16 w-full text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                            day: "h-full w-full p-1 aria-selected:opacity-100",
+                            cell: "h-16 w-full text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                            day: "h-full w-full p-1",
                         }}
-                        modifiers={{ vacation: vacationDays }}
+                        modifiers={{ 
+                            vacation: (date) => vacationDays.has(startOfDay(date).toISOString()),
+                        }}
                         modifiersClassNames={{ vacation: 'day-vacation' }}
                         components={{
-                            DayContent: (dayProps) => {
-                                const dateKey = startOfDay(dayProps.date).toISOString();
-                                const isVacation = vacationDays.some(d => isSameDay(d, dayProps.date));
+                            Day: ({ date }) => {
+                                const dateKey = startOfDay(date).toISOString();
                                 const hasEvents = eventsByDate.has(dateKey);
 
                                 return (
                                 <div
-                                    onMouseEnter={() => hasEvents && setHoveredDate(dayProps.date)}
+                                    onMouseEnter={() => hasEvents && setHoveredDate(date)}
                                     onMouseLeave={() => setHoveredDate(null)}
-                                    className={cn("h-full w-full rounded-md", {
+                                    className={cn("h-full w-full rounded-md flex items-center justify-center relative", {
                                         "cursor-pointer": hasEvents,
                                     })}
                                 >
-                                    <DayContent {...dayProps} />
+                                    <DayContent date={date} />
                                 </div>
                                 );
                             },
@@ -193,7 +194,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 <h3 className="font-semibold text-lg text-primary">Legenda</h3>
                 <div className="space-y-3">
                     <div className="flex items-center">
-                        <div className="w-5 h-5 rounded-full bg-blue-500/80 mr-3" />
+                        <div className="w-5 h-5 rounded-md bg-blue-200 dark:bg-blue-900/50 mr-3 border border-blue-300 dark:border-blue-800" />
                         <span className="text-sm">Dia de Afastamento</span>
                     </div>
                     <div className="flex items-center">
