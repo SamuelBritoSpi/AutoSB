@@ -126,8 +126,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                             day_outside: "day-outside text-muted-foreground opacity-90 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
                             day_disabled: "text-muted-foreground opacity-50",
                             day_hidden: "invisible",
-                            // A chave do modificador deve corresponder ao nome em `modifiers`
-                            vacation: "bg-blue-100 dark:bg-blue-900/50 rounded-md",
+                            day_modifier_vacation: "bg-blue-100 dark:bg-blue-900/50 rounded-md",
                         }}
                         modifiers={{ 
                             vacation: (date) => vacationDays.has(startOfDay(date).toISOString()),
