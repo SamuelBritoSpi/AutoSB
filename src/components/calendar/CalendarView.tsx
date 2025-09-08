@@ -127,7 +127,6 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                             day_outside: "day-outside text-muted-foreground opacity-90",
                             day_disabled: "text-muted-foreground opacity-50",
                             day_hidden: "invisible",
-                            vacation: 'bg-accent',
                         }}
                          modifiers={{ 
                             vacation: (date) => vacationDays.has(startOfDay(date).toISOString()),
