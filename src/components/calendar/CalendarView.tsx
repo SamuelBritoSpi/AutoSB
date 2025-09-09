@@ -75,9 +75,9 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     const hasHighPriorityDemand = dayEvents?.demands?.some(d => d.priority === 'alta');
 
     return (
-      <div className="relative w-full h-full flex items-center justify-center">
+      <div className="relative w-full h-full flex flex-col justify-between pt-1">
         <span>{props.date.getDate()}</span>
-        <div className="absolute bottom-0.5 pt-1 flex space-x-1">
+        <div className="flex justify-center w-full space-x-1">
           {dayEvents && dayEvents.vacations.length > 0 && <Plane className="h-3 w-3 text-blue-500" />}
           {dayEvents && dayEvents.demands.length > 0 && (
              hasHighPriorityDemand 
