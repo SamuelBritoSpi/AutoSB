@@ -103,7 +103,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
             </div>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-6">
-            <div className="flex-grow flex justify-center w-full">
+            <div className="w-full">
                 <Popover open={!!hoveredDate} onOpenChange={() => setHoveredDate(null)}>
                     <PopoverTrigger asChild>
                         <div id="calendar-anchor" className="relative" />
@@ -207,3 +207,5 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     </Card>
   );
 }
+
+    
