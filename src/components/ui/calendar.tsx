@@ -21,7 +21,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("w-full", className)}
+      className={cn("w-full p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4 w-full",
@@ -47,7 +47,7 @@ function Calendar({
         day_range_end: "day-range-end",
         day_selected:
           "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent/50 text-accent-foreground",
+        day_today: "bg-accent text-accent-foreground",
         day_outside:
           "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",
@@ -55,6 +55,9 @@ function Calendar({
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
+      }}
+      formatters={{
+        formatWeekdayName: (day) => format(day, 'EEEEEE', { locale: ptBR }),
       }}
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
