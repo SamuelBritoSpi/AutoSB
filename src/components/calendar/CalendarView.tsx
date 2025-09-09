@@ -76,7 +76,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     return (
       <div className="relative w-full h-full flex items-center justify-center">
         <span>{props.date.getDate()}</span>
-        <div className="absolute bottom-0.5 flex space-x-1">
+        <div className="absolute bottom-0.5 pt-1 flex space-x-1">
           {dayEvents && dayEvents.vacations.length > 0 && <Plane className="h-3 w-3 text-blue-500" />}
           {dayEvents && dayEvents.demands.length > 0 && (
              hasHighPriorityDemand 
@@ -111,7 +111,6 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                         month={month}
                         onMonthChange={setMonth}
                         showOutsideDays={false}
-                        className="p-0 sm:p-0"
                          modifiers={{ 
                             vacation: (date) => vacationDays.has(startOfDay(date).toISOString()),
                          }}
@@ -204,4 +203,3 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     </Card>
   );
 }
-
