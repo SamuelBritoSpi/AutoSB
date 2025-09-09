@@ -1,6 +1,14 @@
 
 import type {NextConfig} from 'next';
 
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+});
+
+
 const nextConfig: NextConfig = {
   /* config options here */
   typescript: {
@@ -26,14 +34,17 @@ const nextConfig: NextConfig = {
     ],
   },
   webpack: (config, { isServer }) => {
-    // Exclui módulos problemáticos do pacote do cliente
+    // Exclude problematic modules from the client bundle
     if (!isServer) {
-      config.resolve.alias['@opentelemetry/exporter-jaeger'] = false;
-      config.resolve.alias['handlebars'] = false;
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@opentelemetry/exporter-jaeger': false,
+        'handlebars': false, // Add other modules to ignore here
+      };
     }
 
     return config;
   },
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);
