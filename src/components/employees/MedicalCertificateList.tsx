@@ -44,7 +44,7 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-y-auto pr-2">
       <Alert variant={getAlertVariant()}>
         <AlertTitle>Análise do Período (Últimos 60 dias)</AlertTitle>
         <AlertDescription>
@@ -65,56 +65,58 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
         />
       </div>
 
-      <div>
+      <div className="flex-grow flex flex-col">
         <h3 className="text-lg font-medium mb-2">Histórico de Atestados</h3>
-        <ScrollArea className="h-auto max-h-[30vh] rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Dias</TableHead>
-                <TableHead>CID</TableHead>
-                <TableHead>Original</TableHead>
-                <TableHead>Anexo</TableHead>
-                <TableHead className="text-right">Ação</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedCertificates.length > 0 ? (
-                sortedCertificates.map(cert => (
-                  <TableRow key={cert.id}>
-                    <TableCell>{format(parseISO(cert.certificateDate), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
-                    <TableCell>
-                      {cert.isHalfDay ? <Badge variant="secondary">Meio Turno</Badge> : `${cert.days} dia(s)`}
-                    </TableCell>
-                     <TableCell>
-                      {cert.cid ? <Badge variant="outline">{cert.cid.toUpperCase()}</Badge> : 'N/A'}
-                    </TableCell>
-                    <TableCell>{cert.originalReceived ? 'Sim' : 'Não'}</TableCell>
-                    <TableCell>
-                      {cert.fileURL ? (
-                        <Button variant="outline" size="icon" onClick={() => openAttachment(cert.fileURL!)}>
-                           <FileImage className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        'Não'
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => onDeleteCertificate(cert.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full rounded-md border">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">Nenhum atestado registrado.</TableCell>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Dias</TableHead>
+                  <TableHead>CID</TableHead>
+                  <TableHead>Original</TableHead>
+                  <TableHead>Anexo</TableHead>
+                  <TableHead className="text-right">Ação</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </ScrollArea>
+              </TableHeader>
+              <TableBody>
+                {sortedCertificates.length > 0 ? (
+                  sortedCertificates.map(cert => (
+                    <TableRow key={cert.id}>
+                      <TableCell>{format(parseISO(cert.certificateDate), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                      <TableCell>
+                        {cert.isHalfDay ? <Badge variant="secondary">Meio Turno</Badge> : `${cert.days} dia(s)`}
+                      </TableCell>
+                       <TableCell>
+                        {cert.cid ? <Badge variant="outline">{cert.cid.toUpperCase()}</Badge> : 'N/A'}
+                      </TableCell>
+                      <TableCell>{cert.originalReceived ? 'Sim' : 'Não'}</TableCell>
+                      <TableCell>
+                        {cert.fileURL ? (
+                          <Button variant="outline" size="icon" onClick={() => openAttachment(cert.fileURL!)}>
+                             <FileImage className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          'Não'
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => onDeleteCertificate(cert.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">Nenhum atestado registrado.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </div>
       </div>
     </div>
   );

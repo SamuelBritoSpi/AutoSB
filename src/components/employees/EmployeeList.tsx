@@ -112,7 +112,7 @@ export default function EmployeeList({
       
       {/* Manage Certificates Dialog */}
       <Dialog open={!!managingCertificatesFor} onOpenChange={(isOpen) => !isOpen && closeCertificateManager()}>
-          <DialogContent className="sm:max-w-[800px]">
+          <DialogContent className="sm:max-w-3xl grid-rows-[auto_1fr] max-h-[90vh]">
               <DialogHeader>
                   <DialogTitle>Gerenciar Atestados de {managingCertificatesFor?.name}</DialogTitle>
               </DialogHeader>
