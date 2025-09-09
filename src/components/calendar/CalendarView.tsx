@@ -71,7 +71,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
   const DayContent = (props: { date: Date }) => {
     const dateKey = startOfDay(props.date).toISOString();
     const dayEvents = eventsByDate.get(dateKey);
-    const hasHighPriorityDemand = dayEvents?.demands.some(d => d.priority === 'alta');
+    const hasHighPriorityDemand = dayEvents?.demands?.some(d => d.priority === 'alta');
 
     return (
       <div className="relative w-full h-full flex items-center justify-center">
@@ -101,8 +101,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 </Button>
             </div>
         </CardHeader>
-        <CardContent className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-grow">
+        <CardContent className="flex flex-col gap-6">
+            <div className="flex-grow flex justify-center">
                 <Popover open={!!hoveredDate} onOpenChange={() => setHoveredDate(null)}>
                     <PopoverTrigger asChild>
                         <div id="calendar-anchor" className="relative" />
@@ -176,9 +176,9 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 </Popover>
 
             </div>
-            <div className="lg:w-1/4 space-y-4">
-                <h3 className="font-semibold text-lg text-primary">Legenda</h3>
-                <div className="space-y-3">
+            <div className="w-full border-t pt-4">
+                <h3 className="font-semibold text-lg text-primary mb-3 text-center">Legenda</h3>
+                <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3">
                     <div className="flex items-center gap-3">
                         <div className="w-5 h-5 rounded-md bg-accent flex items-center justify-center">
                            <Plane className="h-3 w-3 text-blue-500" />
@@ -203,3 +203,4 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     </Card>
   );
 }
+
