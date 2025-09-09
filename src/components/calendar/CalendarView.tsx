@@ -11,7 +11,8 @@ import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { Calendar as CalendarIcon, ClipboardCheck, UserCheck, Plane, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/button';
-
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface CalendarViewProps {
   demands: Demand[];
@@ -77,8 +78,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
       <div className="relative w-full h-full flex items-center justify-center">
         <span>{props.date.getDate()}</span>
         <div className="absolute bottom-0.5 pt-1 flex space-x-1">
-          {dayEvents && dayEvents.vacations.length > 0 && <Plane className="h-3 w-3 text-blue-500" />}
-          {dayEvents && dayEvents.demands.length > 0 && (
+          {dayEvents && dayEvents.vacations && dayEvents.vacations.length > 0 && <Plane className="h-3 w-3 text-blue-500" />}
+          {dayEvents && dayEvents.demands && dayEvents.demands.length > 0 && (
              hasHighPriorityDemand 
                 ? <AlertTriangle className="h-3 w-3 text-destructive" />
                 : <ClipboardCheck className="h-3 w-3 text-amber-600" />
@@ -101,8 +102,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 </Button>
             </div>
         </CardHeader>
-        <CardContent className="flex flex-col gap-6">
-            <div className="flex-grow flex justify-center">
+        <CardContent className="flex flex-col items-center gap-6">
+            <div className="flex-grow flex justify-center w-full">
                 <Popover open={!!hoveredDate} onOpenChange={() => setHoveredDate(null)}>
                     <PopoverTrigger asChild>
                         <div id="calendar-anchor" className="relative" />
@@ -116,6 +117,9 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                          }}
                          modifiersClassNames={{
                             vacation: 'bg-accent',
+                         }}
+                         formatters={{
+                            formatWeekdayName: (day) => format(day, 'EEEEEE', { locale: ptBR }),
                          }}
                         components={{
                             Day: ({ date }) => {
@@ -203,4 +207,3 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     </Card>
   );
 }
-

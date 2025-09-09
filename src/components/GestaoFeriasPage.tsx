@@ -41,6 +41,7 @@ import {
 } from '@/lib/idb';
 import { sendNotification } from '@/ai/flows/send-notification-flow';
 import { Card, CardHeader, CardTitle } from './ui/card';
+import { cn } from '@/lib/utils';
 
 // Define the fixed statuses that should always exist.
 const FIXED_STATUSES: Record<string, Omit<DemandStatus, 'id'>> = {
@@ -428,19 +429,23 @@ export default function GestaoFeriasPage() {
       </div>
     );
   }
+  
+  const containerClass = "p-4 md:p-6 mx-auto";
 
   return (
     <div className="w-full space-y-8 mt-0">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Desktop Navigation */}
-        <div className="hidden md:flex justify-center">
-            <TabsList className="grid w-full grid-cols-5 md:w-5/6 mx-auto">
-                {tabOptions.map(tab => (
-                    <TabsTrigger key={tab.value} value={tab.value}>
-                        {tab.icon} {tab.label}
-                    </TabsTrigger>
-                ))}
-            </TabsList>
+        <div className="hidden md:flex justify-center border-b">
+            <div className="container mx-auto">
+                <TabsList className="grid w-full grid-cols-5 bg-transparent">
+                    {tabOptions.map(tab => (
+                        <TabsTrigger key={tab.value} value={tab.value} className="bg-transparent shadow-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none">
+                            {tab.icon} {tab.label}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
+            </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -462,7 +467,7 @@ export default function GestaoFeriasPage() {
              </DropdownMenu>
         </div>
         
-        <TabsContent value="dashboard" className="space-y-6 mt-6">
+        <TabsContent value="dashboard" className={cn(containerClass, "space-y-6 mt-6")}>
           <DashboardTab 
             demands={demands} 
             employees={employees} 
@@ -472,11 +477,11 @@ export default function GestaoFeriasPage() {
           />
         </TabsContent>
 
-        <TabsContent value="calendar" className="space-y-6 mt-6">
+        <TabsContent value="calendar" className="p-4 md:p-6 space-y-6 mt-6">
           <CalendarView demands={demands} vacations={vacations} />
         </TabsContent>
 
-        <TabsContent value="demands" className="space-y-6 mt-6">
+        <TabsContent value="demands" className={cn(containerClass, "space-y-6 mt-6")}>
           <section aria-labelledby="demands-form-section-title">
              <Card className="shadow-sm">
                 <CardHeader>
@@ -520,7 +525,7 @@ export default function GestaoFeriasPage() {
           </section>
         </TabsContent>
 
-        <TabsContent value="vacations" className="space-y-6 mt-6">
+        <TabsContent value="vacations" className={cn(containerClass, "space-y-6 mt-6")}>
           <section aria-labelledby="vacations-form-section">
              <Card className="shadow-sm">
                 <CardHeader>
@@ -555,7 +560,7 @@ export default function GestaoFeriasPage() {
           </section>
         </TabsContent>
 
-        <TabsContent value="employees" className="space-y-6 mt-6">
+        <TabsContent value="employees" className={cn(containerClass, "space-y-6 mt-6")}>
           <section aria-labelledby="employees-form-section-title">
               <Card className="shadow-sm">
                   <CardHeader>
@@ -597,7 +602,3 @@ export default function GestaoFeriasPage() {
     </div>
   );
 }
-
-    
-
-    

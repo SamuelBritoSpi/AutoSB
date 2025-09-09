@@ -9,7 +9,7 @@ export default function HomePage() {
   return (
     <>
       <AppHeader />
-      <main className="flex-grow container mx-auto p-4 md:p-6">
+      <main className="flex-grow w-full">
         <GestaoFeriasPage />
       </main>
     </>
