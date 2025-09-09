@@ -112,27 +112,11 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                         onMonthChange={setMonth}
                         showOutsideDays={false}
                         className="p-0"
-                        classNames={{
-                            months: "w-full",
-                            month: "w-full space-y-4 border rounded-lg p-4 shadow-sm",
-                            caption_label: "text-lg font-bold",
-                            table: "w-full border-collapse",
-                            head_row: "flex justify-around mb-2",
-                            head_cell: "text-muted-foreground rounded-md w-full font-normal text-sm",
-                            row: "flex w-full mt-2 justify-around",
-                            cell: "h-12 w-12 text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                            day: "h-12 w-12 p-0 font-normal aria-selected:opacity-100",
-                            day_today: "bg-accent text-accent-foreground rounded-full",
-                            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-full",
-                            day_outside: "day-outside text-muted-foreground opacity-90",
-                            day_disabled: "text-muted-foreground opacity-50",
-                            day_hidden: "invisible",
-                        }}
                          modifiers={{ 
                             vacation: (date) => vacationDays.has(startOfDay(date).toISOString()),
                          }}
                          modifiersClassNames={{
-                            vacation: 'bg-accent',
+                            vacation: 'border-2 border-primary rounded-lg',
                          }}
                         components={{
                             Day: ({ date }) => {
@@ -197,7 +181,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 <h3 className="font-semibold text-lg text-primary">Legenda</h3>
                 <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-md bg-accent flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-md border-2 border-primary flex items-center justify-center">
                            <Plane className="h-3 w-3 text-blue-500" />
                         </div>
                         <span className="text-sm">Dia de Afastamento</span>
