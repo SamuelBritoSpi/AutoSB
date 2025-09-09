@@ -78,8 +78,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
       <div className="relative w-full h-full flex items-center justify-center">
         <span>{props.date.getDate()}</span>
         <div className="absolute bottom-0.5 pt-1 flex space-x-1">
-          {dayEvents && dayEvents.vacations && dayEvents.vacations.length > 0 && <Plane className="h-3 w-3 text-blue-500" />}
-          {dayEvents && dayEvents.demands && dayEvents.demands.length > 0 && (
+          {dayEvents && dayEvents.vacations.length > 0 && <Plane className="h-3 w-3 text-blue-500" />}
+          {dayEvents && dayEvents.demands.length > 0 && (
              hasHighPriorityDemand 
                 ? <AlertTriangle className="h-3 w-3 text-destructive" />
                 : <ClipboardCheck className="h-3 w-3 text-amber-600" />
@@ -102,8 +102,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 </Button>
             </div>
         </CardHeader>
-        <CardContent className="flex flex-col items-center gap-6">
-            <div className="w-full">
+        <CardContent className="flex flex-col lg:flex-row gap-6">
+            <div className="flex-grow">
                 <Popover open={!!hoveredDate} onOpenChange={() => setHoveredDate(null)}>
                     <PopoverTrigger asChild>
                         <div id="calendar-anchor" className="relative" />
@@ -118,9 +118,9 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                          modifiersClassNames={{
                             vacation: 'bg-accent',
                          }}
-                         formatters={{
+                        formatters={{
                             formatWeekdayName: (day) => format(day, 'EEEEEE', { locale: ptBR }),
-                         }}
+                        }}
                         components={{
                             Day: ({ date }) => {
                                 const dateKey = startOfDay(date).toISOString();
@@ -180,9 +180,9 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 </Popover>
 
             </div>
-            <div className="w-full border-t pt-4">
-                <h3 className="font-semibold text-lg text-primary mb-3 text-center">Legenda</h3>
-                <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3">
+            <div className="w-full lg:w-1/4 lg:border-l lg:pl-6">
+                <h3 className="font-semibold text-lg text-primary mb-3">Legenda</h3>
+                <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3">
                         <div className="w-5 h-5 rounded-md bg-accent flex items-center justify-center">
                            <Plane className="h-3 w-3 text-blue-500" />
@@ -190,13 +190,13 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                         <span className="text-sm">Dia de Afastamento</span>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-md border flex items-center justify-center">
                            <ClipboardCheck className="h-3 w-3 text-amber-600" />
                         </div>
                         <span className="text-sm">Entrega de Demanda</span>
                     </div>
                      <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-md border flex items-center justify-center">
                            <AlertTriangle className="h-3 w-3 text-destructive" />
                         </div>
                         <span className="text-sm">Demanda (Prioridade Alta)</span>
@@ -207,5 +207,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     </Card>
   );
 }
+
+    
 
     
