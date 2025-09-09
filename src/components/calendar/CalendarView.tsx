@@ -109,6 +109,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                         <div id="calendar-anchor" className="relative" />
                     </PopoverTrigger>
                     <Calendar
+                        locale={ptBR}
                         month={month}
                         onMonthChange={setMonth}
                         showOutsideDays={false}
@@ -207,7 +208,3 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     </Card>
   );
 }
-
-    
-
-    
