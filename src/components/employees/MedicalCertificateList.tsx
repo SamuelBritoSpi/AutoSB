@@ -12,6 +12,7 @@ import React, { useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeCertificates } from '@/lib/certificate-logic';
 import { Badge } from '../ui/badge';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface MedicalCertificateListProps {
   employee: Employee;
@@ -66,7 +67,7 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
 
       <div>
         <h3 className="text-lg font-medium mb-2">Histórico de Atestados</h3>
-        <div className="rounded-md border">
+        <ScrollArea className="h-auto max-h-[30vh] rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -113,7 +114,7 @@ export default function MedicalCertificateList({ employee, certificates, onAddCe
               )}
             </TableBody>
           </Table>
-        </div>
+        </ScrollArea>
       </div>
     </div>
   );
