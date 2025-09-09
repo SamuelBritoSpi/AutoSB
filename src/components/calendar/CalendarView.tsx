@@ -111,7 +111,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                         month={month}
                         onMonthChange={setMonth}
                         showOutsideDays={false}
-                        className="p-0"
+                        className="p-0 sm:p-0"
                          modifiers={{ 
                             vacation: (date) => vacationDays.has(startOfDay(date).toISOString()),
                          }}
@@ -204,3 +204,4 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     </Card>
   );
 }
+
