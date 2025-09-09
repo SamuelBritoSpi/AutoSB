@@ -76,7 +76,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     return (
       <div className="relative w-full h-full flex items-center justify-center">
         <span>{props.date.getDate()}</span>
-        <div className="absolute bottom-0.5 flex space-x-1 pt-1">
+        <div className="absolute bottom-0.5 flex space-x-1">
           {dayEvents && dayEvents.vacations.length > 0 && <Plane className="h-3 w-3 text-blue-500" />}
           {dayEvents && dayEvents.demands.length > 0 && (
              hasHighPriorityDemand 
@@ -177,7 +177,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 </Popover>
 
             </div>
-            <div className="lg:w-1/5 space-y-4">
+            <div className="lg:w-1/4 space-y-4">
                 <h3 className="font-semibold text-lg text-primary">Legenda</h3>
                 <div className="space-y-3">
                     <div className="flex items-center gap-3">
