@@ -144,7 +144,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                      <PopoverContent 
                         side="top" 
                         align="center"
-                        className="w-80 z-20"
+                        className="z-20"
                         onOpenAutoFocus={(e) => e.preventDefault()}
                         onMouseEnter={() => setHoveredDate(hoveredDate)}
                         onMouseLeave={() => setHoveredDate(null)}
