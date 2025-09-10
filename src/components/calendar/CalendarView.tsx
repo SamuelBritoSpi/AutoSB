@@ -109,6 +109,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                         <div id="calendar-anchor" className="relative" />
                     </PopoverTrigger>
                     <Calendar
+                        variant="full"
                         locale={ptBR}
                         month={month}
                         onMonthChange={setMonth}

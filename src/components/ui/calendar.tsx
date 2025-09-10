@@ -4,25 +4,42 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
 import { DayPicker, type DayPickerProps } from "react-day-picker";
+import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { ptBR } from 'date-fns/locale';
 import { format } from 'date-fns';
 
-export type CalendarProps = DayPickerProps;
+const calendarVariants = cva(
+  "p-3",
+  {
+    variants: {
+      variant: {
+        default: "",
+        full: "w-full",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+export type CalendarProps = DayPickerProps & VariantProps<typeof calendarVariants>;
 
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  variant,
   ...props
 }: CalendarProps) {
   return (
     <DayPicker
       locale={ptBR}
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      className={cn(calendarVariants({ variant }), className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
@@ -71,4 +88,3 @@ function Calendar({
 Calendar.displayName = "Calendar";
 
 export { Calendar };
-
