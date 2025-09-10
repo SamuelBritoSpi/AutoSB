@@ -8,6 +8,7 @@ import { DayPicker, type DayPickerProps } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { ptBR } from 'date-fns/locale';
+import { format } from 'date-fns';
 
 export type CalendarProps = DayPickerProps;
 
@@ -59,6 +60,9 @@ function Calendar({
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+      }}
+      formatters={{
+          formatWeekdayName: (day) => format(day, 'EEEEEE', { locale: ptBR }),
       }}
       {...props}
     />
