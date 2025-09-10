@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import type { Demand, Vacation } from '@/lib/types';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { Calendar as CalendarIcon, ClipboardCheck, UserCheck, Plane, AlertTriang
 import { Button } from '../ui/button';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CalendarViewProps {
   demands: Demand[];
@@ -21,7 +22,9 @@ interface CalendarViewProps {
 
 export default function CalendarView({ demands, vacations }: CalendarViewProps) {
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
+  const [clickedDate, setClickedDate] = useState<Date | null>(null);
   const [month, setMonth] = useState<Date>(startOfMonth(new Date()));
+  const isMobile = useIsMobile();
 
 
   const eventsByDate = useMemo(() => {
@@ -76,13 +79,13 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
 
     return (
       <div className="relative w-full h-full flex flex-col justify-between pt-1">
-        <span>{props.date.getDate()}</span>
+        <span className="text-sm font-medium md:text-base">{props.date.getDate()}</span>
         <div className="flex justify-center w-full space-x-1">
-          {dayEvents && dayEvents.vacations.length > 0 && <Plane className="h-3 w-3 text-blue-500" />}
+          {dayEvents && dayEvents.vacations.length > 0 && <Plane className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-blue-500" />}
           {dayEvents && dayEvents.demands.length > 0 && (
              hasHighPriorityDemand 
-                ? <AlertTriangle className="h-3 w-3 text-destructive" />
-                : <ClipboardCheck className="h-3 w-3 text-amber-600" />
+                ? <AlertTriangle className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-destructive" />
+                : <ClipboardCheck className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-amber-600" />
           )}
         </div>
       </div>
@@ -103,12 +106,16 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
             </div>
         </CardHeader>
         <CardContent className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-grow">
-                <Popover open={!!hoveredDate} onOpenChange={() => setHoveredDate(null)}>
-                    <PopoverTrigger asChild>
-                        <div id="calendar-anchor" className="relative" />
-                    </PopoverTrigger>
-                    <Calendar
+            <div className="flex-grow flex justify-center">
+                <div className="inline-block">
+                    <Popover open={!!(isMobile ? clickedDate : hoveredDate)} onOpenChange={() => {
+                        setHoveredDate(null);
+                        setClickedDate(null);
+                    }}>
+                        <PopoverTrigger asChild>
+                            <div id="calendar-anchor" className="relative" />
+                        </PopoverTrigger>
+                        <Calendar
                         variant="full"
                         locale={ptBR}
                         month={month}
@@ -130,8 +137,17 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
 
                                 return (
                                 <div
-                                    onMouseEnter={() => hasEvents && setHoveredDate(date)}
-                                    onMouseLeave={() => setHoveredDate(null)}
+                                    onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(date)}
+                                    onMouseLeave={() => !isMobile && setHoveredDate(null)}
+                                    onClick={() => {
+                                        if (isMobile && hasEvents) {
+                                            if (clickedDate && isSameDay(clickedDate, date)) {
+                                                setClickedDate(null);
+                                            } else {
+                                                setClickedDate(date);
+                                            }
+                                        }
+                                    }}
                                     className={cn("h-full w-full flex items-center justify-center relative", {
                                         "cursor-pointer": hasEvents,
                                     })}
@@ -143,44 +159,56 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                         }}
                     />
                      <PopoverContent 
-                        side="top" 
-                        align="center"
-                        className="z-20"
+                        side={isMobile ? "top" : "right"} 
+                        align={isMobile ? "center" : "start"}
+                        sideOffset={isMobile ? 5 : 10}
+                        alignOffset={isMobile ? 0 : -10}
+                        className={cn("z-20", isMobile ? "w-72 mx-4" : "w-80")}
                         onOpenAutoFocus={(e) => e.preventDefault()}
-                        onMouseEnter={() => setHoveredDate(hoveredDate)}
-                        onMouseLeave={() => setHoveredDate(null)}
+                        onMouseEnter={() => !isMobile && setHoveredDate(hoveredDate)}
+                        onMouseLeave={() => !isMobile && setHoveredDate(null)}
+                        avoidCollisions={isMobile}
                      >
-                        {hoveredDate && eventsByDate.get(startOfDay(hoveredDate).toISOString()) && (
-                        <div className="grid gap-2">
-                            <h4 className="font-medium leading-none">{hoveredDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</h4>
-                            <div className="grid gap-2 mt-2">
-                               {eventsByDate.get(startOfDay(hoveredDate).toISOString())!.vacations.map(v => (
-                                   <div key={v.id} className="flex items-start gap-2">
-                                       <Plane className="h-4 w-4 mt-0.5 text-blue-500" />
-                                       <div>
-                                            <p className="text-sm font-medium">{v.type === 'ferias' ? 'Férias' : 'Licença'}</p>
-                                            <p className="text-sm text-muted-foreground">{v.employeeName}</p>
-                                       </div>
-                                   </div>
-                               ))}
-                               {eventsByDate.get(startOfDay(hoveredDate).toISOString())!.demands.map(d => (
-                                   <div key={d.id} className="flex items-start gap-2">
-                                       <ClipboardCheck className="h-4 w-4 mt-0.5 text-amber-600" />
-                                       <div>
-                                            <p className="text-sm font-medium">Entrega de Demanda</p>
-                                            <p className="text-sm text-muted-foreground">{d.title}</p>
-                                            <Badge variant={d.priority === 'alta' ? 'destructive' : d.priority === 'media' ? 'secondary' : 'outline'} className="mt-1">
-                                                Prioridade {d.priority}
-                                            </Badge>
-                                       </div>
-                                   </div>
-                               ))}
-                            </div>
-                        </div>
-                        )}
+                        {(() => {
+                            const currentDate = isMobile ? clickedDate : hoveredDate;
+                            if (!currentDate || !eventsByDate.get(startOfDay(currentDate).toISOString())) {
+                                return null;
+                            }
+                            
+                            const dayEvents = eventsByDate.get(startOfDay(currentDate).toISOString())!;
+                            
+                            return (
+                                <div className="grid gap-2">
+                                    <h4 className="font-medium leading-none">{currentDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</h4>
+                                    <div className="grid gap-2 mt-2">
+                                       {dayEvents.vacations.map(v => (
+                                           <div key={v.id} className="flex items-start gap-2">
+                                               <Plane className="h-4 w-4 mt-0.5 text-blue-500" />
+                                               <div>
+                                                    <p className="text-sm font-medium">{v.type === 'ferias' ? 'Férias' : 'Licença'}</p>
+                                                    <p className="text-sm text-muted-foreground">{v.employeeName}</p>
+                                               </div>
+                                           </div>
+                                       ))}
+                                       {dayEvents.demands.map(d => (
+                                           <div key={d.id} className="flex items-start gap-2">
+                                               <ClipboardCheck className="h-4 w-4 mt-0.5 text-amber-600" />
+                                               <div>
+                                                    <p className="text-sm font-medium">Entrega de Demanda</p>
+                                                    <p className="text-sm text-muted-foreground">{d.title}</p>
+                                                    <Badge variant={d.priority === 'alta' ? 'destructive' : d.priority === 'media' ? 'secondary' : 'outline'} className="mt-1">
+                                                        Prioridade {d.priority}
+                                                    </Badge>
+                                               </div>
+                                           </div>
+                                       ))}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </PopoverContent>
                 </Popover>
-
+                </div>
             </div>
             <div className="w-full lg:w-1/4 lg:border-l lg:pl-6">
                 <h3 className="font-semibold text-lg text-primary mb-3">Legenda</h3>

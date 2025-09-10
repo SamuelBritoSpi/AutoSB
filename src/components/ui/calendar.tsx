@@ -54,13 +54,19 @@ function Calendar({
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
-        head_cell:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+        head_cell: cn(
+          "text-muted-foreground rounded-md font-normal text-[0.8rem]",
+          variant === "full" ? "w-14 sm:w-16 md:w-20 lg:w-24 xl:w-28" : "w-9"
+        ),
         row: "flex w-full mt-2",
-        cell: "size-9 text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+        cell: cn(
+          "text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+          variant === "full" ? "h-11 w-14 sm:w-16 md:w-20 lg:w-24 xl:w-28" : "size-9"
+        ),
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+          "p-0 font-normal aria-selected:opacity-100",
+          variant === "full" ? "h-11 w-14 sm:w-16 md:w-20 lg:w-24 xl:w-28" : "h-9 w-9"
         ),
         day_range_end: "day-range-end",
         day_selected:
