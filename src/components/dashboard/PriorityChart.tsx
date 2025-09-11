@@ -27,12 +27,21 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
     return null;
   }
   
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  // Ajusta o raio para posicionar o texto mais próximo do centro da fatia
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
   return (
-    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+    <text 
+      x={x} 
+      y={y} 
+      fill="white" 
+      textAnchor="middle" 
+      dominantBaseline="central"
+      fontSize="14"
+      fontWeight="bold"
+    >
       {`${(percent * 100).toFixed(0)}%`}
     </text>
   );

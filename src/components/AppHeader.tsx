@@ -9,7 +9,6 @@ import { getAuthInstance } from '@/lib/firebase-client';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import InstallPwaButton from './InstallPwaButton';
 
 export default function AppHeader() {
   const router = useRouter();
@@ -34,7 +33,6 @@ export default function AppHeader() {
           <h1 className="text-xl font-headline font-bold">AutoSB</h1>
         </div>
         <div className="flex items-center gap-2">
-           <InstallPwaButton />
            <ThemeToggle />
            <TooltipProvider>
               <Tooltip>
