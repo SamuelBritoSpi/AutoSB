@@ -90,10 +90,19 @@ export default function PriorityChart({ demands, demandStatuses }: PriorityChart
           </Pie>
           <Tooltip 
             contentStyle={{ 
-                backgroundColor: 'hsl(var(--background))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: 'var(--radius)',
-                color: 'hsl(var(--foreground))'
+                backgroundColor: resolvedTheme === 'dark' ? '#1f2937' : '#ffffff',
+                border: resolvedTheme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
+                borderRadius: '6px',
+                color: resolvedTheme === 'dark' ? '#ffffff !important' : '#111827',
+                boxShadow: resolvedTheme === 'dark' 
+                  ? '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)' 
+                  : '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+            }}
+            labelStyle={{
+                color: resolvedTheme === 'dark' ? '#ffffff' : '#111827'
+            }}
+            itemStyle={{
+                color: resolvedTheme === 'dark' ? '#ffffff' : '#111827'
             }}
           />
           <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
