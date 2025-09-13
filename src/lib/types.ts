@@ -44,6 +44,7 @@ export interface Vacation {
   endDate: string; // String ISO para data
   type: AbsenceType;
   status: AbsenceStatus; // 'planejado', 'confirmado', 'cancelado'
+  notes?: string; // Observações/detalhes sobre o agendamento
 }
 
 export type ContractType = 'efetivo' | 'reda' | 'terceirizado';

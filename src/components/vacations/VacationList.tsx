@@ -9,6 +9,7 @@ import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import VacationForm from './VacationForm';
 import VacationHistoryDialog from './VacationHistoryDialog';
+import VacationDetailsDialog from './VacationDetailsDialog';
 import ReportDialog from '../reports/ReportDialog';
 import { Button } from '../ui/button';
 import { Card, CardHeader } from '../ui/card';
@@ -26,6 +27,7 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [historyEmployee, setHistoryEmployee] = useState<Employee | null>(null);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [selectedVacationDetails, setSelectedVacationDetails] = useState<Vacation | null>(null);
   
   const handleEdit = (vacation: Vacation) => {
     setEditingVacation(vacation);
@@ -34,6 +36,10 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
 
   const handleOpenHistory = (employee: Employee) => {
     setHistoryEmployee(employee);
+  };
+
+  const handleViewDetails = (vacation: Vacation) => {
+    setSelectedVacationDetails(vacation);
   };
   
   const handleUpdateAndClose = (vacation: Vacation) => {
@@ -106,6 +112,7 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
               employee={employee}
               vacations={employee.vacations}
               onOpenHistory={() => handleOpenHistory(employee)}
+              onViewDetails={handleViewDetails}
             />
           ))}
         </div>
@@ -156,6 +163,21 @@ export default function VacationList({ vacations, employees, onDeleteVacation, o
         employees={employees}
         vacations={vacations}
       />
+
+      {/* Diálogo de Detalhes do Agendamento */}
+      {selectedVacationDetails && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <VacationDetailsDialog
+                vacation={selectedVacationDetails}
+                onUpdate={onUpdateVacation}
+                onClose={() => setSelectedVacationDetails(null)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

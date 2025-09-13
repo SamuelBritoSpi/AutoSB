@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, parseISO, isFuture, isPast, isWithinInterval, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { User, CalendarRange, Plane, Gift, Stethoscope, Baby, CheckCircle, Clock, History, XCircle, CalendarCheck, CalendarX } from 'lucide-react';
+import { User, CalendarRange, Plane, Gift, Stethoscope, Baby, CheckCircle, Clock, History, XCircle, CalendarCheck, CalendarX, Eye } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { Badge } from '../ui/badge';
 import { useMemo } from 'react';
@@ -17,6 +17,7 @@ interface EmployeeVacationCardProps {
   employee: Employee;
   vacations: Vacation[];
   onOpenHistory: () => void;
+  onViewDetails?: (vacation: Vacation) => void;
 }
 
 const absenceTypeDetails: Record<AbsenceType, { label: string, icon: React.ReactNode, variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
@@ -33,7 +34,7 @@ const absenceStatusDetails: Record<AbsenceStatus, { label: string, icon: React.R
 };
 
 
-export default function EmployeeVacationCard({ employee, vacations, onOpenHistory }: EmployeeVacationCardProps) {
+export default function EmployeeVacationCard({ employee, vacations, onOpenHistory, onViewDetails }: EmployeeVacationCardProps) {
 
   const { relevantAbsence, summaryByMonth } = useMemo(() => {
     const summary: Record<string, number> = {};
@@ -129,6 +130,17 @@ export default function EmployeeVacationCard({ employee, vacations, onOpenHistor
                     <span className={cn(relevantAbsence.status === 'cancelado' && 'line-through')}>
                         {format(parseISO(relevantAbsence.startDate), "dd/MM/yy")} a {format(parseISO(relevantAbsence.endDate), "dd/MM/yy")}
                     </span>
+                    {onViewDetails && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onViewDetails(relevantAbsence)}
+                            className="h-6 w-6 p-0 hover:bg-primary/10"
+                            title="Ver detalhes do agendamento"
+                        >
+                            <Eye className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                        </Button>
+                    )}
                 </div>
                  <Badge variant={typeDetails.variant} className="capitalize">
                     {typeDetails.icon}

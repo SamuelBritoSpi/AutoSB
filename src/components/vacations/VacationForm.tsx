@@ -27,6 +27,7 @@ const vacationSchema = z.object({
   startDate: z.date({ required_error: "Data de início é obrigatória." }),
   endDate: z.date({ required_error: "Data de término é obrigatória." }),
   type: z.enum(['ferias', 'licenca_premio', 'licenca_medica', 'licenca_maternidade'], { message: "Tipo de afastamento é obrigatório."}),
+  notes: z.string().optional(),
 }).refine(data => data.endDate >= data.startDate, {
   message: "Data de término não pode ser anterior à data de início.",
   path: ["endDate"],
@@ -51,9 +52,11 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
       startDate: parseISO(existingVacation.startDate),
       endDate: parseISO(existingVacation.endDate),
       type: existingVacation.type || 'ferias',
+      notes: existingVacation.notes || '',
     } : {
       employeeId: '',
       type: 'ferias',
+      notes: '',
     },
   });
 
@@ -69,6 +72,7 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
         startDate: values.startDate.toISOString(),
         endDate: values.endDate.toISOString(),
         type: values.type,
+        notes: values.notes || '',
       };
       onUpdateVacation(vacationData);
     } else {
@@ -79,9 +83,10 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
         endDate: values.endDate.toISOString(),
         type: values.type,
         status: 'planejado', // Sempre define novos afastamentos como 'planejado'
+        notes: values.notes || '',
       };
       onAddVacation(vacationData);
-      form.reset({ employeeId: '', startDate: undefined, endDate: undefined, type: 'ferias' });
+      form.reset({ employeeId: '', startDate: undefined, endDate: undefined, type: 'ferias', notes: '' });
     }
     if(onClose) onClose();
   };
@@ -208,6 +213,23 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
             )}
           />
         </div>
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Observações (Opcional)</FormLabel>
+              <FormControl>
+                <textarea
+                  {...field}
+                  placeholder="Ex: Período aquisitivo 2023/2024, funcionário ganhou um dia de folga, etc."
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="flex gap-2">
           <Button type="submit" className="w-full md:w-auto">
             <PlusCircle className="mr-2 h-4 w-4" /> {existingVacation ? 'Atualizar Período' : 'Registrar Afastamento'}

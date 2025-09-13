@@ -17,6 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from '../ui/scroll-area';
+import VacationDetailsDialog from './VacationDetailsDialog';
+import { useState } from 'react';
 
 
 interface VacationHistoryDialogProps {
@@ -41,73 +43,100 @@ const absenceStatusDetails: Record<AbsenceStatus, { label: string, icon: React.R
 
 
 export default function VacationHistoryDialog({ vacations, onDelete, onUpdate, onEdit }: VacationHistoryDialogProps) {
+  const [selectedVacation, setSelectedVacation] = useState<Vacation | null>(null);
 
   const sortedVacations = useMemo(() => {
      return [...vacations].sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
   }, [vacations]);
 
+  const handleUpdateDetails = (updatedVacation: Vacation) => {
+    onUpdate(updatedVacation);
+    setSelectedVacation(null);
+  };
+
 
   return (
-    <ScrollArea className="max-h-[60vh] pr-4">
-        <div className="space-y-4">
-            {sortedVacations.length > 0 ? sortedVacations.map(vacation => {
-                    const days = differenceInDays(parseISO(vacation.endDate), parseISO(vacation.startDate)) + 1;
-                    const typeDetails = absenceTypeDetails[vacation.type] || { label: 'Desconhecido', icon: null, variant: 'secondary' };
-                    const statusDetails = absenceStatusDetails[vacation.status] || { label: 'Desconhecido', icon: null, className: '' };
+    <>
+      <ScrollArea className="max-h-[60vh] pr-4">
+          <div className="space-y-4">
+              {sortedVacations.length > 0 ? sortedVacations.map(vacation => {
+                      const days = differenceInDays(parseISO(vacation.endDate), parseISO(vacation.startDate)) + 1;
+                      const typeDetails = absenceTypeDetails[vacation.type] || { label: 'Desconhecido', icon: null, variant: 'secondary' };
+                      const statusDetails = absenceStatusDetails[vacation.status] || { label: 'Desconhecido', icon: null, className: '' };
 
-                    return (
-                        <div key={vacation.id} className={cn("p-3 border rounded-lg flex items-center justify-between group", vacation.status === 'cancelado' && 'bg-muted/50')}>
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 flex-grow">
-                                <div className={cn("flex items-center text-sm p-2 rounded-md font-medium", statusDetails.className, vacation.status === 'cancelado' && 'line-through')}>
-                                    <span className="flex items-center gap-2">
-                                        {statusDetails.icon} {statusDetails.label}
-                                    </span>
-                                </div>
-                                <div>
-                                    <p className="font-semibold">{format(parseISO(vacation.startDate), "dd/MM/yyyy")} a {format(parseISO(vacation.endDate), "dd/MM/yyyy")} ({days} dias)</p>
-                                    <Badge variant={typeDetails.variant} className="w-fit mt-1 capitalize">
-                                        {typeDetails.icon}
-                                        <span className='ml-1'>{typeDetails.label}</span>
-                                    </Badge>
-                                </div>
-                            </div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                                        <MoreVertical className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    {vacation.status === 'planejado' && (
-                                    <>
-                                        <DropdownMenuItem onClick={() => onUpdate({ ...vacation, status: 'confirmado' })}>
-                                            <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> Marcar como Usufruído
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => onEdit(vacation)}>
-                                            <Pencil className="mr-2 h-4 w-4 text-blue-500" /> Ajustar e Marcar como Usufruído
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => onUpdate({ ...vacation, status: 'cancelado' })} className='text-amber-600 focus:text-amber-700'>
-                                            <CalendarX className="mr-2 h-4 w-4" /> Marcar como Não Usufruído
-                                        </DropdownMenuItem>
-                                    </>
-                                    )}
-                                    {(vacation.status === 'confirmado' || vacation.status === 'cancelado') && (
-                                        <DropdownMenuItem onClick={() => onUpdate({ ...vacation, status: 'planejado' })}>
-                                            <Undo className="mr-2 h-4 w-4" /> Reverter para Planejado
-                                        </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => onDelete(vacation.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                                        <Trash2 className="mr-2 h-4 w-4" /> Excluir Registro
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                    )
-                }) : (
-                    <p className="text-sm text-muted-foreground text-center py-10">Nenhum período de afastamento registrado para este funcionário.</p>
-                )}
+                      return (
+                          <div key={vacation.id} className={cn("p-3 border rounded-lg flex items-center justify-between group", vacation.status === 'cancelado' && 'bg-muted/50')}>
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 flex-grow">
+                                  <div className={cn("flex items-center text-sm p-2 rounded-md font-medium", statusDetails.className, vacation.status === 'cancelado' && 'line-through')}>
+                                      <span className="flex items-center gap-2">
+                                          {statusDetails.icon} {statusDetails.label}
+                                      </span>
+                                  </div>
+                                  <div>
+                                      <p className="font-semibold">{format(parseISO(vacation.startDate), "dd/MM/yyyy")} a {format(parseISO(vacation.endDate), "dd/MM/yyyy")} ({days} dias)</p>
+                                      <Badge variant={typeDetails.variant} className="w-fit mt-1 capitalize">
+                                          {typeDetails.icon}
+                                          <span className='ml-1'>{typeDetails.label}</span>
+                                      </Badge>
+                                  </div>
+                              </div>
+                              <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                          <MoreVertical className="h-4 w-4" />
+                                      </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => setSelectedVacation(vacation)}>
+                                          <Pencil className="mr-2 h-4 w-4 text-blue-500" /> Ver Detalhes
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      {vacation.status === 'planejado' && (
+                                      <>
+                                          <DropdownMenuItem onClick={() => onUpdate({ ...vacation, status: 'confirmado' })}>
+                                              <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> Marcar como Usufruído
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem onClick={() => onEdit(vacation)}>
+                                              <Pencil className="mr-2 h-4 w-4 text-blue-500" /> Ajustar e Marcar como Usufruído
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem onClick={() => onUpdate({ ...vacation, status: 'cancelado' })} className='text-amber-600 focus:text-amber-700'>
+                                              <CalendarX className="mr-2 h-4 w-4" /> Marcar como Não Usufruído
+                                          </DropdownMenuItem>
+                                      </>
+                                      )}
+                                      {(vacation.status === 'confirmado' || vacation.status === 'cancelado') && (
+                                          <DropdownMenuItem onClick={() => onUpdate({ ...vacation, status: 'planejado' })}>
+                                              <Undo className="mr-2 h-4 w-4" /> Reverter para Planejado
+                                          </DropdownMenuItem>
+                                      )}
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem onClick={() => onDelete(vacation.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                          <Trash2 className="mr-2 h-4 w-4" /> Excluir Registro
+                                      </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                              </DropdownMenu>
+                          </div>
+                      )
+                  }) : (
+                      <p className="text-sm text-muted-foreground text-center py-10">Nenhum período de afastamento registrado para este funcionário.</p>
+                  )}
+          </div>
+      </ScrollArea>
+      
+      {/* Diálogo de Detalhes */}
+      {selectedVacation && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <VacationDetailsDialog
+                vacation={selectedVacation}
+                onUpdate={handleUpdateDetails}
+                onClose={() => setSelectedVacation(null)}
+              />
+            </div>
+          </div>
         </div>
-    </ScrollArea>
+      )}
+    </>
   );
 }
