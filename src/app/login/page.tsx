@@ -28,7 +28,7 @@ export default function LoginPage() {
     setIsLoading(true);
     const auth = getAuthInstance();
     try {
-      // Define a persistência da autenticação para a sessão atual do navegador.
+      // Define a persistência da autenticação para a sessão atual do navegador .
       // Isso garante que o usuário seja desconectado ao fechar o navegador.
       await setPersistence(auth, browserSessionPersistence);
       
