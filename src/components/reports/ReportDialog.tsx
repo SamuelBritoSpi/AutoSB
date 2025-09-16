@@ -174,12 +174,13 @@ export default function ReportDialog({
                 </div>
             </div>
             {reportType === 'demands' && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="demand-filter" className="text-right">
-                        Demanda
-                    </Label>
-                    <div className="col-span-3">
-                        <Select value={selectedDemandId} onValueChange={setSelectedDemandId}>
+                <>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="demand-filter" className="text-right">
+                            Demanda
+                        </Label>
+                        <div className="col-span-3">
+                            <Select value={selectedDemandId} onValueChange={setSelectedDemandId}>
                                 <SelectTrigger id="demand-filter">
                                     <SelectValue placeholder="Selecione uma demanda..." />
                                 </SelectTrigger>
@@ -196,13 +197,28 @@ export default function ReportDialog({
                                             <SelectItem key={demand.id} value={demand.id}>
                                                 {demand.title}
                                             </SelectItem>
-                                        ))
-                                    }
+                                        ))}
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
-                </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="status-filter" className="text-right">
+                            Status
+                        </Label>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger id="status-filter" className="col-span-3">
+                                <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[200px] overflow-auto">
+                                <SelectItem value="all">Todos os status</SelectItem>
+                                {demandStatuses?.map(status => (
+                                    <SelectItem key={status.id} value={status.label}>{status.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </>
             )}
             {reportType !== 'demands' && (
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -217,24 +233,6 @@ export default function ReportDialog({
                             <SelectItem value="all">Todos os funcionários</SelectItem>
                             {employees?.sort((a,b) => a.name.localeCompare(b.name)).map(emp => (
                                 <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            )}
-            {reportType === 'demands' && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="status-filter" className="text-right">
-                        Status
-                    </Label>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger id="status-filter" className="col-span-3">
-                            <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[200px] overflow-auto">
-                            <SelectItem value="all">Todos os status</SelectItem>
-                            {demandStatuses?.map(status => (
-                                <SelectItem key={status.id} value={status.label}>{status.label}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
