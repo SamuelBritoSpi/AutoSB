@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 220 25% 95%; /* Light Gray #F0F2F5 */
+    --background: 220 25% 95%; /* Light  Gray #F0F2F5 */
     --foreground: 222 47% 11%; /* Darker Gray for text */
 
     --card: 0 0% 100%; /* White */
