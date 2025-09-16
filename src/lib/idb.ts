@@ -1,7 +1,7 @@
 
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query, where } from 'firebase/firestore';
 import { getDbInstance } from './firebase-client'; // Usa o db específico do cliente
-import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence } from './types';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, DemandProgress } from './types';
 
 const STORES = {
   demands: 'demands',
@@ -68,22 +68,47 @@ export const deleteDemand = (id: string) => remove(STORES.demands, id);
 
 // --- Histórico de Andamento das Demandas ---
 export const getDemandProgressByDemandId = async (demandId: string): Promise<DemandProgress[]> => {
-  const db = getDbInstance();
-  if (!db) {
-    console.warn("Firestore não está disponível. Retornando array vazio.");
+  try {
+    const db = getDbInstance();
+    if (!db) {
+      console.warn("Firestore não está disponível. Retornando array vazio.");
+      return [];
+    }
+    
+    console.log(`Buscando progresso para demanda ID: ${demandId}`);
+    const collRef = collection(db, STORES.demandProgress);
+    
+    // Tentativa com filtro where
+    try {
+      const q = query(collRef, where('demandId', '==', demandId), orderBy('date', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const data: DemandProgress[] = [];
+      querySnapshot.forEach((doc) => {
+        const progress = { ...doc.data(), id: doc.id } as DemandProgress;
+        data.push(progress);
+      });
+      console.log(`Encontrados ${data.length} registros de progresso para demanda ${demandId}`);
+      return data;
+    } catch (queryError) {
+      console.warn(`Erro na consulta com where. Tentando busca completa. Erro:`, queryError);
+      
+      // Fallback: buscar todos e filtrar no cliente
+      const q = query(collRef, orderBy('date', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const data: DemandProgress[] = [];
+      querySnapshot.forEach((doc) => {
+        const progress = { ...doc.data(), id: doc.id } as DemandProgress;
+        if (progress.demandId === demandId) {
+          data.push(progress);
+        }
+      });
+      console.log(`Encontrados ${data.length} registros de progresso para demanda ${demandId} (fallback)`);
+      return data;
+    }
+  } catch (error) {
+    console.error(`Erro geral ao buscar progresso para demanda ${demandId}:`, error);
     return [];
   }
-  const collRef = collection(db, STORES.demandProgress);
-  const q = query(collRef, orderBy('date', 'desc'));
-  const querySnapshot = await getDocs(q);
-  const data: DemandProgress[] = [];
-  querySnapshot.forEach((doc) => {
-    const progress = { ...doc.data(), id: doc.id } as DemandProgress;
-    if (progress.demandId === demandId) {
-      data.push(progress);
-    }
-  });
-  return data;
 };
 
 export const addDemandProgress = async (progress: Omit<DemandProgress, 'id'>) => {
@@ -98,6 +123,30 @@ export const updateDemandProgress = (progress: DemandProgress) => {
 };
 
 export const deleteDemandProgress = (id: string) => remove(STORES.demandProgress, id);
+
+// Função alternativa para buscar progresso das demandas (sem where clause)
+export const getAllDemandProgress = async (): Promise<DemandProgress[]> => {
+  try {
+    const db = getDbInstance();
+    if (!db) {
+      console.warn("Firestore não está disponível. Retornando array vazio.");
+      return [];
+    }
+    
+    const collRef = collection(db, STORES.demandProgress);
+    const q = query(collRef, orderBy('date', 'desc'));
+    const querySnapshot = await getDocs(q);
+    const data: DemandProgress[] = [];
+    querySnapshot.forEach((doc) => {
+      const progress = { ...doc.data(), id: doc.id } as DemandProgress;
+      data.push(progress);
+    });
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar todo o progresso das demandas:', error);
+    return [];
+  }
+};
 
 // --- Status de Demanda ---
 export const getDemandStatuses = () => getAll<DemandStatus>(STORES.demandStatuses, 'order');

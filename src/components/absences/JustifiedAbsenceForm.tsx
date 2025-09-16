@@ -215,3 +215,4 @@ export default function JustifiedAbsenceForm({ onAddAbsence, existingAbsence, on
     </Form>
   );
 }
+

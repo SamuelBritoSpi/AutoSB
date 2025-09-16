@@ -140,3 +140,4 @@ export default function AbsenceDetailsDialog({ absence, onUpdate, onClose }: Abs
     </div>
   );
 }
+

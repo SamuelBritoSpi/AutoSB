@@ -114,3 +114,4 @@ export default function AbsenceHistoryDialog({ absences, onDelete, onUpdate, onE
     </>
   );
 }
+

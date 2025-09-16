@@ -52,7 +52,7 @@ export default function ReportDialog({
   const [employeeFilter, setEmployeeFilter] = useState('all'); // Mantido para outros tipos de relatório
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
     setIsGenerating(true);
 
     let filteredDemands = demands;
@@ -84,7 +84,14 @@ export default function ReportDialog({
         if (statusFilter !== 'all') {
             filteredDemands = filteredDemands.filter(d => d.status === statusFilter);
         }
-        const reportElement = <DemandsReport demands={filteredDemands} employees={employees} demandStatuses={demandStatuses} filters={{dateRange, employeeId: 'all', status: statusFilter}} />;
+        
+        // Gerar o relatório diretamente sem carregar histórico
+        const reportElement = <DemandsReport 
+            demands={filteredDemands} 
+            employees={employees} 
+            demandStatuses={demandStatuses} 
+            filters={{dateRange, employeeId: 'all', status: statusFilter}}
+        />;
         renderReport(reportElement, title);
     }
 
