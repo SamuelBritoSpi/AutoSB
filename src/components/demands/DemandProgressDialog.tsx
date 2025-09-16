@@ -24,9 +24,17 @@ export default function DemandProgressDialog({
   const handleProgressAdded = (progress: DemandProgress) => {
     setNewProgress(progress);
   };
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      // Limpa o estado quando o diálogo é fechado para evitar contaminação
+      setNewProgress(undefined);
+    }
+    onOpenChange(isOpen);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Andamento da Demanda: {demandTitle}</DialogTitle>
