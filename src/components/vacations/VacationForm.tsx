@@ -13,7 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, PlusCircle, X } from 'lucide-react';
+import { CalendarIcon, PlusCircle, X, Sparkles, Loader2 } from 'lucide-react';
+import { enhanceText } from '@/ai/flows/enhance-text-flow';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { Textarea } from '../ui/textarea';
 
 const absenceTypes: Record<AbsenceType, string> = {
   ferias: 'Férias',
@@ -44,6 +48,8 @@ interface VacationFormProps {
 }
 
 export default function VacationForm({ onAddVacation, existingVacation, onUpdateVacation, onClose, employees }: VacationFormProps) {
+  const { toast } = useToast();
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   const form = useForm<VacationFormValues>({
     resolver: zodResolver(vacationSchema),
@@ -59,6 +65,23 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
       notes: '',
     },
   });
+
+  const handleEnhanceText = async () => {
+    const originalText = form.getValues("notes");
+    if (!originalText) return;
+
+    setIsEnhancing(true);
+    try {
+      const { enhancedText } = await enhanceText({ text: originalText });
+      form.setValue("notes", enhancedText, { shouldValidate: true });
+      toast({ title: 'Texto Aprimorado!', description: 'As observações foram corrigidas e refinadas pela IA.' });
+    } catch (error) {
+      console.error('Falha ao aprimorar o texto:', error);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível aprimorar o texto.' });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
 
   const onSubmit = (values: VacationFormValues) => {
     const selectedEmployee = employees.find(e => e.id === values.employeeId);
@@ -219,13 +242,25 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
           render={({ field }) => (
             <FormItem>
               <FormLabel>Observações (Opcional)</FormLabel>
-              <FormControl>
-                <textarea
-                  {...field}
-                  placeholder="Ex: Período aquisitivo 2023/2024, funcionário ganhou um dia de folga, etc."
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </FormControl>
+              <div className="relative">
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="Ex: Período aquisitivo 2023/2024..."
+                    className="pr-10"
+                  />
+                </FormControl>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-1 top-2 h-7 w-7 text-primary hover:text-primary"
+                  onClick={handleEnhanceText}
+                  disabled={isEnhancing}
+                >
+                  {isEnhancing ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                </Button>
+              </div>
               <FormMessage />
             </FormItem>
           )}

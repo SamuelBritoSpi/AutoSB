@@ -15,9 +15,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, PlusCircle, X } from 'lucide-react';
+import { CalendarIcon, PlusCircle, X, Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '../AuthProvider';
+import { useState } from 'react';
+import { enhanceText } from '@/ai/flows/enhance-text-flow';
 
 const demandSchema = z.object({
   title: z.string().min(1, { message: "Título é obrigatório." }),
@@ -39,6 +40,7 @@ interface DemandFormProps {
 
 export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand, onClose, employees }: DemandFormProps) {
   const { toast } = useToast();
+  const [isEnhancing, setIsEnhancing] = useState<null | 'title' | 'description'>(null);
   
   const form = useForm<DemandFormValues>({
     resolver: zodResolver(demandSchema),
@@ -56,6 +58,23 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
       ownerId: employees?.[0]?.id || '',
     },
   });
+
+  const handleEnhanceText = async (field: 'title' | 'description') => {
+    const originalText = form.getValues(field);
+    if (!originalText) return;
+
+    setIsEnhancing(field);
+    try {
+      const { enhancedText } = await enhanceText({ text: originalText });
+      form.setValue(field, enhancedText, { shouldValidate: true });
+      toast({ title: 'Texto Aprimorado!', description: 'O texto foi corrigido e refinado pela IA.' });
+    } catch (error) {
+      console.error('Falha ao aprimorar o texto:', error);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível aprimorar o texto.' });
+    } finally {
+      setIsEnhancing(null);
+    }
+  };
 
   const onSubmit = (values: DemandFormValues) => {
     if (existingDemand && onUpdateDemand) {
@@ -92,9 +111,21 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
           render={({ field }) => (
             <FormItem>
               <FormLabel>Título da Demanda</FormLabel>
-              <FormControl>
-                <Input placeholder="Digite o título da demanda" {...field} />
-              </FormControl>
+              <div className="relative">
+                <FormControl>
+                  <Input placeholder="Digite o título da demanda" {...field} className="pr-10" />
+                </FormControl>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-primary hover:text-primary"
+                  onClick={() => handleEnhanceText('title')}
+                  disabled={isEnhancing === 'title'}
+                >
+                  {isEnhancing === 'title' ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                </Button>
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -105,9 +136,21 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
           render={({ field }) => (
             <FormItem>
               <FormLabel>Descrição da Demanda</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Detalhe a demanda..." {...field} rows={4} />
-              </FormControl>
+              <div className="relative">
+                <FormControl>
+                  <Textarea placeholder="Detalhe a demanda..." {...field} rows={4} className="pr-10" />
+                </FormControl>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-1 top-2 h-7 w-7 text-primary hover:text-primary"
+                  onClick={() => handleEnhanceText('description')}
+                  disabled={isEnhancing === 'description'}
+                >
+                  {isEnhancing === 'description' ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                </Button>
+              </div>
               <FormMessage />
             </FormItem>
           )}

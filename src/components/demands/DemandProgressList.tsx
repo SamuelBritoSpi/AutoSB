@@ -8,10 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { History, MoreVertical, Pencil, Save, Trash2, X, Loader2 } from 'lucide-react';
+import { History, MoreVertical, Pencil, Save, Trash2, X, Loader2, Sparkles } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { DemandProgress } from '@/lib/types';
 import { getDemandProgressByDemandId, updateDemandProgress, deleteDemandProgress } from '@/lib/idb';
+import { enhanceText } from '@/ai/flows/enhance-text-flow';
 
 interface DemandProgressListProps {
   demandId: string;
@@ -24,6 +25,7 @@ export default function DemandProgressList({ demandId, newProgress }: DemandProg
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -56,6 +58,20 @@ export default function DemandProgressList({ demandId, newProgress }: DemandProg
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingText('');
+  };
+
+  const handleEnhanceText = async () => {
+    if (!editingText) return;
+    setIsEnhancing(true);
+    try {
+      const { enhancedText } = await enhanceText({ text: editingText });
+      setEditingText(enhancedText);
+      toast({ title: 'Texto Aprimorado!' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível aprimorar o texto.' });
+    } finally {
+      setIsEnhancing(false);
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -156,12 +172,24 @@ export default function DemandProgressList({ demandId, newProgress }: DemandProg
                   </div>
                   {editingId === progress.id ? (
                     <div className="space-y-2 pt-1">
-                        <Textarea 
-                            value={editingText}
-                            onChange={(e) => setEditingText(e.target.value)}
-                            className="text-sm"
-                            rows={3}
-                        />
+                        <div className="relative">
+                          <Textarea 
+                              value={editingText}
+                              onChange={(e) => setEditingText(e.target.value)}
+                              className="text-sm pr-10"
+                              rows={3}
+                          />
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon" 
+                            className="absolute right-1 top-2 h-7 w-7 text-primary hover:text-primary"
+                            onClick={handleEnhanceText}
+                            disabled={isEnhancing}
+                          >
+                            {isEnhancing ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                          </Button>
+                        </div>
                         <div className="flex gap-2 justify-end">
                             <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
                                 <X className="mr-2 h-4 w-4" /> Cancelar

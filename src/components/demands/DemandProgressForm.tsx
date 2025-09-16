@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -11,7 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '../AuthProvider';
 import type { DemandProgress } from '@/lib/types';
 import { addDemandProgress } from '@/lib/idb';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Sparkles, Loader2 } from 'lucide-react';
+import { enhanceText } from '@/ai/flows/enhance-text-flow';
 
 const progressSchema = z.object({
   description: z.string().min(1, { message: "Descrição é obrigatória." }),
@@ -28,6 +30,7 @@ export default function DemandProgressForm({ demandId, onProgressAdded }: Demand
   const { toast } = useToast();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   
   const form = useForm<ProgressFormValues>({
     resolver: zodResolver(progressSchema),
@@ -35,6 +38,23 @@ export default function DemandProgressForm({ demandId, onProgressAdded }: Demand
       description: '',
     },
   });
+
+  const handleEnhanceText = async () => {
+    const originalText = form.getValues("description");
+    if (!originalText) return;
+
+    setIsEnhancing(true);
+    try {
+      const { enhancedText } = await enhanceText({ text: originalText });
+      form.setValue("description", enhancedText, { shouldValidate: true });
+      toast({ title: 'Texto Aprimorado!', description: 'O andamento foi corrigido e refinado pela IA.' });
+    } catch (error) {
+      console.error('Falha ao aprimorar o texto:', error);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível aprimorar o texto.' });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
 
   const onSubmit = async (values: ProgressFormValues) => {
     try {
@@ -77,14 +97,26 @@ export default function DemandProgressForm({ demandId, onProgressAdded }: Demand
           render={({ field }) => (
             <FormItem>
               <FormLabel>Adicionar Andamento</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Descreva a atualização da demanda..." 
-                  {...field} 
-                  rows={3} 
-                  className="resize-none"
-                />
-              </FormControl>
+              <div className="relative">
+                <FormControl>
+                  <Textarea 
+                    placeholder="Descreva a atualização da demanda..." 
+                    {...field} 
+                    rows={3} 
+                    className="resize-none pr-10"
+                  />
+                </FormControl>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-1 top-2 h-7 w-7 text-primary hover:text-primary"
+                  onClick={handleEnhanceText}
+                  disabled={isEnhancing}
+                >
+                  {isEnhancing ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                </Button>
+              </div>
               <FormMessage />
             </FormItem>
           )}

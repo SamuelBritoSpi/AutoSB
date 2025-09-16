@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { JustifiedAbsence, Employee } from '@/lib/types';
@@ -12,8 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, PlusCircle, X, FileText } from 'lucide-react';
+import { CalendarIcon, PlusCircle, X, Sparkles, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { useState } from 'react';
+import { enhanceText } from '@/ai/flows/enhance-text-flow';
+import { useToast } from '@/hooks/use-toast';
 
 const absenceSchema = z.object({
   employeeId: z.string().min(1, { message: "Selecione um funcionário." }),
@@ -36,6 +40,8 @@ interface JustifiedAbsenceFormProps {
 }
 
 export default function JustifiedAbsenceForm({ onAddAbsence, existingAbsence, onUpdateAbsence, onClose, employees }: JustifiedAbsenceFormProps) {
+  const { toast } = useToast();
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   const form = useForm<AbsenceFormValues>({
     resolver: zodResolver(absenceSchema),
@@ -49,6 +55,23 @@ export default function JustifiedAbsenceForm({ onAddAbsence, existingAbsence, on
       reason: '',
     },
   });
+
+  const handleEnhanceText = async () => {
+    const originalText = form.getValues("reason");
+    if (!originalText) return;
+
+    setIsEnhancing(true);
+    try {
+      const { enhancedText } = await enhanceText({ text: originalText });
+      form.setValue("reason", enhancedText, { shouldValidate: true });
+      toast({ title: 'Texto Aprimorado!', description: 'O motivo foi corrigido e refinado pela IA.' });
+    } catch (error) {
+      console.error('Falha ao aprimorar o texto:', error);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível aprimorar o texto.' });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
 
   const onSubmit = (values: AbsenceFormValues) => {
     const selectedEmployee = employees.find(e => e.id === values.employeeId);
@@ -185,13 +208,25 @@ export default function JustifiedAbsenceForm({ onAddAbsence, existingAbsence, on
           render={({ field }) => (
             <FormItem>
               <FormLabel>Motivo da Falta</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="Ex: Consulta médica, problema familiar, compromisso pessoal, etc."
-                  className="min-h-[100px]"
-                />
-              </FormControl>
+              <div className="relative">
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="Ex: Consulta médica, problema familiar, compromisso pessoal, etc."
+                    className="min-h-[100px] pr-10"
+                  />
+                </FormControl>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-1 top-2 h-7 w-7 text-primary hover:text-primary"
+                  onClick={handleEnhanceText}
+                  disabled={isEnhancing}
+                >
+                  {isEnhancing ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                </Button>
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -215,4 +250,3 @@ export default function JustifiedAbsenceForm({ onAddAbsence, existingAbsence, on
     </Form>
   );
 }
-
