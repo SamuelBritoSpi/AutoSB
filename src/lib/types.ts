@@ -67,6 +67,16 @@ export interface MedicalCertificate {
   cid?: string; // Código da Classificação Internacional de Doenças
 }
 
+export interface JustifiedAbsence {
+  id: string;
+  employeeId: string;
+  employeeName: string; // Denormalizado para fácil exibição
+  startDate: string; // String ISO para data
+  endDate: string; // String ISO para data
+  reason: string; // Motivo da falta justificada
+  status: 'active' | 'cancelled'; // Status da falta
+}
+
 // Tipos para Folha de Ponto
 export interface TimeSheetEntry {
   employeeName: string;

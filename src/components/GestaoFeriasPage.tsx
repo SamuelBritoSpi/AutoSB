@@ -7,13 +7,14 @@ import DemandForm from '@/components/demands/DemandForm';
 import DemandList from '@/components/demands/DemandList';
 import VacationForm from '@/components/vacations/VacationForm';
 import VacationList from '@/components/vacations/VacationList';
+import JustifiedAbsenceList from '@/components/absences/JustifiedAbsenceList';
 import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeList from '@/components/employees/EmployeeList';
 import DashboardTab from '@/components/dashboard/DashboardTab';
 import CalendarView from '@/components/calendar/CalendarView';
-import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from '@/lib/types';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,6 +29,9 @@ import {
   addVacation as addDbVacation,
   updateVacation as updateDbVacation,
   deleteVacation as deleteDbVacation,
+  addJustifiedAbsence as addDbJustifiedAbsence,
+  updateJustifiedAbsence as updateDbJustifiedAbsence,
+  deleteJustifiedAbsence as deleteDbJustifiedAbsence,
   addEmployee as addDbEmployee,
   updateEmployee as updateDbEmployee,
   deleteEmployee as deleteDbEmployee,
@@ -94,6 +98,7 @@ export default function GestaoFeriasPage() {
 
   const [demands, setDemands] = useState<Demand[]>([]);
   const [vacations, setVacations] = useState<Vacation[]>([]);
+  const [justifiedAbsences, setJustifiedAbsences] = useState<JustifiedAbsence[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [certificates, setCertificates] = useState<MedicalCertificate[]>([]);
   const [demandStatuses, setDemandStatuses] = useState<DemandStatus[]>([]);
@@ -115,6 +120,7 @@ export default function GestaoFeriasPage() {
         const initialData = await getAllData();
         setDemands(initialData.demands);
         setVacations(initialData.vacations);
+        setJustifiedAbsences(initialData.justifiedAbsences || []);
         setEmployees(initialData.employees);
         setCertificates(initialData.certificates);
 
@@ -140,7 +146,8 @@ export default function GestaoFeriasPage() {
     { value: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="mr-2 h-5 w-5" /> },
     { value: "calendar", label: "Calendário", icon: <CalendarIconLucide className="mr-2 h-5 w-5" /> },
     { value: "demands", label: "Demandas", icon: <ListChecks className="mr-2 h-5 w-5" /> },
-    { value: "vacations", label: "Férias", icon: <CalendarCheck className="mr-2 h-5 w-5" /> },
+    { value: "vacations", label: "Férias/Afastamento", icon: <CalendarCheck className="mr-2 h-5 w-5" /> },
+    { value: "absences", label: "Faltas Justificadas", icon: <FileText className="mr-2 h-5 w-5" /> },
     { value: "employees", label: "Funcionários", icon: <Users className="mr-2 h-5 w-5" /> },
   ];
 
@@ -259,6 +266,48 @@ export default function GestaoFeriasPage() {
        console.error("Failed to delete vacation:", error);
        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível excluir as férias.' });
        setVacations(originalVacations);
+    });
+  };
+
+  const handleAddJustifiedAbsence = (absenceData: Omit<JustifiedAbsence, 'id'>) => {
+    const tempId = `temp-absence-${Date.now()}`;
+    const newAbsence: JustifiedAbsence = { ...absenceData, id: tempId };
+    const originalAbsences = [...justifiedAbsences];
+
+    setJustifiedAbsences(prev => [newAbsence, ...prev]);
+    toast({ title: "Falta Justificada Adicionada", description: "Sincronizando com a nuvem..." });
+    
+    addDbJustifiedAbsence(absenceData)
+      .then(savedAbsence => {
+        setJustifiedAbsences(prev => prev.map(a => a.id === tempId ? savedAbsence : a));
+      })
+      .catch(error => {
+       console.error("Failed to add justified absence:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar a falta justificada.' });
+       setJustifiedAbsences(originalAbsences);
+    });
+  };
+  
+  const handleUpdateJustifiedAbsence = (updatedAbsence: JustifiedAbsence) => {
+    const originalAbsences = [...justifiedAbsences];
+    setJustifiedAbsences(prev => prev.map(a => a.id === updatedAbsence.id ? updatedAbsence : a));
+
+    updateDbJustifiedAbsence(updatedAbsence).catch(error => {
+       console.error("Failed to update justified absence:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível atualizar a falta justificada.' });
+       setJustifiedAbsences(originalAbsences);
+    });
+  };
+
+  const handleDeleteJustifiedAbsence = (id: string) => {
+    const originalAbsences = [...justifiedAbsences];
+    setJustifiedAbsences(prev => prev.filter(a => a.id !== id));
+    toast({ title: "Falta Justificada Excluída", description: "O registro de falta foi removido." });
+
+    deleteDbJustifiedAbsence(id).catch(error => {
+       console.error("Failed to delete justified absence:", error);
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível excluir a falta justificada.' });
+       setJustifiedAbsences(originalAbsences);
     });
   };
 
@@ -438,7 +487,7 @@ export default function GestaoFeriasPage() {
         {/* Desktop Navigation */}
         <div className="hidden md:flex justify-center border-b">
             <div className="container mx-auto">
-                <TabsList className="grid w-full grid-cols-5 bg-transparent">
+                <TabsList className="grid w-full grid-cols-6 bg-transparent">
                     {tabOptions.map(tab => (
                         <TabsTrigger key={tab.value} value={tab.value} className="bg-transparent shadow-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none">
                             {tab.icon} {tab.label}
@@ -558,6 +607,16 @@ export default function GestaoFeriasPage() {
               onUpdateVacation={handleUpdateVacation}
             />
           </section>
+        </TabsContent>
+
+        <TabsContent value="absences" className={cn(containerClass, "space-y-6 mt-6")}>
+          <JustifiedAbsenceList 
+            absences={justifiedAbsences} 
+            employees={employees} 
+            onDeleteAbsence={handleDeleteJustifiedAbsence}
+            onUpdateAbsence={handleUpdateJustifiedAbsence}
+            onAddAbsence={handleAddJustifiedAbsence}
+          />
         </TabsContent>
 
         <TabsContent value="employees" className={cn(containerClass, "space-y-6 mt-6")}>

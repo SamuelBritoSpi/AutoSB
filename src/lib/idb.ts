@@ -1,11 +1,12 @@
 
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query } from 'firebase/firestore';
 import { getDbInstance } from './firebase-client'; // Usa o db específico do cliente
-import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus } from './types';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence } from './types';
 
 const STORES = {
   demands: 'demands',
   vacations: 'vacations',
+  justifiedAbsences: 'justifiedAbsences',
   employees: 'employees',
   certificates: 'certificates',
   demandStatuses: 'demandStatuses',
@@ -83,6 +84,15 @@ export const addVacation = async (vacation: Omit<Vacation, 'id'>) => {
 export const updateVacation = (vacation: Vacation) => update(STORES.vacations, vacation);
 export const deleteVacation = (id: string) => remove(STORES.vacations, id);
 
+// --- Faltas Justificadas ---
+export const getJustifiedAbsences = () => getAll<JustifiedAbsence>(STORES.justifiedAbsences);
+export const addJustifiedAbsence = async (absence: Omit<JustifiedAbsence, 'id'>) => {
+    const newId = await add(STORES.justifiedAbsences, absence);
+    return { ...absence, id: newId };
+};
+export const updateJustifiedAbsence = (absence: JustifiedAbsence) => update(STORES.justifiedAbsences, absence);
+export const deleteJustifiedAbsence = (id: string) => remove(STORES.justifiedAbsences, id);
+
 // --- Funcionários ---
 export const getEmployees = () => getAll<Employee>(STORES.employees);
 export const addEmployee = async (employee: Omit<Employee, 'id'>) => {
@@ -111,20 +121,22 @@ export const deleteCertificate = (id: string) => remove(STORES.certificates, id)
 interface AllData {
     demands: Demand[];
     vacations: Vacation[];
+    justifiedAbsences: JustifiedAbsence[];
     employees: Employee[];
     certificates: MedicalCertificate[];
     demandStatuses: DemandStatus[];
 }
 
 export async function getAllData(): Promise<AllData> {
-    const [demands, vacations, employees, certificates, demandStatuses] = await Promise.all([
+    const [demands, vacations, justifiedAbsences, employees, certificates, demandStatuses] = await Promise.all([
         getDemands(),
         getVacations(),
+        getJustifiedAbsences(),
         getEmployees(),
         getCertificates(),
         getDemandStatuses(),
     ]);
-    return { demands, vacations, employees, certificates, demandStatuses };
+    return { demands, vacations, justifiedAbsences, employees, certificates, demandStatuses };
 }
 
 // Esta função pode ser usada para migrar dados de um backup JSON para o Firestore.
@@ -144,6 +156,11 @@ export async function importData(data: AllData): Promise<void> {
     data.vacations.forEach(item => {
         const { id, ...rest } = item;
         const docRef = doc(db, STORES.vacations, id);
+        batch.set(docRef, rest);
+    });
+    data.justifiedAbsences.forEach(item => {
+        const { id, ...rest } = item;
+        const docRef = doc(db, STORES.justifiedAbsences, id);
         batch.set(docRef, rest);
     });
     data.employees.forEach(item => {
