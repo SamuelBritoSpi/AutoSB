@@ -148,7 +148,7 @@ export default function GestaoFeriasPage() {
     { value: "demands", label: "Demandas", icon: <ListChecks className="mr-2 h-5 w-5" /> },
     { value: "vacations", label: "Férias/Afastamento", icon: <CalendarCheck className="mr-2 h-5 w-5" /> },
     { value: "absences", label: "Faltas Justificadas", icon: <FileText className="mr-2 h-5 w-5" /> },
-    { value: "employees", label: "Funcionários", icon: <Users className="mr-2 h-5 w-5" /> },
+    { value: "employees", label: "Funcionários/Atestados", icon: <Users className="mr-2 h-5 w-5" /> },
   ];
 
   const handleAddDemand = (demandData: Omit<Demand, 'id'>) => {
