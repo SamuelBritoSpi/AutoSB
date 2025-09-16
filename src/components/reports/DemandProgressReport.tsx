@@ -1,3 +1,4 @@
+
 import type { DemandProgress } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -43,3 +44,5 @@ export default function DemandProgressReport({ progressList }: DemandProgressRep
     </div>
   );
 }
+
+    

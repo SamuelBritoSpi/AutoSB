@@ -1,14 +1,16 @@
 
 import React from 'react';
-import type { Demand, Employee, DemandStatus } from '@/lib/types';
+import type { Demand, Employee, DemandStatus, DemandProgress } from '@/lib/types';
 import ReportLayout from './ReportLayout';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import DemandProgressReport from './DemandProgressReport';
 
 interface DemandsReportProps {
   demands: Demand[];
   employees: Employee[];
   demandStatuses: DemandStatus[];
+  demandProgress: DemandProgress[];
   filters: {
     dateRange: { from?: Date; to?: Date };
     employeeId: string;
@@ -16,7 +18,7 @@ interface DemandsReportProps {
   };
 }
 
-export default function DemandsReport({ demands, employees, demandStatuses, filters }: DemandsReportProps) {
+export default function DemandsReport({ demands, employees, demandStatuses, demandProgress, filters }: DemandsReportProps) {
   const getEmployeeName = (id?: string | null) => employees.find(e => e.id === id)?.name || 'N/A';
   
   const formatDate = (date?: Date) => date ? format(date, "P", { locale: ptBR }) : 'N/A';
@@ -47,18 +49,29 @@ export default function DemandsReport({ demands, employees, demandStatuses, filt
             {demands.length > 0 ? (
                 demands
                     .sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-                    .map(demand => (
-                        <React.Fragment key={demand.id}>
-                          <tr style={{borderBottom: '1px solid #dee2e6'}}>
-                              <td style={{padding: '0.75rem', verticalAlign: 'top', fontWeight: '500'}}>{demand.title}</td>
-                              <td style={{padding: '0.75rem', maxWidth: '250px', wordWrap: 'break-word', lineHeight: '1.4', verticalAlign: 'top'}}>{demand.description}</td>
-                              <td style={{padding: '0.75rem', verticalAlign: 'top'}}>{getEmployeeName(demand.ownerId)}</td>
-                              <td style={{padding: '0.75rem', verticalAlign: 'top'}}>{priorityMap[demand.priority]}</td>
-                              <td style={{padding: '0.75rem', verticalAlign: 'top'}}>{demand.status}</td>
-                              <td style={{padding: '0.75rem', verticalAlign: 'top', whiteSpace: 'nowrap'}}>{format(parseISO(demand.dueDate), "dd/MM/yyyy", { locale: ptBR })}</td>
-                          </tr>
-                        </React.Fragment>
-                    ))
+                    .map(demand => {
+                        const progressForDemand = demandProgress.filter(p => p.demandId === demand.id);
+                        const hasProgress = progressForDemand.length > 0;
+                        return (
+                            <React.Fragment key={demand.id}>
+                              <tr style={{borderBottom: hasProgress ? '1px solid #dee2e6' : '1px solid #ddd'}}>
+                                  <td style={{padding: '0.75rem', verticalAlign: 'top', fontWeight: '500'}}>{demand.title}</td>
+                                  <td style={{padding: '0.75rem', maxWidth: '250px', wordWrap: 'break-word', lineHeight: '1.4', verticalAlign: 'top'}}>{demand.description}</td>
+                                  <td style={{padding: '0.75rem', verticalAlign: 'top'}}>{getEmployeeName(demand.ownerId)}</td>
+                                  <td style={{padding: '0.75rem', verticalAlign: 'top'}}>{priorityMap[demand.priority]}</td>
+                                  <td style={{padding: '0.75rem', verticalAlign: 'top'}}>{demand.status}</td>
+                                  <td style={{padding: '0.75rem', verticalAlign: 'top', whiteSpace: 'nowrap'}}>{format(parseISO(demand.dueDate), "dd/MM/yyyy", { locale: ptBR })}</td>
+                              </tr>
+                              {hasProgress && (
+                                <tr style={{borderBottom: '1px solid #ddd'}}>
+                                    <td colSpan={6} style={{padding: '0 1rem 1rem 1rem', backgroundColor: '#fdfdfd'}}>
+                                        <DemandProgressReport progressList={progressForDemand} />
+                                    </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                        )
+                    })
             ) : (
                 <tr>
                     <td colSpan={6} style={{textAlign: 'center', padding: '2rem'}}>Nenhuma demanda encontrada para os filtros selecionados.</td>
@@ -69,3 +82,5 @@ export default function DemandsReport({ demands, employees, demandStatuses, filt
     </ReportLayout>
   );
 }
+
+    

@@ -19,11 +19,12 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import type { Demand, Vacation, Employee, DemandStatus, MedicalCertificate } from '@/lib/types';
+import type { Demand, Vacation, Employee, DemandStatus, MedicalCertificate, DemandProgress } from '@/lib/types';
 import { renderReport } from '@/lib/print-utils';
 import DemandsReport from './DemandsReport';
 import VacationsReport from './VacationsReport';
 import CertificatesReport from './CertificatesReport';
+import { getAllDemandProgress } from '@/lib/idb';
 
 interface ReportDialogProps {
   open: boolean;
@@ -85,11 +86,13 @@ export default function ReportDialog({
             filteredDemands = filteredDemands.filter(d => d.status === statusFilter);
         }
         
-        // Gerar o relatório diretamente sem carregar histórico
+        const demandProgress = await getAllDemandProgress();
+        
         const reportElement = <DemandsReport 
             demands={filteredDemands} 
             employees={employees} 
-            demandStatuses={demandStatuses} 
+            demandStatuses={demandStatuses}
+            demandProgress={demandProgress}
             filters={{dateRange, employeeId: 'all', status: statusFilter}}
         />;
         renderReport(reportElement, title);
@@ -257,3 +260,5 @@ export default function ReportDialog({
     </Dialog>
   );
 }
+
+    
