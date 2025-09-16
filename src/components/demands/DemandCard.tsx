@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { AlertTriangle, ArrowDownCircle, CalendarDays, CheckCircle2, ChevronDown, Edit, Trash2, Settings, type LucideIcon, type LucideProps, icons, Smile } from 'lucide-react';
+import { AlertTriangle, ArrowDownCircle, CalendarDays, CheckCircle2, ChevronDown, Edit, Trash2, Settings, History, type LucideIcon, type LucideProps, icons, Smile } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
@@ -21,6 +21,7 @@ interface DemandCardProps {
   onDelete: (id: string) => void;
   onEdit: (demand: Demand) => void;
   onManageStatuses: () => void;
+  onViewProgress: (demandId: string, demandTitle: string) => void;
 }
 
 const priorityIcons: Record<Demand['priority'], React.ReactElement> = {
@@ -43,7 +44,7 @@ const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
     return <IconComponent {...props} />;
 };
 
-export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onDelete, onEdit, onManageStatuses }: DemandCardProps) {
+export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onDelete, onEdit, onManageStatuses, onViewProgress }: DemandCardProps) {
   
   const currentStatus = useMemo(() => {
     return demandStatuses.find(s => s.label === demand.status);
@@ -95,7 +96,14 @@ export default function DemandCard({ demand, demandStatuses, onUpdateStatus, onD
             )}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end">
+      <CardFooter className="flex justify-between">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => onViewProgress(demand.id, demand.title)}
+        >
+          <History className="mr-2 h-4 w-4" /> Andamento
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">

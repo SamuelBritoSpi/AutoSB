@@ -22,6 +22,15 @@ export interface DemandStatus {
   color: string; // Classe CSS do Tailwind, ex: 'text-blue-500'
 }
 
+// Interface para o histórico de andamento das demandas
+export interface DemandProgress {
+  id: string;
+  demandId: string; // ID da demanda relacionada
+  description: string; // Descrição da atualização
+  date: string; // String ISO para data
+  createdBy?: string | null; // ID do usuário que criou a atualização
+}
+
 export interface Demand {
   id: string;
   title: string; 

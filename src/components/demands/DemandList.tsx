@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ListFilter, ArrowDownAZ, ArrowUpAZ, CalendarClock, AlertOctagon, type LucideIcon, type LucideProps, icons, Smile, FileText } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import DemandProgressDialog from './DemandProgressDialog';
 import DemandForm from './DemandForm';
 import ManageStatusesDialog from './ManageStatusesDialog';
 import { cn } from '@/lib/utils';
@@ -58,6 +59,8 @@ export default function DemandList({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isStatusManagerOpen, setIsStatusManagerOpen] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [isProgressDialogOpen, setIsProgressDialogOpen] = useState(false);
+  const [selectedDemandForProgress, setSelectedDemandForProgress] = useState<{id: string, title: string} | null>(null);
 
   const priorityOrder: Record<Demand['priority'], number> = { 'alta': 1, 'media': 2, 'baixa': 3 };
 
@@ -69,6 +72,11 @@ export default function DemandList({
   const closeEditDialog = () => {
     setIsEditDialogOpen(false);
     setEditingDemand(null);
+  };
+
+  const handleViewProgress = (demandId: string, demandTitle: string) => {
+    setSelectedDemandForProgress({id: demandId, title: demandTitle});
+    setIsProgressDialogOpen(true);
   };
 
 
@@ -157,6 +165,7 @@ export default function DemandList({
               onDelete={onDeleteDemand}
               onEdit={handleEdit} 
               onManageStatuses={() => setIsStatusManagerOpen(true)}
+              onViewProgress={handleViewProgress}
             />
           ))}
         </div>
@@ -194,6 +203,14 @@ export default function DemandList({
         demandStatuses={demandStatuses}
         employees={employees}
       />
+      {selectedDemandForProgress && (
+        <DemandProgressDialog
+          open={isProgressDialogOpen}
+          onOpenChange={setIsProgressDialogOpen}
+          demandId={selectedDemandForProgress.id}
+          demandTitle={selectedDemandForProgress.title}
+        />
+      )}
     </div>
   );
 }

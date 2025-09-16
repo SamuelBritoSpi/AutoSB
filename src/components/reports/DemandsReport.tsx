@@ -1,5 +1,8 @@
 
-import type { Demand, Employee, DemandStatus } from '@/lib/types';
+import React, { useEffect, useState } from 'react';
+import type { Demand, Employee, DemandStatus, DemandProgress } from '@/lib/types';
+import { getDemandProgressByDemandId } from '@/lib/idb';
+import DemandProgressReport from './DemandProgressReport';
 import ReportLayout from './ReportLayout';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -16,6 +19,34 @@ interface DemandsReportProps {
 }
 
 export default function DemandsReport({ demands, employees, demandStatuses, filters }: DemandsReportProps) {
+  const [progressData, setProgressData] = useState<Record<string, DemandProgress[]>>({});
+  const [loadingProgress, setLoadingProgress] = useState(true);
+
+  useEffect(() => {
+    const fetchProgressData = async () => {
+      setLoadingProgress(true);
+      const progressMap: Record<string, DemandProgress[]> = {};
+      
+      for (const demand of demands) {
+        try {
+          const progress = await getDemandProgressByDemandId(demand.id);
+          progressMap[demand.id] = progress;
+        } catch (error) {
+          console.error(`Erro ao buscar andamento para demanda ${demand.id}:`, error);
+          progressMap[demand.id] = [];
+        }
+      }
+      
+      setProgressData(progressMap);
+      setLoadingProgress(false);
+    };
+
+    if (demands.length > 0) {
+      fetchProgressData();
+    } else {
+      setLoadingProgress(false);
+    }
+  }, [demands]);
   
   const getEmployeeName = (id?: string | null) => employees.find(e => e.id === id)?.name || 'N/A';
   
@@ -23,8 +54,8 @@ export default function DemandsReport({ demands, employees, demandStatuses, filt
 
   const filterSummary = [
     `Período: De ${formatDate(filters.dateRange.from)} a ${formatDate(filters.dateRange.to)}`,
-    `Funcionário: ${filters.employeeId === 'all' ? 'Todos' : getEmployeeName(filters.employeeId)}`,
-    `Status: ${filters.status === 'all' ? 'Todos' : filters.status}`
+    `Status: ${filters.status === 'all' ? 'Todos' : filters.status}`,
+    `Demandas: ${demands.length}`
   ].join(' | ');
 
   const priorityMap = { alta: 'Alta', media: 'Média', baixa: 'Baixa' };
@@ -47,13 +78,25 @@ export default function DemandsReport({ demands, employees, demandStatuses, filt
                 demands
                     .sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
                     .map(demand => (
-                        <tr key={demand.id}>
-                            <td>{demand.title}</td>
-                            <td>{getEmployeeName(demand.ownerId)}</td>
-                            <td>{priorityMap[demand.priority]}</td>
-                            <td>{demand.status}</td>
-                            <td>{format(parseISO(demand.dueDate), "P", { locale: ptBR })}</td>
-                        </tr>
+                        <React.Fragment key={demand.id}>
+                          <tr>
+                              <td>{demand.title}</td>
+                              <td>{getEmployeeName(demand.ownerId)}</td>
+                              <td>{priorityMap[demand.priority]}</td>
+                              <td>{demand.status}</td>
+                              <td>{format(parseISO(demand.dueDate), "P", { locale: ptBR })}</td>
+                          </tr>
+                          {/* Linha para o histórico de andamento */}
+                          <tr>
+                              <td colSpan={5} style={{padding: '0 1rem 1rem 2rem', backgroundColor: '#f9f9f9'}}>
+                                {loadingProgress ? (
+                                  <p style={{fontStyle: 'italic', textAlign: 'center'}}>Carregando histórico...</p>
+                                ) : (
+                                  <DemandProgressReport progressList={progressData[demand.id] || []} />
+                                )}
+                              </td>
+                          </tr>
+                        </React.Fragment>
                     ))
             ) : (
                 <tr>

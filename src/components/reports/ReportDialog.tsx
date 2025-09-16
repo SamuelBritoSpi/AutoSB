@@ -48,7 +48,8 @@ export default function ReportDialog({
 }: ReportDialogProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [dateRange, setDateRange] = useState<{ from: Date | undefined, to: Date | undefined }>({ from: undefined, to: undefined });
-  const [employeeFilter, setEmployeeFilter] = useState('all');
+  const [selectedDemandId, setSelectedDemandId] = useState('all');
+  const [employeeFilter, setEmployeeFilter] = useState('all'); // Mantido para outros tipos de relatório
   const [statusFilter, setStatusFilter] = useState('all');
 
   const handleGenerateReport = () => {
@@ -77,13 +78,13 @@ export default function ReportDialog({
     if (reportType === 'demands') {
         title = "Relatório de Demandas";
         filteredDemands = filterByDate(demands) as Demand[];
-        if (employeeFilter !== 'all') {
-            filteredDemands = filteredDemands.filter(d => d.ownerId === employeeFilter);
+        if (selectedDemandId !== 'all') {
+            filteredDemands = filteredDemands.filter(d => d.id === selectedDemandId);
         }
         if (statusFilter !== 'all') {
             filteredDemands = filteredDemands.filter(d => d.status === statusFilter);
         }
-        const reportElement = <DemandsReport demands={filteredDemands} employees={employees} demandStatuses={demandStatuses} filters={{dateRange, employeeId: employeeFilter, status: statusFilter}} />;
+        const reportElement = <DemandsReport demands={filteredDemands} employees={employees} demandStatuses={demandStatuses} filters={{dateRange, employeeId: 'all', status: statusFilter}} />;
         renderReport(reportElement, title);
     }
 
@@ -172,22 +173,55 @@ export default function ReportDialog({
                     </Popover>
                 </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="employee-filter" className="text-right">
-                    Funcionário
-                </Label>
-                <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-                    <SelectTrigger id="employee-filter" className="col-span-3">
-                        <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todos os funcionários</SelectItem>
-                        {employees?.sort((a,b) => a.name.localeCompare(b.name)).map(emp => (
-                            <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+            {reportType === 'demands' && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="demand-filter" className="text-right">
+                        Demanda
+                    </Label>
+                    <div className="col-span-3">
+                        <Select value={selectedDemandId} onValueChange={setSelectedDemandId}>
+                                <SelectTrigger id="demand-filter">
+                                    <SelectValue placeholder="Selecione uma demanda..." />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-auto">
+                                    <SelectItem value="all">Todas as demandas</SelectItem>
+                                    {demands
+                                        ?.filter(d => {
+                                            // Filtrar demandas ativas por padrão
+                                            return statusFilter === 'all' || 
+                                                (statusFilter !== 'all' && d.status === statusFilter);
+                                        })
+                                        .sort((a, b) => a.title.localeCompare(b.title))
+                                        .map(demand => (
+                                            <SelectItem key={demand.id} value={demand.id}>
+                                                {demand.title}
+                                            </SelectItem>
+                                        ))
+                                    }
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {reportType !== 'demands' && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="employee-filter" className="text-right">
+                        Funcionário
+                    </Label>
+                    <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+                        <SelectTrigger id="employee-filter" className="col-span-3">
+                            <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[200px] overflow-auto">
+                            <SelectItem value="all">Todos os funcionários</SelectItem>
+                            {employees?.sort((a,b) => a.name.localeCompare(b.name)).map(emp => (
+                                <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
             {reportType === 'demands' && (
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="status-filter" className="text-right">
@@ -197,7 +231,7 @@ export default function ReportDialog({
                         <SelectTrigger id="status-filter" className="col-span-3">
                             <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-[200px] overflow-auto">
                             <SelectItem value="all">Todos os status</SelectItem>
                             {demandStatuses?.map(status => (
                                 <SelectItem key={status.id} value={status.label}>{status.label}</SelectItem>

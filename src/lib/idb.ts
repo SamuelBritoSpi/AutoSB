@@ -10,6 +10,7 @@ const STORES = {
   employees: 'employees',
   certificates: 'certificates',
   demandStatuses: 'demandStatuses',
+  demandProgress: 'demandProgress',
 };
 
 // --- Operações CRUD Genéricas para o Firestore ---
@@ -64,6 +65,39 @@ export const updateDemand = (demand: Demand) => {
     return update(STORES.demands, finalDemand);
 };
 export const deleteDemand = (id: string) => remove(STORES.demands, id);
+
+// --- Histórico de Andamento das Demandas ---
+export const getDemandProgressByDemandId = async (demandId: string): Promise<DemandProgress[]> => {
+  const db = getDbInstance();
+  if (!db) {
+    console.warn("Firestore não está disponível. Retornando array vazio.");
+    return [];
+  }
+  const collRef = collection(db, STORES.demandProgress);
+  const q = query(collRef, orderBy('date', 'desc'));
+  const querySnapshot = await getDocs(q);
+  const data: DemandProgress[] = [];
+  querySnapshot.forEach((doc) => {
+    const progress = { ...doc.data(), id: doc.id } as DemandProgress;
+    if (progress.demandId === demandId) {
+      data.push(progress);
+    }
+  });
+  return data;
+};
+
+export const addDemandProgress = async (progress: Omit<DemandProgress, 'id'>) => {
+  const finalProgress = { ...progress, createdBy: progress.createdBy || null };
+  const newId = await add(STORES.demandProgress, finalProgress);
+  return { ...finalProgress, id: newId } as DemandProgress;
+};
+
+export const updateDemandProgress = (progress: DemandProgress) => {
+  const finalProgress = { ...progress, createdBy: progress.createdBy || null };
+  return update(STORES.demandProgress, finalProgress);
+};
+
+export const deleteDemandProgress = (id: string) => remove(STORES.demandProgress, id);
 
 // --- Status de Demanda ---
 export const getDemandStatuses = () => getAll<DemandStatus>(STORES.demandStatuses, 'order');
