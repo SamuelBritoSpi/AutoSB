@@ -48,7 +48,15 @@ const enhanceTextFlow = ai.defineFlow(
     outputSchema: EnhanceTextOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
+    const { output } = await prompt(input, {
+      model: 'googleai/gemini-2.0-flash',
+      config: {
+        temperature: 0.2,
+        topK: 40,
+        topP: 0.95,
+      }
+    });
+    
     if (!output) {
       throw new Error('A IA não conseguiu aprimorar o texto.');
     }
