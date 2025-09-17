@@ -67,17 +67,33 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
   });
 
   const handleEnhanceText = async () => {
-    const originalText = form.getValues("notes");
-    if (!originalText) return;
+    const currentNotes = form.getValues('notes') || '';
+    if (!currentNotes) return;
 
     setIsEnhancing(true);
     try {
-      const { enhancedText } = await enhanceText({ text: originalText });
-      form.setValue("notes", enhancedText, { shouldValidate: true });
+      const response = await fetch('/api/enhance-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: currentNotes }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao aprimorar o texto');
+      }
+
+      const { enhancedText } = await response.json();
+      form.setValue('notes', enhancedText, { shouldValidate: true });
       toast({ title: 'Texto Aprimorado!', description: 'As observações foram corrigidas e refinadas pela IA.' });
     } catch (error) {
       console.error('Falha ao aprimorar o texto:', error);
-      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível aprimorar o texto.' });
+      toast({ 
+        variant: 'destructive', 
+        title: 'Erro', 
+        description: 'Não foi possível aprimorar o texto. Por favor, tente novamente.' 
+      });
     } finally {
       setIsEnhancing(false);
     }

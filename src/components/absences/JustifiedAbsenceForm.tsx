@@ -57,17 +57,33 @@ export default function JustifiedAbsenceForm({ onAddAbsence, existingAbsence, on
   });
 
   const handleEnhanceText = async () => {
-    const originalText = form.getValues("reason");
-    if (!originalText) return;
+    const currentReason = form.getValues('reason');
+    if (!currentReason) return;
 
     setIsEnhancing(true);
     try {
-      const { enhancedText } = await enhanceText({ text: originalText });
-      form.setValue("reason", enhancedText, { shouldValidate: true });
-      toast({ title: 'Texto Aprimorado!', description: 'O motivo foi corrigido e refinado pela IA.' });
+      const response = await fetch('/api/enhance-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: currentReason }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao aprimorar o texto');
+      }
+
+      const { enhancedText } = await response.json();
+      form.setValue('reason', enhancedText, { shouldValidate: true });
+      toast({ title: 'Texto Aprimorado!', description: 'O texto foi corrigido e refinado pela IA.' });
     } catch (error) {
       console.error('Falha ao aprimorar o texto:', error);
-      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível aprimorar o texto.' });
+      toast({ 
+        variant: 'destructive', 
+        title: 'Erro', 
+        description: 'Não foi possível aprimorar o texto. Por favor, tente novamente.' 
+      });
     } finally {
       setIsEnhancing(false);
     }

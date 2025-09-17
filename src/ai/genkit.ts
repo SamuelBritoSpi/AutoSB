@@ -1,7 +1,13 @@
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
 
+// Configuração do GenKit com suporte a chave de API do Google AI (Gemini)
 export const ai = genkit({
-  plugins: [googleAI()],
-  model: 'googleai/gemini-2.0-flash',
+  plugins: [
+    googleAI({
+      // A chave da API será obtida da variável de ambiente GOOGLE_API_KEY
+      // Certifique-se de configurar essa variável no seu ambiente de produção
+      apiKey: process.env.GOOGLE_API_KEY
+    })
+  ]
 });

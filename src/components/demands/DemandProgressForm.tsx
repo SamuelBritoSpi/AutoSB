@@ -45,12 +45,28 @@ export default function DemandProgressForm({ demandId, onProgressAdded }: Demand
 
     setIsEnhancing(true);
     try {
-      const { enhancedText } = await enhanceText({ text: originalText });
+      const response = await fetch('/api/enhance-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: originalText }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao aprimorar o texto');
+      }
+
+      const { enhancedText } = await response.json();
       form.setValue("description", enhancedText, { shouldValidate: true });
       toast({ title: 'Texto Aprimorado!', description: 'O andamento foi corrigido e refinado pela IA.' });
     } catch (error) {
       console.error('Falha ao aprimorar o texto:', error);
-      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível aprimorar o texto.' });
+      toast({ 
+        variant: 'destructive', 
+        title: 'Erro', 
+        description: 'Não foi possível aprimorar o texto. Por favor, tente novamente.' 
+      });
     } finally {
       setIsEnhancing(false);
     }
