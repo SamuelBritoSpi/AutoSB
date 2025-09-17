@@ -13,7 +13,7 @@ Construída com as tecnologias mais recentes, a aplicação utiliza Firebase par
 - **Tailwind CSS**: Para estilização ágil e customizável.
 - **ShadCN/UI**: Componentes de UI pré-construídos, acessíveis e elegantes.
 - **Firebase**: Para autenticação, banco de dados (Firestore com persistência offline) e armazenamento de arquivos (Storage).
-- **Zod**: Para validação de esquemas de dados e formulários.
+- **Zod**: Para validação de esquemas de dados e formulários. 
 - **date-fns**: Para manipulação e formatação de datas.
 
 ## Funcionalidades Principais
