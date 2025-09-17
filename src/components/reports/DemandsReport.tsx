@@ -38,7 +38,6 @@ export default function DemandsReport({ demands, employees, demandStatuses, dema
             <thead>
             <tr>
                 <th>Título</th>
-                <th>Descrição</th>
                 <th>Responsável</th>
                 <th>Prioridade</th>
                 <th>Status</th>
@@ -52,19 +51,31 @@ export default function DemandsReport({ demands, employees, demandStatuses, dema
                     .map(demand => {
                         const progressForDemand = demandProgress.filter(p => p.demandId === demand.id);
                         const hasProgress = progressForDemand.length > 0;
+                        const hasDescription = demand.description && demand.description.trim() !== '';
+
                         return (
                             <React.Fragment key={demand.id}>
-                              <tr style={{borderBottom: hasProgress ? '1px solid #dee2e6' : '1px solid #ddd'}}>
+                              <tr style={{borderBottom: !hasDescription && !hasProgress ? '1px solid #ddd' : 'none'}}>
                                   <td style={{padding: '0.75rem', verticalAlign: 'top', fontWeight: '500'}}>{demand.title}</td>
-                                  <td style={{padding: '0.75rem', maxWidth: '250px', wordWrap: 'break-word', lineHeight: '1.4', verticalAlign: 'top'}}>{demand.description}</td>
                                   <td style={{padding: '0.75rem', verticalAlign: 'top'}}>{getEmployeeName(demand.ownerId)}</td>
                                   <td style={{padding: '0.75rem', verticalAlign: 'top'}}>{priorityMap[demand.priority]}</td>
                                   <td style={{padding: '0.75rem', verticalAlign: 'top'}}>{demand.status}</td>
                                   <td style={{padding: '0.75rem', verticalAlign: 'top', whiteSpace: 'nowrap'}}>{format(parseISO(demand.dueDate), "dd/MM/yyyy", { locale: ptBR })}</td>
                               </tr>
+                              {hasDescription && (
+                                <tr style={{ borderBottom: hasProgress ? 'none' : '1px solid #ddd' }}>
+                                  <td colSpan={5} style={{ padding: '0.25rem 1rem 1rem 1rem', backgroundColor: '#fdfdfd' }}>
+                                    <div style={{ padding: '0.5rem', borderLeft: '3px solid #C5CAE9' }}>
+                                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#333' }}>
+                                        <strong>Descrição:</strong> {demand.description}
+                                      </p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
                               {hasProgress && (
                                 <tr style={{borderBottom: '1px solid #ddd'}}>
-                                    <td colSpan={6} style={{padding: '0 1rem 1rem 1rem', backgroundColor: '#fdfdfd'}}>
+                                    <td colSpan={5} style={{padding: '0 1rem 1rem 1rem', backgroundColor: '#fdfdfd'}}>
                                         <DemandProgressReport progressList={progressForDemand} />
                                     </td>
                                 </tr>
@@ -74,7 +85,7 @@ export default function DemandsReport({ demands, employees, demandStatuses, dema
                     })
             ) : (
                 <tr>
-                    <td colSpan={6} style={{textAlign: 'center', padding: '2rem'}}>Nenhuma demanda encontrada para os filtros selecionados.</td>
+                    <td colSpan={5} style={{textAlign: 'center', padding: '2rem'}}>Nenhuma demanda encontrada para os filtros selecionados.</td>
                 </tr>
             )}
             </tbody>
@@ -82,5 +93,3 @@ export default function DemandsReport({ demands, employees, demandStatuses, dema
     </ReportLayout>
   );
 }
-
-    
