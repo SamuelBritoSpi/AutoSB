@@ -86,6 +86,17 @@ export interface JustifiedAbsence {
   status: 'active' | 'cancelled'; // Status da falta
 }
 
+export type CardStatus = 'pending' | 'delivered';
+
+export interface Card {
+  id: string;
+  recipientName: string;
+  status: CardStatus;
+  arrivalDate: string; // Data de chegada do cartão
+  deliveryDate?: string | null; // Data de entrega ao destinatário
+}
+
+
 // Tipos para Folha de Ponto
 export interface TimeSheetEntry {
   employeeName: string;

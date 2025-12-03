@@ -1,7 +1,7 @@
 
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query, where } from 'firebase/firestore';
 import { getDbInstance } from './firebase-client'; // Usa o db específico do cliente
-import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, DemandProgress } from './types';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, DemandProgress, Card } from './types';
 
 const STORES = {
   demands: 'demands',
@@ -11,6 +11,7 @@ const STORES = {
   certificates: 'certificates',
   demandStatuses: 'demandStatuses',
   demandProgress: 'demandProgress',
+  cards: 'cards',
 };
 
 // --- Operações CRUD Genéricas para o Firestore ---
@@ -199,6 +200,14 @@ export const addCertificate = async (certificate: Omit<MedicalCertificate, 'id'>
 export const updateCertificate = (certificate: MedicalCertificate) => update(STORES.certificates, certificate);
 export const deleteCertificate = (id: string) => remove(STORES.certificates, id);
 
+// --- Cartões ---
+export const getCards = () => getAll<Card>(STORES.cards, 'arrivalDate');
+export const addCard = async (card: Omit<Card, 'id'>) => {
+    const newId = await add(STORES.cards, card);
+    return { ...card, id: newId };
+};
+export const updateCard = (card: Card) => update(STORES.cards, card);
+export const deleteCard = (id: string) => remove(STORES.cards, id);
 
 // --- Importação/Exportação (Agora para fins de migração, se necessário, não para backup regular) ---
 interface AllData {
@@ -208,18 +217,20 @@ interface AllData {
     employees: Employee[];
     certificates: MedicalCertificate[];
     demandStatuses: DemandStatus[];
+    cards: Card[];
 }
 
 export async function getAllData(): Promise<AllData> {
-    const [demands, vacations, justifiedAbsences, employees, certificates, demandStatuses] = await Promise.all([
+    const [demands, vacations, justifiedAbsences, employees, certificates, demandStatuses, cards] = await Promise.all([
         getDemands(),
         getVacations(),
         getJustifiedAbsences(),
         getEmployees(),
         getCertificates(),
         getDemandStatuses(),
+        getCards(),
     ]);
-    return { demands, vacations, justifiedAbsences, employees, certificates, demandStatuses };
+    return { demands, vacations, justifiedAbsences, employees, certificates, demandStatuses, cards };
 }
 
 // Esta função pode ser usada para migrar dados de um backup JSON para o Firestore.

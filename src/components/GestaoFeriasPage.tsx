@@ -12,9 +12,10 @@ import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeList from '@/components/employees/EmployeeList';
 import DashboardTab from '@/components/dashboard/DashboardTab';
 import CalendarView from '@/components/calendar/CalendarView';
-import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence } from '@/lib/types';
+import CardManagementPage from '@/components/cards/CardManagementPage';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, Card } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList, FileText } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList, FileText, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -40,11 +41,14 @@ import {
   addDemandStatus as addDbDemandStatus,
   deleteDemandStatus as deleteDbDemandStatus,
   updateDemandStatus as updateDbDemandStatus,
+  addCard as addDbCard,
+  updateCard as updateDbCard,
+  deleteCard as deleteDbCard,
   getAllData,
   getDemandStatuses,
 } from '@/lib/idb';
 import { sendNotification } from '@/ai/flows/send-notification-flow';
-import { Card, CardHeader, CardTitle } from './ui/card';
+import { Card as ShadCnCard, CardHeader, CardTitle } from './ui/card';
 import { cn } from '@/lib/utils';
 
 // Define the fixed statuses that should always exist.
@@ -102,6 +106,7 @@ export default function GestaoFeriasPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [certificates, setCertificates] = useState<MedicalCertificate[]>([]);
   const [demandStatuses, setDemandStatuses] = useState<DemandStatus[]>([]);
+  const [cards, setCards] = useState<Card[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
 
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -123,6 +128,7 @@ export default function GestaoFeriasPage() {
         setJustifiedAbsences(initialData.justifiedAbsences || []);
         setEmployees(initialData.employees);
         setCertificates(initialData.certificates);
+        setCards(initialData.cards || []);
 
         // This check is important: if ensureFixedStatuses ran and fetched new data,
         // we might have a slightly newer list than what getAllData returned.
@@ -149,6 +155,7 @@ export default function GestaoFeriasPage() {
     { value: "vacations", label: "Férias/Afastamento", icon: <CalendarCheck className="mr-2 h-5 w-5" /> },
     { value: "absences", label: "Faltas Justificadas", icon: <FileText className="mr-2 h-5 w-5" /> },
     { value: "employees", label: "Funcionários/Atestados", icon: <Users className="mr-2 h-5 w-5" /> },
+    { value: "cards", label: "Cartões", icon: <CreditCard className="mr-2 h-5 w-5" /> },
   ];
 
   const handleAddDemand = (demandData: Omit<Demand, 'id'>) => {
@@ -466,6 +473,49 @@ export default function GestaoFeriasPage() {
           });
     };
 
+    // --- Card Handlers ---
+    const handleAddCard = (cardData: Omit<Card, 'id'>) => {
+        const tempId = `temp-card-${Date.now()}`;
+        const newCard: Card = { ...cardData, id: tempId };
+        const originalCards = [...cards];
+
+        setCards(prev => [newCard, ...prev].sort((a, b) => new Date(b.arrivalDate).getTime() - new Date(a.arrivalDate).getTime()));
+        toast({ title: "Cartão Adicionado", description: "Sincronizando..." });
+
+        addDbCard(cardData)
+            .then(savedCard => {
+                setCards(prev => prev.map(c => c.id === tempId ? savedCard : c));
+            })
+            .catch(error => {
+                console.error("Failed to add card:", error);
+                toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar o cartão.' });
+                setCards(originalCards);
+            });
+    };
+
+    const handleUpdateCard = (updatedCard: Card) => {
+        const originalCards = [...cards];
+        setCards(prev => prev.map(c => c.id === updatedCard.id ? updatedCard : c));
+
+        updateDbCard(updatedCard).catch(error => {
+            console.error("Failed to update card:", error);
+            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível atualizar o cartão.' });
+            setCards(originalCards);
+        });
+    };
+
+    const handleDeleteCard = (id: string) => {
+        const originalCards = [...cards];
+        setCards(prev => prev.filter(c => c.id !== id));
+        toast({ title: "Cartão Excluído" });
+
+        deleteDbCard(id).catch(error => {
+            console.error("Failed to delete card:", error);
+            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível excluir o cartão.' });
+            setCards(originalCards);
+        });
+    };
+
 
   if (!dataLoaded) {
     return (
@@ -487,7 +537,7 @@ export default function GestaoFeriasPage() {
         {/* Desktop Navigation */}
         <div className="hidden md:flex justify-center border-b">
             <div className="container mx-auto">
-                <TabsList className="grid w-full grid-cols-6 bg-transparent">
+                <TabsList className="grid w-full grid-cols-7 bg-transparent">
                     {tabOptions.map(tab => (
                         <TabsTrigger key={tab.value} value={tab.value} className="bg-transparent shadow-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none">
                             {tab.icon} {tab.label}
@@ -532,7 +582,7 @@ export default function GestaoFeriasPage() {
 
         <TabsContent value="demands" className={cn(containerClass, "space-y-6 mt-6")}>
           <section aria-labelledby="demands-form-section-title">
-             <Card className="shadow-sm">
+             <ShadCnCard className="shadow-sm">
                 <CardHeader>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <CardTitle className="text-xl font-headline text-primary flex items-center gap-3">
@@ -544,7 +594,7 @@ export default function GestaoFeriasPage() {
                         </Button>
                     </div>
                 </CardHeader>
-            </Card>
+            </ShadCnCard>
             {showDemandForm && (
               <div className="mt-4">
                 <DemandForm 
@@ -576,7 +626,7 @@ export default function GestaoFeriasPage() {
 
         <TabsContent value="vacations" className={cn(containerClass, "space-y-6 mt-6")}>
           <section aria-labelledby="vacations-form-section">
-             <Card className="shadow-sm">
+             <ShadCnCard className="shadow-sm">
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <CardTitle className="text-xl font-headline text-primary flex items-center gap-3">
@@ -588,7 +638,7 @@ export default function GestaoFeriasPage() {
                     </Button>
                   </div>
                 </CardHeader>
-             </Card>
+             </ShadCnCard>
              {showVacationForm && (
                 <div className="mt-4">
                     <VacationForm 
@@ -621,7 +671,7 @@ export default function GestaoFeriasPage() {
 
         <TabsContent value="employees" className={cn(containerClass, "space-y-6 mt-6")}>
           <section aria-labelledby="employees-form-section-title">
-              <Card className="shadow-sm">
+              <ShadCnCard className="shadow-sm">
                   <CardHeader>
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                           <CardTitle className="text-xl font-headline text-primary flex items-center gap-3">
@@ -633,7 +683,7 @@ export default function GestaoFeriasPage() {
                           </Button>
                       </div>
                   </CardHeader>
-              </Card>
+              </ShadCnCard>
               {showEmployeeForm && (
                 <div className="mt-4">
                   <EmployeeForm 
@@ -657,6 +707,16 @@ export default function GestaoFeriasPage() {
             />
           </section>
         </TabsContent>
+        
+        <TabsContent value="cards" className={cn(containerClass, "space-y-6 mt-6")}>
+          <CardManagementPage
+            cards={cards}
+            onAddCard={handleAddCard}
+            onUpdateCard={handleUpdateCard}
+            onDeleteCard={handleDeleteCard}
+          />
+        </TabsContent>
+
       </Tabs>
     </div>
   );
