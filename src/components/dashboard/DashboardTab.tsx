@@ -7,7 +7,7 @@ import StatCard from './StatCard';
 import PriorityChart from './PriorityChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Mailbox, Hourglass, CalendarOff, Plane, Gift, Stethoscope, Baby, Clock, CalendarCheck, CalendarX } from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Mailbox, Hourglass, CalendarOff, Plane, Gift, Stethoscope, Baby, Clock, CalendarCheck, CalendarX, type LucideProps, icons, Smile } from 'lucide-react';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeCertificates } from '@/lib/certificate-logic';
@@ -24,7 +24,15 @@ interface DashboardTabProps {
 }
 
 const FINAL_STATUS_LABEL = 'Finalizado';
-const WAITING_STATUS_LABEL = 'Aguardando Resposta';
+
+const LucideIcon = ({ name, ...props }: { name: string } & LucideProps) => {
+    const IconComponent = (icons as any)[name];
+    if (!IconComponent) {
+        return <Smile {...props} />;
+    }
+    return <IconComponent {...props} />;
+};
+
 
 const absenceTypeDetails: Record<AbsenceType, { label: string, icon: React.ReactNode }> = {
     ferias: { label: 'Férias', icon: <Plane className="h-4 w-4" /> },
@@ -43,11 +51,26 @@ const absenceStatusDetails: Record<AbsenceStatus, { label: string, icon: React.R
 export default function DashboardTab({ demands, employees, certificates, demandStatuses, vacations }: DashboardTabProps) {
   
   const demandStats = useMemo(() => {
-    const done = demands.filter(d => d.status === FINAL_STATUS_LABEL).length;
-    const waiting = demands.filter(d => d.status === WAITING_STATUS_LABEL).length;
-    const openDemands = demands.length - done;
-    return { openDemands, waiting, done };
-  }, [demands]);
+    const openDemands = demands.filter(d => d.status !== FINAL_STATUS_LABEL);
+    
+    const statusCounts = demandStatuses.reduce((acc, status) => {
+      if (status.label !== FINAL_STATUS_LABEL) { // Não contamos "Finalizado" aqui
+          acc[status.label] = {
+              count: openDemands.filter(d => d.status === status.label).length,
+              icon: status.icon,
+              color: status.color,
+          };
+      }
+      return acc;
+    }, {} as Record<string, { count: number; icon: string, color: string }>);
+
+    const totalOpen = openDemands.length;
+
+    return {
+        totalOpen,
+        statusCounts,
+    };
+  }, [demands, demandStatuses]);
 
   const upcomingDemands = useMemo(() => {
     return demands
@@ -91,10 +114,16 @@ export default function DashboardTab({ demands, employees, certificates, demandS
   return (
     <div className="space-y-6">
       {/* Cards de Estatísticas */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Demandas em Aberto" value={demandStats.openDemands} icon={<Hourglass className="h-5 w-5 text-muted-foreground" />} />
-        <StatCard title="Aguardando Resposta" value={demandStats.waiting} icon={<Mailbox className="h-5 w-5 text-muted-foreground" />} />
-        <StatCard title="Finalizadas" value={demandStats.done} icon={<CheckCircle2 className="h-5 w-5 text-muted-foreground" />} />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Demandas em Aberto" value={demandStats.totalOpen} icon={<Hourglass className="h-5 w-5 text-muted-foreground" />} />
+        {Object.entries(demandStats.statusCounts).map(([label, data]) => (
+            <StatCard 
+                key={label}
+                title={label} 
+                value={data.count} 
+                icon={<LucideIcon name={data.icon} className={cn("h-5 w-5 text-muted-foreground", data.color)} />} 
+            />
+        ))}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
@@ -232,3 +261,4 @@ export default function DashboardTab({ demands, employees, certificates, demandS
   );
 }
 
+    
