@@ -12,8 +12,11 @@ export default function DeliveryTerm({ cards }: DeliveryTermProps) {
   return (
     <ReportLayout title="Termo de Entrega">
       <div style={{ padding: '1rem', fontSize: '1.1rem', lineHeight: '1.6' }}>
-        <p style={{ textAlign: 'justify', marginBottom: '2rem' }}>
-          Eu, responsável pela retirada do cartão alimentação da empresa Le card, das empresas terceirizadas, declaro responsável pela retirada do(s) mesmo(s) no Núcleo Territorial de Educação 20 (NTE 20), em Vitória da Conquista - Bahia.
+        <p style={{ textAlign: 'justify', marginBottom: '1rem', textIndent: '2rem' }}>
+          Declaro, para os devidos fins, que estou realizando a retirada do(s) cartão(ões) alimentação fornecido(s) pela empresa Le Card, destinado(s) aos colaboradores das empresas terceirizadas vinculadas. A retirada ocorre nas dependências do Núcleo Territorial de Educação 20 (NTE 20), localizado em Vitória da Conquista – Bahia.
+        </p>
+        <p style={{ textAlign: 'justify', marginBottom: '2rem', textIndent: '2rem' }}>
+          Estou ciente de que assumo total responsabilidade pela posse e pela entrega do(s) referido(s) cartão(ões) ao(s) beneficiário(s) correspondente(s), conforme autorização prévia.
         </p>
 
         <h2 style={{ fontSize: '1.3rem', marginTop: '2rem', marginBottom: '1rem', borderBottom: '1px solid #ccc', paddingBottom: '0.5rem' }}>
