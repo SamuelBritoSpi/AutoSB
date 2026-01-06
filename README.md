@@ -21,7 +21,7 @@ Construída com as tecnologias mais recentes, a aplicação utiliza Firebase par
 ### 1. Gestão de Demandas
 - **Criação e Edição**: Registre novas tarefas com título, descrição, prioridade (alta, média, baixa) e data de entrega.
 - **Controle de Status Customizável**: Acompanhe o progresso de cada demanda com um fluxo de trabalho personalizável (`Aberto`, `Aguardando Resposta`, `Finalizado`, etc.).
-- **Filtros e Ordenação**: Organize sua lista de demandas por status, data ou prioridade para focar no que é mais importante e necessário.
+- **Filtros e Ordenação**: Organize sua lista de demandas por status, data ou prioridade para focar no que é mais importante e necessários.
 
 ### 2. Gestão de Afastamentos (Férias e Licenças)
 - **Registro Simplificado**: Adicione rapidamente os períodos de afastamento dos funcionários (férias, licença prêmio, médica, etc.).
