@@ -49,11 +49,9 @@ const enhanceTextFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await prompt(input, {
-      model: 'googleai/gemini-2.0-flash',
+      model: 'googleai/gemini-1.5-flash',
       config: {
         temperature: 0.2,
-        topK: 40,
-        topP: 0.95,
       }
     });
     
