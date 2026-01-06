@@ -15,7 +15,7 @@ Construída com as tecnologias mais recentes, a aplicação utiliza Firebase par
 - **Firebase**: Para autenticação, banco de dados (Firestore com persistência offline) e armazenamento de arquivos (Storage).
 - **Genkit (Google AI)**: Para funcionalidades inteligentes, como aprimoramento de textos.
 - **Zod**: Para validação de esquemas de dados e formulários. 
-- **date-fns**: Para manipulação e formatação de data.
+- **date-fns**: Para manipulação e formatação de datas.
 
 ## Funcionalidades Principais
 
