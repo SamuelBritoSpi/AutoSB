@@ -3,12 +3,13 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
-import { DayPicker, type DayPickerProps } from "react-day-picker";
+import { DayPicker, type DayPickerProps, type DayProps } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { ptBR } from 'date-fns/locale';
 import { cva, type VariantProps } from "class-variance-authority";
+import { format } from "date-fns";
 
 const calendarVariants = cva(
   "p-3",
@@ -27,11 +28,21 @@ const calendarVariants = cva(
 
 export type CalendarProps = DayPickerProps & VariantProps<typeof calendarVariants>;
 
+const DefaultDay = (props: DayProps) => {
+    const { date, displayMonth } = props;
+    if (date.getMonth() !== displayMonth.getMonth()) {
+        return <div />;
+    }
+    return <time dateTime={date.toISOString()}>{format(date, 'd')}</time>
+}
+
+
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
   variant,
+  components,
   ...props
 }: CalendarProps) {
   return (
@@ -84,7 +95,8 @@ function Calendar({
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
-        ...props.components,
+        Day: DefaultDay,
+        ...components,
       }}
       {...props}
     />

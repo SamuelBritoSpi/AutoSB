@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo } from 'react';
 import type { DayProps } from 'react-day-picker';
-import { startOfDay, isWithinInterval, parseISO, format, isValid, set } from 'date-fns';
+import { startOfDay, parseISO, format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Demand, Vacation } from '@/lib/types';
 import { Calendar } from '@/components/ui/calendar';
@@ -13,7 +13,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '../ui/badge';
 import { Calendar as CalendarIcon, Briefcase, Plane } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { DayPicker } from "react-day-picker";
+
 
 type CalendarEventType = 'demand' | 'vacation';
 
@@ -86,6 +87,35 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     setCurrentMonth(new Date());
   }
 
+  const DayWithDot = (dayProps: DayProps) => {
+    const { date, displayMonth } = dayProps;
+
+    // Não renderiza nada se a data não for do mês atual
+    if (date.getMonth() !== displayMonth.getMonth()) {
+        return <div />;
+    }
+
+    const dateKey = startOfDay(date).toISOString();
+    const hasEvents = eventsByDate.has(dateKey);
+
+    return (
+        <div
+            onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(date)}
+            onMouseLeave={() => !isMobile && setHoveredDate(null)}
+            onClick={() => isMobile && hasEvents && setHoveredDate(h => h?.getTime() === date.getTime() ? null : date)}
+            className="relative h-full w-full flex items-center justify-center p-1"
+        >
+            <time dateTime={date.toISOString()}>{format(date, 'd')}</time>
+            {hasEvents && (
+                <div className="day-deadline-dots">
+                    {eventsByDate.get(dateKey)?.some(e => e.type === 'demand') && <div className="day-deadline-dot bg-destructive" />}
+                    {eventsByDate.get(dateKey)?.some(e => e.type === 'vacation') && <div className="day-deadline-dot bg-blue-500" />}
+                </div>
+            )}
+        </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <Card className="lg:col-span-3 shadow-lg">
@@ -104,47 +134,15 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
         <CardContent className="p-2 sm:p-4">
           <Popover open={!isMobile && hoveredEvents.length > 0}>
             <PopoverTrigger asChild>
-              <div>
                 <Calendar
                   variant="full"
-                  locale={ptBR}
                   month={currentMonth}
                   onMonthChange={setCurrentMonth}
                   showOutsideDays={false}
                   components={{
-                    Day: (dayProps) => {
-                      const { date } = dayProps;
-                      const validDate = date;
-                      if (!isValid(validDate)) return <div />;
-
-                      const dateKey = startOfDay(validDate).toISOString();
-                      const hasEvents = eventsByDate.has(dateKey);
-
-                      return (
-                        <div
-                           {...dayProps}
-                           onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(validDate)}
-                           onMouseLeave={() => !isMobile && setHoveredDate(null)}
-                           onClick={() => {
-                            if (isMobile && hasEvents) {
-                              setHoveredDate(h => (h && h.getTime() === validDate.getTime() ? null : validDate))
-                            }
-                          }}
-                          className="h-full w-full flex items-center justify-center relative p-1"
-                        >
-                           <time dateTime={date.toISOString()}>{format(validDate, 'd')}</time>
-                           {hasEvents && (
-                            <div className="day-deadline-dots">
-                              {eventsByDate.get(dateKey)?.some(e => e.type === 'demand') && <div className="day-deadline-dot bg-destructive" />}
-                              {eventsByDate.get(dateKey)?.some(e => e.type === 'vacation') && <div className="day-deadline-dot bg-blue-500" />}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    },
+                    Day: DayWithDot
                   }}
                 />
-              </div>
             </PopoverTrigger>
             <PopoverContent className="w-80" onMouseLeave={() => setHoveredDate(null)}>
               <div className="grid gap-4">
