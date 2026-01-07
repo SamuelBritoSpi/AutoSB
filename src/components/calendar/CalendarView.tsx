@@ -6,7 +6,7 @@ import type { Demand, Vacation } from '@/lib/types';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { eachDayOfInterval, isSameDay, parseISO, startOfDay, startOfMonth } from 'date-fns';
+import { eachDayOfInterval, isSameDay, parseISO, startOfDay, startOfMonth, isValid } from 'date-fns';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { Calendar as CalendarIcon, ClipboardCheck, UserCheck, Plane, AlertTriangle } from 'lucide-react';
@@ -34,7 +34,12 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
 
     demands.forEach(demand => {
       if (demand.status === finalStatus) return;
-      const dateKey = startOfDay(parseISO(demand.dueDate)).toISOString();
+      const parsed = parseISO(demand.dueDate);
+      if (!isValid(parsed)) {
+        console.warn("CalendarView: data inválida na demanda", { id: demand.id, dueDate: demand.dueDate });
+        return;
+      }
+      const dateKey = startOfDay(parsed).toISOString();
       if (!events.has(dateKey)) {
         events.set(dateKey, { demands: [], vacations: [] });
       }
@@ -43,17 +48,24 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
 
     vacations.forEach(vacation => {
       if (vacation.status === 'cancelado') return;
-      const interval = eachDayOfInterval({
-        start: parseISO(vacation.startDate),
-        end: parseISO(vacation.endDate)
-      });
-      interval.forEach(day => {
-        const dateKey = startOfDay(day).toISOString();
-        if (!events.has(dateKey)) {
-          events.set(dateKey, { demands: [], vacations: [] });
-        }
-        events.get(dateKey)!.vacations.push(vacation);
-      });
+      const start = parseISO(vacation.startDate);
+      const end = parseISO(vacation.endDate);
+      if (!isValid(start) || !isValid(end)) {
+        console.warn("CalendarView: data inválida nas férias", { id: vacation.id, startDate: vacation.startDate, endDate: vacation.endDate });
+        return;
+      }
+      try {
+        const interval = eachDayOfInterval({ start, end });
+        interval.forEach(day => {
+          const dateKey = startOfDay(day).toISOString();
+          if (!events.has(dateKey)) {
+            events.set(dateKey, { demands: [], vacations: [] });
+          }
+          events.get(dateKey)!.vacations.push(vacation);
+        });
+      } catch (e) {
+        console.warn("CalendarView: falha ao criar intervalo de férias", { id: vacation.id, start: vacation.startDate, end: vacation.endDate, error: e });
+      }
     });
 
     return events;
@@ -63,11 +75,18 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     const dates = new Set<string>();
     vacations.forEach(v => {
         if (v.status === 'cancelado') return;
-        const interval = eachDayOfInterval({
-          start: parseISO(v.startDate),
-          end: parseISO(v.endDate)
-        });
-        interval.forEach(day => dates.add(startOfDay(day).toISOString()));
+        const start = parseISO(v.startDate);
+        const end = parseISO(v.endDate);
+        if (!isValid(start) || !isValid(end)) {
+          console.warn("CalendarView: data inválida em vacationDays", { id: v.id, startDate: v.startDate, endDate: v.endDate });
+          return;
+        }
+        try {
+          const interval = eachDayOfInterval({ start, end });
+          interval.forEach(day => dates.add(startOfDay(day).toISOString()));
+        } catch (e) {
+          console.warn("CalendarView: falha ao criar intervalo em vacationDays", { id: v.id, startDate: v.startDate, endDate: v.endDate, error: e });
+        }
     });
     return dates;
   }, [vacations]);
