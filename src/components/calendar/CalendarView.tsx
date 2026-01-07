@@ -155,31 +155,33 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                             formatWeekdayName: (day) => format(day, 'EEEEEE', { locale: ptBR }),
                         }}
                         components={{
-                            Day: ({ date, ...props }: DayProps) => {
+                            Day: ({ date, className, ...props }: DayProps) => {
                               const validDate = date instanceof Date && !isNaN(date.getTime()) ? date : new Date();
                               const dateKey = startOfDay(validDate).toISOString();
                               const hasEvents = eventsByDate.has(dateKey);
 
                               return (
-                              <button
-                                type="button"
-                                onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(validDate)}
-                                onMouseLeave={() => !isMobile && setHoveredDate(null)}
-                                onClick={() => {
-                                  if (isMobile && hasEvents) {
-                                    if (clickedDate && isSameDay(clickedDate, validDate)) {
-                                      setClickedDate(null);
-                                    } else {
-                                      setClickedDate(validDate);
+                              <td {...props} className={cn(className)}>
+                                <button
+                                  type="button"
+                                  onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(validDate)}
+                                  onMouseLeave={() => !isMobile && setHoveredDate(null)}
+                                  onClick={() => {
+                                    if (isMobile && hasEvents) {
+                                      if (clickedDate && isSameDay(clickedDate, validDate)) {
+                                        setClickedDate(null);
+                                      } else {
+                                        setClickedDate(validDate);
+                                      }
                                     }
-                                  }
-                                }}
-                                className={cn("h-full w-full flex items-center justify-center relative p-0 border-0 bg-transparent", {
-                                  "cursor-pointer": hasEvents,
-                                })}
-                              >
-                                <DayContent date={validDate} />
-                              </button>
+                                  }}
+                                  className={cn("h-full w-full flex items-center justify-center relative p-0 border-0 bg-transparent", {
+                                    "cursor-pointer": hasEvents,
+                                  })}
+                                >
+                                  <DayContent date={validDate} />
+                                </button>
+                              </td>
                               );
                             },
                         }}
