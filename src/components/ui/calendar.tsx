@@ -3,13 +3,12 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
-import { DayPicker, type DayPickerProps, type DayProps } from "react-day-picker";
-import { cva, type VariantProps } from 'class-variance-authority';
+import { DayPicker, type DayPickerProps } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { ptBR } from 'date-fns/locale';
-import { format } from 'date-fns';
+import { cva, type VariantProps } from "class-variance-authority";
 
 const calendarVariants = cva(
   "p-3",
@@ -53,20 +52,22 @@ function Calendar({
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
-        head_row: "flex w-full",
-        head_cell: cn(
-          "text-muted-foreground rounded-md font-normal text-[0.8rem]",
-          variant === "full" ? "w-14 sm:w-16 md:w-20 lg:w-24 xl:w-28" : "w-9"
-        ),
+        head_row: "flex w-full mt-2",
+        head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
         row: "flex w-full mt-2",
         cell: cn(
-          "text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-          variant === "full" ? "h-11 w-14 sm:w-16 md:w-20 lg:w-24 xl:w-28" : "size-9"
+          "h-9 w-9 text-center text-sm p-0 relative",
+          "[&:has([aria-selected].day-range-end)]:rounded-r-md",
+          "[&:has([aria-selected].day-outside)]:bg-accent/50",
+          "[&:has([aria-selected])]:bg-accent",
+          "first:[&:has([aria-selected])]:rounded-l-md",
+          "focus-within:relative focus-within:z-20",
+          variant === 'full' && "h-14 w-full"
         ),
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "p-0 font-normal aria-selected:opacity-100",
-          variant === "full" ? "h-11 w-14 sm:w-16 md:w-20 lg:w-24 xl:w-28" : "h-9 w-9"
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
+          variant === 'full' && "h-14 w-full"
         ),
         day_range_end: "day-range-end",
         day_selected:
@@ -83,16 +84,7 @@ function Calendar({
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
-        Day: (dayProps: DayProps) => {
-          const { components } = props;
-          if (components?.Day) {
-            return <components.Day {...dayProps} />;
-          }
-          return <DayPicker.defaultProps.components.Day {...dayProps} />;
-        },
-      }}
-      formatters={{
-          formatWeekdayName: (day) => format(day, 'EEEEEE', { locale: ptBR }),
+        ...props.components,
       }}
       {...props}
     />
