@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -11,11 +10,10 @@ import JustifiedAbsenceList from '@/components/absences/JustifiedAbsenceList';
 import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeList from '@/components/employees/EmployeeList';
 import DashboardTab from '@/components/dashboard/DashboardTab';
-import CalendarView from '@/components/calendar/CalendarView';
 import CardManagementPage from '@/components/cards/CardManagementPage';
 import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, Card } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Calendar as CalendarIconLucide, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList, FileText, CreditCard } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList, FileText, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -150,7 +148,6 @@ export default function GestaoFeriasPage() {
 
   const tabOptions = [
     { value: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="mr-2 h-5 w-5" /> },
-    { value: "calendar", label: "Calendário", icon: <CalendarIconLucide className="mr-2 h-5 w-5" /> },
     { value: "demands", label: "Demandas", icon: <ListChecks className="mr-2 h-5 w-5" /> },
     { value: "vacations", label: "Férias/Afastamento", icon: <CalendarCheck className="mr-2 h-5 w-5" /> },
     { value: "absences", label: "Faltas Justificadas", icon: <FileText className="mr-2 h-5 w-5" /> },
@@ -537,7 +534,7 @@ export default function GestaoFeriasPage() {
         {/* Desktop Navigation */}
         <div className="hidden md:flex justify-center border-b">
             <div className="container mx-auto">
-                <TabsList className="grid w-full grid-cols-7 bg-transparent">
+                <TabsList className="grid w-full grid-cols-6 bg-transparent">
                     {tabOptions.map(tab => (
                         <TabsTrigger key={tab.value} value={tab.value} className="bg-transparent shadow-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none">
                             {tab.icon} {tab.label}
@@ -574,10 +571,6 @@ export default function GestaoFeriasPage() {
             demandStatuses={demandStatuses}
             vacations={vacations}
           />
-        </TabsContent>
-
-        <TabsContent value="calendar" className="p-4 md:p-6 space-y-6 mt-6">
-          <CalendarView demands={demands} vacations={vacations} />
         </TabsContent>
 
         <TabsContent value="demands" className={cn(containerClass, "space-y-6 mt-6")}>
@@ -721,5 +714,3 @@ export default function GestaoFeriasPage() {
     </div>
   );
 }
-
-    
