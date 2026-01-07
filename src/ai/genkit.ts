@@ -1,5 +1,5 @@
 import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
+import { googleAI } from '@genkit-ai/google-genai';
 
 // Configuração do GenKit com suporte a chave de API do Google AI (Gemini)
 export const ai = genkit({

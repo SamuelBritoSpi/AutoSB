@@ -4,7 +4,7 @@
 
 O AutoSB é uma aplicação web moderna e inteligente, projetada para otimizar a gestão de tarefas, organizar afastamentos de funcionários (férias, licenças), controlar detalhadamente atestados médicos com análise automatizada e gerenciar a entrega de cartões corporativos.
 
-Construída com as tecnologias mais recentes, a aplicação utiliza Firebase para autenticação segura e armazenamento de dados em tempo real na nuvem, garantindo acesso de qualquer lugar e funcionamento offline. A sessão de usuário é encerrada automaticamente ao fechar o navegador, para maior segurança.
+Construída com as tecnologias mais recentes, a aplicação utiliza Firebase para autenticação segura e armazenamento de dados em tempo real na nuvem, garantindo acesso de qualquer lugar e funcionamento offline através da persistência de dados. A sessão do usuário é encerrada automaticamente ao fechar o navegador, garantindo a segurança das informações.
 
 ## Tecnologias Utilizadas
 
@@ -14,7 +14,7 @@ Construída com as tecnologias mais recentes, a aplicação utiliza Firebase par
 - **ShadCN/UI**: Componentes de UI pré-construídos, acessíveis e elegantes.
 - **Firebase**: Para autenticação, banco de dados (Firestore com persistência offline) e armazenamento de arquivos (Storage).
 - **Genkit (Google AI)**: Para funcionalidades inteligentes, como aprimoramento de textos.
-- **Zod**: Para validação de esquemas de dados e formulários. 
+- **Zod**: Para validação de esquemas de dados e formulários.
 - **date-fns**: Para manipulação e formatação de datas.
 
 ## Funcionalidades Principais
@@ -91,7 +91,6 @@ A Vercel é a melhor plataforma para publicar projetos Next.js e oferece um plan
 | `NEXT_PUBLIC_FIREBASE_APP_ID`                     | (Cole o valor de `appId` aqui)                  |
 | `NEXT_PUBLIC_FIREBASE_VAPID_KEY`                  | (Cole a sua chave VAPID de notificações aqui) |
 | `GOOGLE_API_KEY`                                  | (Cole a sua chave da API do Google AI aqui)     |
-
 
 4.  **Fazer o Deploy:**
     *   Após adicionar todas as variáveis, clique no botão **"Deploy"**.
