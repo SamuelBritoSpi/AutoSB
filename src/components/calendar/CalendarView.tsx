@@ -112,7 +112,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                   onMonthChange={setCurrentMonth}
                   showOutsideDays={false}
                   components={{
-                    Day: ({ date, ...dayProps }) => {
+                    Day: (dayProps) => {
+                      const { date } = dayProps;
                       const validDate = date;
                       if (!isValid(validDate)) return <div />;
 
@@ -120,26 +121,25 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                       const hasEvents = eventsByDate.has(dateKey);
 
                       return (
-                        <td
-                          {...dayProps}
-                          onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(validDate)}
-                          onMouseLeave={() => !isMobile && setHoveredDate(null)}
+                        <div
+                           {...dayProps}
+                           onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(validDate)}
+                           onMouseLeave={() => !isMobile && setHoveredDate(null)}
                            onClick={() => {
                             if (isMobile && hasEvents) {
                               setHoveredDate(h => (h && h.getTime() === validDate.getTime() ? null : validDate))
                             }
                           }}
+                          className="h-full w-full flex items-center justify-center relative p-1"
                         >
-                          <div className="relative h-full w-full flex flex-col items-center justify-center p-1">
-                             <time dateTime={date.toISOString()}>{format(validDate, 'd')}</time>
-                             {hasEvents && (
-                              <div className="day-deadline-dots">
-                                {eventsByDate.get(dateKey)?.some(e => e.type === 'demand') && <div className="day-deadline-dot bg-destructive" />}
-                                {eventsByDate.get(dateKey)?.some(e => e.type === 'vacation') && <div className="day-deadline-dot bg-blue-500" />}
-                              </div>
-                            )}
-                          </div>
-                        </td>
+                           <time dateTime={date.toISOString()}>{format(validDate, 'd')}</time>
+                           {hasEvents && (
+                            <div className="day-deadline-dots">
+                              {eventsByDate.get(dateKey)?.some(e => e.type === 'demand') && <div className="day-deadline-dot bg-destructive" />}
+                              {eventsByDate.get(dateKey)?.some(e => e.type === 'vacation') && <div className="day-deadline-dot bg-blue-500" />}
+                            </div>
+                          )}
+                        </div>
                       );
                     },
                   }}
