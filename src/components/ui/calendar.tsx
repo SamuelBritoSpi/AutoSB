@@ -86,7 +86,7 @@ function Calendar({
         Day: (dayProps: DayProps) => {
           const { components } = props;
           if (components?.Day) {
-            return <td {...dayProps.rootProps}><components.Day {...dayProps} /></td>
+            return <components.Day {...dayProps} />;
           }
           return <DayPicker.defaultProps.components.Day {...dayProps} />;
         },
