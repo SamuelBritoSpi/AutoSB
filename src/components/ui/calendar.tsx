@@ -3,7 +3,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
-import { DayPicker, type DayPickerProps } from "react-day-picker";
+import { DayPicker, type DayPickerProps, type DayProps } from "react-day-picker";
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from "@/lib/utils";
@@ -83,6 +83,13 @@ function Calendar({
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+        Day: (dayProps: DayProps) => {
+          const { components } = props;
+          if (components?.Day) {
+            return <td {...dayProps.rootProps}><components.Day {...dayProps} /></td>
+          }
+          return <DayPicker.defaultProps.components.Day {...dayProps} />;
+        },
       }}
       formatters={{
           formatWeekdayName: (day) => format(day, 'EEEEEE', { locale: ptBR }),
