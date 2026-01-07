@@ -14,6 +14,7 @@ import { Button } from '../ui/button';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
+import type { DayProps } from 'react-day-picker';
 
 interface CalendarViewProps {
   demands: Demand[];
@@ -131,20 +132,20 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                             formatWeekdayName: (day) => format(day, 'EEEEEE', { locale: ptBR }),
                         }}
                         components={{
-                            Day: ({ day, ...props }) => {
-                                const dateKey = startOfDay(day).toISOString();
+                            Day: ({ date, ...props }: DayProps) => {
+                                const dateKey = startOfDay(date).toISOString();
                                 const hasEvents = eventsByDate.has(dateKey);
 
                                 return (
                                 <div
-                                    onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(day)}
+                                    onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(date)}
                                     onMouseLeave={() => !isMobile && setHoveredDate(null)}
                                     onClick={() => {
                                         if (isMobile && hasEvents) {
-                                            if (clickedDate && isSameDay(clickedDate, day)) {
+                                            if (clickedDate && isSameDay(clickedDate, date)) {
                                                 setClickedDate(null);
                                             } else {
-                                                setClickedDate(day);
+                                                setClickedDate(date);
                                             }
                                         }
                                     }}
@@ -152,7 +153,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                                         "cursor-pointer": hasEvents,
                                     })}
                                 >
-                                    <DayContent date={day} />
+                                    <DayContent date={date} />
                                 </div>
                                 );
                             },
