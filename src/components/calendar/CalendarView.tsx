@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -38,6 +39,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
 
     demands.forEach(demand => {
       const demandDate = parseISO(demand.dueDate);
+      if (!isValid(demandDate)) return;
       const dateKey = startOfDay(demandDate).toISOString();
       if (!eventsMap.has(dateKey)) {
         eventsMap.set(dateKey, []);
@@ -55,6 +57,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
       let currentDate = parseISO(vacation.startDate);
       const endDate = parseISO(vacation.endDate);
       
+      if (!isValid(currentDate) || !isValid(endDate)) return;
+
       while (currentDate <= endDate) {
         const dateKey = startOfDay(currentDate).toISOString();
         if (!eventsMap.has(dateKey)) {
@@ -66,7 +70,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 id: vacation.id,
                 title: `${vacation.employeeName} - ${vacation.type}`,
                 type: 'vacation',
-                date: currentDate,
+                date: new Date(currentDate),
             });
         }
         currentDate.setDate(currentDate.getDate() + 1);
@@ -76,7 +80,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     return eventsMap;
   }, [demands, vacations]);
 
-  const hoveredEvents = hoveredDate ? eventsByDate.get(hoveredDate.toISOString()) || [] : [];
+  const hoveredEvents = hoveredDate ? eventsByDate.get(startOfDay(hoveredDate).toISOString()) || [] : [];
   
   const goToToday = () => {
     setCurrentMonth(new Date());
@@ -108,7 +112,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                   onMonthChange={setCurrentMonth}
                   showOutsideDays={false}
                   components={{
-                    Day: ({ date, ...props }: DayProps) => {
+                    Day: ({ date, ...dayProps }) => {
                       const validDate = date;
                       if (!isValid(validDate)) return <div />;
 
@@ -116,28 +120,29 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                       const hasEvents = eventsByDate.has(dateKey);
 
                       return (
-                        <div
-                          onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(startOfDay(validDate))}
+                        <td
+                          {...dayProps}
+                          onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(validDate)}
                           onMouseLeave={() => !isMobile && setHoveredDate(null)}
-                          onClick={() => {
+                           onClick={() => {
                             if (isMobile && hasEvents) {
-                              setHoveredDate(h => (h?.getTime() === startOfDay(validDate).getTime() ? null : startOfDay(validDate)))
+                              setHoveredDate(h => (h && h.getTime() === validDate.getTime() ? null : validDate))
                             }
                           }}
-                          className="h-full w-full flex items-center justify-center relative"
                         >
-                          <span className={cn(props.className, "z-10")}>{format(validDate, 'd')}</span>
-                          {hasEvents && (
-                            <div className="day-deadline-dots">
-                              {eventsByDate.get(dateKey)?.some(e => e.type === 'demand') && <div className="day-deadline-dot bg-destructive" />}
-                              {eventsByDate.get(dateKey)?.some(e => e.type === 'vacation') && <div className="day-deadline-dot bg-blue-500" />}
-                            </div>
-                          )}
-                        </div>
+                          <div className="relative h-full w-full flex flex-col items-center justify-center p-1">
+                             <time dateTime={date.toISOString()}>{format(validDate, 'd')}</time>
+                             {hasEvents && (
+                              <div className="day-deadline-dots">
+                                {eventsByDate.get(dateKey)?.some(e => e.type === 'demand') && <div className="day-deadline-dot bg-destructive" />}
+                                {eventsByDate.get(dateKey)?.some(e => e.type === 'vacation') && <div className="day-deadline-dot bg-blue-500" />}
+                              </div>
+                            )}
+                          </div>
+                        </td>
                       );
                     },
                   }}
-                  {...props}
                 />
               </div>
             </PopoverTrigger>
@@ -149,7 +154,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                   </h4>
                   <div className="grid gap-2">
                     {hoveredEvents.map(event => (
-                      <div key={event.id} className="text-sm">
+                      <div key={`${event.id}-${event.type}`} className="text-sm">
                         <Badge variant={event.type === 'demand' ? 'destructive' : 'default'} className="capitalize">
                             {event.type === 'demand' ? <Briefcase className="h-3 w-3 mr-1" /> : <Plane className="h-3 w-3 mr-1" />}
                             {event.title}
@@ -168,7 +173,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                 </h4>
                  <div className="grid gap-2">
                     {hoveredEvents.map(event => (
-                      <div key={event.id} className="text-sm">
+                      <div key={`${event.id}-${event.type}-mobile`} className="text-sm">
                         <Badge variant={event.type === 'demand' ? 'destructive' : 'default'} className="capitalize">
                              {event.type === 'demand' ? <Briefcase className="h-3 w-3 mr-1" /> : <Plane className="h-3 w-3 mr-1" />}
                             {event.title}
@@ -200,5 +205,3 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     </div>
   );
 }
-
-    
