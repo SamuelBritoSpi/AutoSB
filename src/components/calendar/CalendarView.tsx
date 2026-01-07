@@ -142,7 +142,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                               const hasEvents = eventsByDate.has(dateKey);
 
                               return (
-                              <div
+                              <button
+                                type="button"
                                 onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(validDate)}
                                 onMouseLeave={() => !isMobile && setHoveredDate(null)}
                                 onClick={() => {
@@ -154,12 +155,12 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                                     }
                                   }
                                 }}
-                                className={cn("h-full w-full flex items-center justify-center relative", {
+                                className={cn("h-full w-full flex items-center justify-center relative p-0 border-0 bg-transparent", {
                                   "cursor-pointer": hasEvents,
                                 })}
                               >
                                 <DayContent date={validDate} />
-                              </div>
+                              </button>
                               );
                             },
                         }}
