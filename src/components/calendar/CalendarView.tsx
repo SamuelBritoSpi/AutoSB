@@ -81,7 +81,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
 
     return (
       <div className="relative w-full h-full flex flex-col justify-between pt-1">
-        <span className="text-sm font-medium md:text-base">{props.date.getDate()}</span>
+        <span className="text-sm font-medium md:text-base">{validDate.getDate()}</span>
         <div className="flex justify-center w-full space-x-1">
           {dayEvents && dayEvents.vacations.length > 0 && <Plane className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-blue-500" />}
           {dayEvents && dayEvents.demands.length > 0 && (
@@ -247,5 +247,3 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     </Card>
   );
 }
-
-    
