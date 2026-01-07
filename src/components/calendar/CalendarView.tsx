@@ -238,5 +238,3 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
     </Card>
   );
 }
-
-    
