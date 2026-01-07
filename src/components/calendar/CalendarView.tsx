@@ -74,7 +74,8 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
 
 
   const DayContent = (props: { date: Date }) => {
-    const dateKey = startOfDay(props.date).toISOString();
+    const validDate = props.date instanceof Date && !isNaN(props.date.getTime()) ? props.date : new Date();
+    const dateKey = startOfDay(validDate).toISOString();
     const dayEvents = eventsByDate.get(dateKey);
     const hasHighPriorityDemand = dayEvents?.demands?.some(d => d.priority === 'alta');
 
@@ -123,7 +124,10 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                         onMonthChange={setMonth}
                         showOutsideDays={false}
                          modifiers={{ 
-                            vacation: (date) => vacationDays.has(startOfDay(date).toISOString()),
+                           vacation: (date) => {
+                            const valid = date instanceof Date && !isNaN(date.getTime());
+                            return valid && vacationDays.has(startOfDay(date).toISOString());
+                           },
                          }}
                          modifiersClassNames={{
                             vacation: 'bg-accent',
@@ -133,29 +137,30 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                         }}
                         components={{
                             Day: ({ date, ...props }: DayProps) => {
-                                const dateKey = startOfDay(date).toISOString();
-                                const hasEvents = eventsByDate.has(dateKey);
+                              const validDate = date instanceof Date && !isNaN(date.getTime()) ? date : new Date();
+                              const dateKey = startOfDay(validDate).toISOString();
+                              const hasEvents = eventsByDate.has(dateKey);
 
-                                return (
-                                <div
-                                    onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(date)}
-                                    onMouseLeave={() => !isMobile && setHoveredDate(null)}
-                                    onClick={() => {
-                                        if (isMobile && hasEvents) {
-                                            if (clickedDate && isSameDay(clickedDate, date)) {
-                                                setClickedDate(null);
-                                            } else {
-                                                setClickedDate(date);
-                                            }
-                                        }
-                                    }}
-                                    className={cn("h-full w-full flex items-center justify-center relative", {
-                                        "cursor-pointer": hasEvents,
-                                    })}
-                                >
-                                    <DayContent date={date} />
-                                </div>
-                                );
+                              return (
+                              <div
+                                onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(validDate)}
+                                onMouseLeave={() => !isMobile && setHoveredDate(null)}
+                                onClick={() => {
+                                  if (isMobile && hasEvents) {
+                                    if (clickedDate && isSameDay(clickedDate, validDate)) {
+                                      setClickedDate(null);
+                                    } else {
+                                      setClickedDate(validDate);
+                                    }
+                                  }
+                                }}
+                                className={cn("h-full w-full flex items-center justify-center relative", {
+                                  "cursor-pointer": hasEvents,
+                                })}
+                              >
+                                <DayContent date={validDate} />
+                              </div>
+                              );
                             },
                         }}
                     />
@@ -171,12 +176,16 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                         avoidCollisions={isMobile}
                      >
                         {(() => {
-                            const currentDate = isMobile ? clickedDate : hoveredDate;
-                            if (!currentDate || !eventsByDate.get(startOfDay(currentDate).toISOString())) {
-                                return null;
-                            }
+                          const currentDate = isMobile ? clickedDate : hoveredDate;
+                          if (!currentDate || !(currentDate instanceof Date && !isNaN(currentDate.getTime()))) {
+                            return null;
+                          }
+                          const dateKey = startOfDay(currentDate).toISOString();
+                          if (!eventsByDate.get(dateKey)) {
+                            return null;
+                          }
                             
-                            const dayEvents = eventsByDate.get(startOfDay(currentDate).toISOString())!;
+                          const dayEvents = eventsByDate.get(dateKey)!;
                             
                             return (
                                 <div className="grid gap-2">
