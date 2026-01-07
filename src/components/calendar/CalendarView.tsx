@@ -155,13 +155,13 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                             formatWeekdayName: (day) => format(day, 'EEEEEE', { locale: ptBR }),
                         }}
                         components={{
-                            Day: ({ date, className, ...props }: DayProps) => {
+                            Day: ({ date, ...props }: DayProps) => {
                               const validDate = date instanceof Date && !isNaN(date.getTime()) ? date : new Date();
                               const dateKey = startOfDay(validDate).toISOString();
                               const hasEvents = eventsByDate.has(dateKey);
 
                               return (
-                              <td {...props} className={cn(className)}>
+                              <td {...props} className={cn(props.className)}>
                                 <button
                                   type="button"
                                   onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(validDate)}

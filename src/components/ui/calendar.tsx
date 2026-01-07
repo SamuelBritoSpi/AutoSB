@@ -53,7 +53,7 @@ function Calendar({
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
-        head_row: "flex",
+        head_row: "flex w-full",
         head_cell: cn(
           "text-muted-foreground rounded-md font-normal text-[0.8rem]",
           variant === "full" ? "w-14 sm:w-16 md:w-20 lg:w-24 xl:w-28" : "w-9"
