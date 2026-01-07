@@ -131,20 +131,20 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                             formatWeekdayName: (day) => format(day, 'EEEEEE', { locale: ptBR }),
                         }}
                         components={{
-                            Day: ({ date }) => {
-                                const dateKey = startOfDay(date).toISOString();
+                            Day: ({ day, ...props }) => {
+                                const dateKey = startOfDay(day).toISOString();
                                 const hasEvents = eventsByDate.has(dateKey);
 
                                 return (
                                 <div
-                                    onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(date)}
+                                    onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(day)}
                                     onMouseLeave={() => !isMobile && setHoveredDate(null)}
                                     onClick={() => {
                                         if (isMobile && hasEvents) {
-                                            if (clickedDate && isSameDay(clickedDate, date)) {
+                                            if (clickedDate && isSameDay(clickedDate, day)) {
                                                 setClickedDate(null);
                                             } else {
-                                                setClickedDate(date);
+                                                setClickedDate(day);
                                             }
                                         }
                                     }}
@@ -152,7 +152,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
                                         "cursor-pointer": hasEvents,
                                     })}
                                 >
-                                    <DayContent date={date} />
+                                    <DayContent date={day} />
                                 </div>
                                 );
                             },
