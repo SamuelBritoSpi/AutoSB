@@ -183,26 +183,17 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
             <CardTitle>Legenda</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center">
-              <div className="w-4 h-4 rounded-full bg-blue-500 mr-3 flex-shrink-0" />
-              <div className="flex items-center gap-2">
-                <Plane className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Dia de Afastamento</span>
-              </div>
+            <div className="flex items-center gap-3">
+              <Plane className="h-4 w-4 text-blue-500 flex-shrink-0" />
+              <span className="text-sm">Dia de Afastamento</span>
             </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 rounded-full bg-destructive mr-3 flex-shrink-0" />
-              <div className="flex items-center gap-2">
-                <Briefcase className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Entrega de Demanda</span>
-              </div>
+            <div className="flex items-center gap-3">
+              <Briefcase className="h-4 w-4 text-destructive flex-shrink-0" />
+              <span className="text-sm">Entrega de Demanda</span>
             </div>
-             <div className="flex items-center">
-              <div className="w-4 h-4 rounded-full bg-orange-500 mr-3 flex-shrink-0" />
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Demanda (Alta Prioridade)</span>
-              </div>
+             <div className="flex items-center gap-3">
+              <AlertTriangle className="h-4 w-4 text-orange-500 flex-shrink-0" />
+              <span className="text-sm">Demanda (Alta Prioridade)</span>
             </div>
           </CardContent>
         </Card>
