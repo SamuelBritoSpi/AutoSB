@@ -124,7 +124,7 @@
   .day-with-demand::after,
   .day-with-high-priority-demand::after {
     content: '';
-    @apply absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full;
+    @apply absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full;
   }
   
   .day-with-vacation::after {
@@ -140,25 +140,30 @@
   }
 
   .day-with-high-priority-demand.day-with-demand::after {
-    @apply bg-destructive; /* Prioridade alta sobrescreve a normal */
+    @apply bg-destructive;
   }
   
-  .day-with-vacation.day-with-demand::after,
-  .day-with-vacation.day-with-high-priority-demand::after {
-    /* Exibe o ponto de afastamento e cria um segundo ponto para demanda */
+  /* Quando há férias E demanda normal */
+  .day-with-vacation.day-with-demand::after {
     @apply bg-blue-500;
-    --tw-translate-x: -150%;
+    left: calc(50% - 5px);
   }
 
   .day-with-vacation.day-with-demand::before {
-     content: '';
-     @apply absolute bottom-1.5 left-1/2 w-1.5 h-1.5 rounded-full bg-orange-500;
-     --tw-translate-x: 50%;
+    content: '';
+    @apply absolute bottom-1 w-1.5 h-1.5 rounded-full bg-orange-500;
+    left: calc(50% + 5px);
+  }
+
+  /* Quando há férias E demanda alta prioridade */
+  .day-with-vacation.day-with-high-priority-demand::after {
+    @apply bg-blue-500;
+    left: calc(50% - 5px);
   }
 
   .day-with-vacation.day-with-high-priority-demand::before {
-      content: '';
-      @apply absolute bottom-1.5 left-1/2 w-1.5 h-1.5 rounded-full bg-destructive;
-      --tw-translate-x: 50%;
+    content: '';
+    @apply absolute bottom-1 w-1.5 h-1.5 rounded-full bg-destructive;
+    left: calc(50% + 5px);
   }
 }
