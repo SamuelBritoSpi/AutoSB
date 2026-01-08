@@ -174,10 +174,11 @@ export default function ReportDialog({
                         <Calendar
                             initialFocus
                             mode="range"
-                            defaultMonth={dateRange.from}
-                            selected={dateRange}
-                            onSelect={setDateRange as any}
-                            numberOfMonths={2}
+                            month={dateRange?.from || new Date()}
+                            onMonthChange={() => {}}
+                            startDate={dateRange?.from || null}
+                            endDate={dateRange?.to || null}
+                            onChange={(dates) => setDateRange({ from: dates[0] || undefined, to: dates[1] || undefined })}
                         />
                         </PopoverContent>
                     </Popover>

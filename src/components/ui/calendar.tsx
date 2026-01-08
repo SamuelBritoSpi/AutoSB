@@ -1,63 +1,129 @@
 
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import * as React from "react";
-import { DayPicker, type DayPickerProps } from "react-day-picker";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import React, { useState } from 'react';
+import ReactDatePicker from 'react-datepicker';
 import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+import 'react-datepicker/dist/react-datepicker.css';
 
-export type CalendarProps = DayPickerProps;
-
-function Calendar({
-  className,
-  classNames,
-  showOutsideDays = true,
-  locale = ptBR,
-  ...props
-}: CalendarProps) {
-  return (
-    <DayPicker
-      locale={locale}
-      showOutsideDays={showOutsideDays}
-      className={cn("p-3 sm:p-6", className)}
-      classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
-        month: "space-y-4 relative w-full",
-        caption: "flex justify-center items-center pt-1 relative mb-4",
-        caption_label: "text-sm sm:text-base font-semibold",
-        nav: "absolute top-0 w-full flex justify-between px-1 sm:px-2",
-        nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 sm:h-9 sm:w-9 bg-transparent p-0 opacity-70 hover:opacity-100 transition-opacity flex items-center justify-center flex-shrink-0"
-        ),
-        nav_button_previous: "",
-        nav_button_next: "",
-        table: "w-full border-collapse space-y-1",
-        head_row: "flex gap-0.5 sm:gap-1 mb-2 sm:mb-3 px-1 sm:px-2",
-        head_cell:
-          "text-muted-foreground font-semibold text-xs h-8 w-9 sm:h-9 sm:w-11 flex items-center justify-center flex-1 min-w-0",
-        row: "flex w-full gap-0.5 sm:gap-1 px-1 sm:px-2",
-        cell: "h-8 w-9 sm:h-9 sm:w-11 text-center text-xs sm:text-sm p-0 relative flex-1 min-w-0 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-        day: cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-8 w-9 sm:h-9 sm:w-11 p-0 font-normal aria-selected:opacity-100 rounded-md text-xs sm:text-sm flex-1"
-        ),
-        day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground font-bold",
-        day_outside: "text-muted-foreground opacity-50",
-        day_disabled: "text-muted-foreground opacity-50 cursor-not-allowed",
-        day_range_middle:
-          "aria-selected:bg-accent aria-selected:text-accent-foreground",
-        day_hidden: "invisible",
-        ...classNames,
-      }}
-      {...props}
-    />
-  );
+interface CalendarProps {
+  selected?: Date | null;
+  onSelect?: (date: Date) => void;
+  disabled?: (date: Date) => boolean;
+  mode?: 'single' | 'range';
+  startDate?: Date | null;
+  endDate?: Date | null;
+  onChange?: (dates: [Date | null | undefined, Date | null | undefined]) => void;
+  className?: string;
+  month?: Date;
+  onMonthChange?: (date: Date) => void;
+  modifiers?: Record<string, Date[]>;
+  modifiersClassNames?: Record<string, string>;
+  initialFocus?: boolean;
 }
-Calendar.displayName = "Calendar";
+
+const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
+  (
+    {
+      selected,
+      onSelect,
+      disabled,
+      mode = 'single',
+      startDate,
+      endDate,
+      onChange,
+      className,
+      month,
+      onMonthChange,
+      modifiers,
+      modifiersClassNames,
+      initialFocus,
+      ...props
+    },
+    ref
+  ) => {
+    const [internalMonth, setInternalMonth] = useState(month || new Date());
+
+    const handleMonthChange = (date: Date) => {
+      setInternalMonth(date);
+      onMonthChange?.(date);
+    };
+
+    const filterDate = (date: Date) => {
+      if (disabled) {
+        return !disabled(date);
+      }
+      return true;
+    };
+
+    const modifierClasses = (date: Date) => {
+      let classes = '';
+      if (modifiers && modifiersClassNames) {
+        Object.entries(modifiers).forEach(([key, dates]) => {
+          if (dates.some(d => d.toDateString() === date.toDateString())) {
+            classes += ` ${modifiersClassNames[key] || ''}`;
+          }
+        });
+      }
+      return classes;
+    };
+
+    const calendarContainerClassName = cn(
+      'react-datepicker-wrapper',
+      className
+    );
+
+    if (mode === 'range') {
+      return (
+        <div
+          ref={ref}
+          className={cn('calendar-container p-3 sm:p-6 flex justify-center', className)}
+        >
+          <ReactDatePicker
+            selected={startDate}
+            onChange={onChange}
+            startDate={startDate}
+            endDate={endDate}
+            selectsRange
+            inline
+            locale={ptBR}
+            filterDate={filterDate}
+            monthsShown={1}
+            className={cn(
+              'w-full bg-card text-foreground rounded-lg',
+              'focus:outline-none focus:ring-2 focus:ring-primary'
+            )}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div
+        ref={ref}
+        className={cn('calendar-container p-3 sm:p-6 flex justify-center', className)}
+      >
+        <ReactDatePicker
+          selected={selected}
+          onChange={(date: Date | null) => {
+            if (date) onSelect?.(date);
+          }}
+          inline
+          locale={ptBR}
+          filterDate={filterDate}
+          minDate={disabled ? new Date(new Date().setHours(0, 0, 0, 0)) : undefined}
+          className={cn(
+            'w-full bg-card text-foreground rounded-lg',
+            'focus:outline-none focus:ring-2 focus:ring-primary'
+          )}
+        />
+      </div>
+    );
+  }
+);
+
+Calendar.displayName = 'Calendar';
 
 export { Calendar };
+export type { CalendarProps };

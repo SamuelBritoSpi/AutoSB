@@ -120,6 +120,102 @@
 }
 
 @layer components {
+  /* Customização do react-datepicker */
+  .react-datepicker {
+    @apply bg-card text-foreground border border-border rounded-lg shadow-lg;
+    font-family: inherit;
+  }
+
+  .react-datepicker__header {
+    @apply bg-card border-b border-border;
+    padding: 1rem;
+  }
+
+  .react-datepicker__current-month {
+    @apply text-lg font-semibold text-foreground;
+  }
+
+  .react-datepicker__day-names-wrapper {
+    @apply mb-2;
+  }
+
+  .react-datepicker__day-name {
+    @apply text-sm font-semibold text-muted-foreground h-9 leading-9;
+    width: 2.5rem;
+  }
+
+  .react-datepicker__month-wrapper {
+    margin-inline: 0;
+  }
+
+  .react-datepicker__month {
+    margin: 0;
+  }
+
+  .react-datepicker__week {
+    @apply flex gap-1;
+    padding: 0 0.5rem;
+  }
+
+  .react-datepicker__day {
+    @apply h-9 w-10 rounded-md text-sm font-normal text-foreground;
+    @apply hover:bg-accent hover:text-accent-foreground transition-colors;
+    @apply flex items-center justify-center;
+    margin: 0;
+    padding: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .react-datepicker__day--selected {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  .react-datepicker__day--selected:hover {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  .react-datepicker__day--today {
+    @apply bg-accent text-accent-foreground font-bold;
+  }
+
+  .react-datepicker__day--outside-month {
+    @apply text-muted-foreground opacity-50;
+  }
+
+  .react-datepicker__day--disabled {
+    @apply text-muted-foreground opacity-50 cursor-not-allowed;
+  }
+
+  .react-datepicker__day--in-range {
+    @apply bg-accent bg-opacity-50 text-foreground;
+  }
+
+  .react-datepicker__day--keyboard-selected {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  .react-datepicker__navigation {
+    @apply top-4;
+  }
+
+  .react-datepicker__navigation-icon {
+    @apply w-5 h-5;
+  }
+
+  .react-datepicker__navigation-icon::before {
+    @apply border-gray-400;
+    border-width: 2px 2px 0 0;
+  }
+
+  .react-datepicker__navigation--next {
+    @apply right-4;
+  }
+
+  .react-datepicker__navigation--previous {
+    @apply left-4;
+  }
+
   /* Melhorias para o calendário */
   [class*="rdp"] {
     --rdp-cell-size: 40px;
