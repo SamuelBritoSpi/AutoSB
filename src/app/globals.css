@@ -118,3 +118,47 @@
     /* font-family is set by tailwind.config.ts */
   }
 }
+
+@layer components {
+  .day-with-vacation::after,
+  .day-with-demand::after,
+  .day-with-high-priority-demand::after {
+    content: '';
+    @apply absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full;
+  }
+  
+  .day-with-vacation::after {
+    @apply bg-blue-500;
+  }
+  
+  .day-with-demand::after {
+    @apply bg-orange-500;
+  }
+  
+  .day-with-high-priority-demand::after {
+    @apply bg-destructive;
+  }
+
+  .day-with-high-priority-demand.day-with-demand::after {
+    @apply bg-destructive; /* Prioridade alta sobrescreve a normal */
+  }
+  
+  .day-with-vacation.day-with-demand::after,
+  .day-with-vacation.day-with-high-priority-demand::after {
+    /* Exibe o ponto de afastamento e cria um segundo ponto para demanda */
+    @apply bg-blue-500;
+    --tw-translate-x: -150%;
+  }
+
+  .day-with-vacation.day-with-demand::before {
+     content: '';
+     @apply absolute bottom-1.5 left-1/2 w-1.5 h-1.5 rounded-full bg-orange-500;
+     --tw-translate-x: 50%;
+  }
+
+  .day-with-vacation.day-with-high-priority-demand::before {
+      content: '';
+      @apply absolute bottom-1.5 left-1/2 w-1.5 h-1.5 rounded-full bg-destructive;
+      --tw-translate-x: 50%;
+  }
+}
