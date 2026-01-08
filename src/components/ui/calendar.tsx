@@ -3,53 +3,25 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
-import { DayPicker, type DayPickerProps, type DayProps } from "react-day-picker";
+import { DayPicker, type DayPickerProps } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { ptBR } from 'date-fns/locale';
-import { cva, type VariantProps } from "class-variance-authority";
-import { format } from "date-fns";
 
-const calendarVariants = cva(
-  "p-3",
-  {
-    variants: {
-      variant: {
-        default: "",
-        full: "w-full",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
-
-export type CalendarProps = DayPickerProps & VariantProps<typeof calendarVariants>;
-
-const DefaultDay = (props: DayProps) => {
-    const { date, displayMonth } = props;
-    if (date.getMonth() !== displayMonth.getMonth()) {
-        return <div />;
-    }
-    return <time dateTime={date.toISOString()}>{format(date, 'd')}</time>
-}
-
+export type CalendarProps = DayPickerProps;
 
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
-  variant,
-  components,
   ...props
 }: CalendarProps) {
   return (
     <DayPicker
       locale={ptBR}
       showOutsideDays={showOutsideDays}
-      className={cn(calendarVariants({ variant }), className)}
+      className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
@@ -63,22 +35,14 @@ function Calendar({
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
-        head_row: "flex w-full mt-2",
-        head_cell: "text-muted-foreground rounded-md w-full font-normal text-[0.8rem]",
+        head_row: "flex",
+        head_cell:
+          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
         row: "flex w-full mt-2",
-        cell: cn(
-          "h-9 w-9 text-center text-sm p-0 relative",
-          "[&:has([aria-selected].day-range-end)]:rounded-r-md",
-          "[&:has([aria-selected].day-outside)]:bg-accent/50",
-          "[&:has([aria-selected])]:bg-accent",
-          "first:[&:has([aria-selected])]:rounded-l-md",
-          "focus-within:relative focus-within:z-20",
-          variant === 'full' && "h-14 w-full"
-        ),
+        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md focus-within:relative focus-within:z-20",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
-          variant === 'full' && "h-14 w-full"
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
         ),
         day_range_end: "day-range-end",
         day_selected:
@@ -95,8 +59,6 @@ function Calendar({
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
-        Day: DefaultDay,
-        ...components,
       }}
       {...props}
     />

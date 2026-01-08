@@ -121,13 +121,29 @@
 
 /* Custom styles for the calendar view */
 @layer components {
-  .day-deadline-dots {
-    @apply absolute bottom-1 left-1/2 -translate-x-1/2 flex space-x-1;
+  .day-with-demand, .day-with-vacation {
+    @apply relative;
+  }
+  .day-with-demand > .rdp-day_button:after,
+  .day-with-vacation > .rdp-day_button:after {
+    content: '';
+    @apply absolute bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full;
+  }
+
+  .day-with-demand > .rdp-day_button:after {
+    @apply bg-destructive;
   }
   
-  .day-deadline-dot {
-    @apply w-1.5 h-1.5 rounded-full;
+  .day-with-vacation > .rdp-day_button:after {
+    @apply bg-blue-500;
+  }
+
+  .day-with-demand.day-with-vacation > .rdp-day_button:before {
+    content: '';
+    @apply absolute bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-[calc(50%_+_4px)] rounded-full bg-destructive;
+  }
+
+  .day-with-demand.day-with-vacation > .rdp-day_button:after {
+     @apply absolute bottom-1 left-1/2 h-1.5 w-1.5 translate-x-[calc(-50%_+_4px)] rounded-full bg-blue-500;
   }
 }
-
-    
