@@ -129,11 +129,11 @@
   }
 
   .day-with-demand > button:after {
-    @apply bg-destructive;
+    @apply bg-orange-500;
   }
 
   .day-with-high-priority-demand > button:after {
-    @apply bg-orange-500;
+    @apply bg-destructive;
   }
   
   .day-with-vacation > button:after {
@@ -150,7 +150,7 @@
   
   /* Two dots */
   .day-with-demand.day-with-vacation > button:before {
-    @apply -translate-x-[calc(50%_+_4px)] bg-destructive;
+    @apply -translate-x-[calc(50%_+_4px)] bg-orange-500;
   }
   .day-with-demand.day-with-vacation > button:after {
      @apply translate-x-[calc(-50%_+_4px)] bg-blue-500;

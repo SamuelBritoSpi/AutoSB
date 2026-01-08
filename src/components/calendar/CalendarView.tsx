@@ -125,10 +125,10 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
             case 'vacation':
                 return <Badge variant="default" className="capitalize w-full justify-start text-left whitespace-normal h-auto bg-blue-500 hover:bg-blue-600"><Plane className="h-3 w-3 mr-1 flex-shrink-0" /><span>{event.title}</span></Badge>;
             case 'highPriorityDemand':
-                return <Badge variant="destructive" className="capitalize w-full justify-start text-left whitespace-normal h-auto bg-orange-500 hover:bg-orange-600"><AlertTriangle className="h-3 w-3 mr-1 flex-shrink-0" /><span>{event.title}</span></Badge>;
+                return <Badge variant="destructive" className="capitalize w-full justify-start text-left whitespace-normal h-auto"><AlertTriangle className="h-3 w-3 mr-1 flex-shrink-0" /><span>{event.title}</span></Badge>;
             case 'demand':
             default:
-                return <Badge variant="destructive" className="capitalize w-full justify-start text-left whitespace-normal h-auto"><Briefcase className="h-3 w-3 mr-1 flex-shrink-0" /><span>{event.title}</span></Badge>;
+                return <Badge variant="destructive" className="capitalize w-full justify-start text-left whitespace-normal h-auto bg-orange-500 hover:bg-orange-600"><Briefcase className="h-3 w-3 mr-1 flex-shrink-0" /><span>{event.title}</span></Badge>;
         }
     }
 
@@ -188,11 +188,11 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
               <span className="text-sm">Dia de Afastamento</span>
             </div>
             <div className="flex items-center gap-3">
-              <Briefcase className="h-4 w-4 text-destructive flex-shrink-0" />
+              <Briefcase className="h-4 w-4 text-orange-500 flex-shrink-0" />
               <span className="text-sm">Entrega de Demanda</span>
             </div>
              <div className="flex items-center gap-3">
-              <AlertTriangle className="h-4 w-4 text-orange-500 flex-shrink-0" />
+              <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
               <span className="text-sm">Demanda (Alta Prioridade)</span>
             </div>
           </CardContent>
