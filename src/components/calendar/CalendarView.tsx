@@ -57,38 +57,40 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
   };
   
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
       <Card className="lg:col-span-3 shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="space-y-1">
-            <CardTitle className="font-headline text-2xl text-primary flex items-center gap-2">
-              <CalendarIcon/>
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4">
+          <div className="space-y-1 flex-1">
+            <CardTitle className="font-headline text-xl sm:text-2xl text-primary flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 sm:h-6 sm:w-6"/>
               Visão Geral do Calendário
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm sm:text-base">
               Prazos de demandas e afastamentos de funcionários.
             </CardDescription>
           </div>
-          <Button onClick={goToToday} variant="outline">Hoje</Button>
+          <Button onClick={goToToday} variant="outline" className="text-sm sm:text-base">Hoje</Button>
         </CardHeader>
-        <CardContent className="p-0 sm:p-0 flex justify-center">
-            <Calendar
-                month={currentMonth}
-                onMonthChange={setCurrentMonth}
-                className="p-0"
-                modifiers={modifiers}
-                modifiersClassNames={{
-                    demand: 'day-with-demand',
-                    highPriorityDemand: 'day-with-high-priority-demand',
-                    vacation: 'day-with-vacation'
-                }}
-            />
+        <CardContent className="p-2 sm:p-4 flex justify-center overflow-x-auto">
+            <div className="w-full">
+              <Calendar
+                  month={currentMonth}
+                  onMonthChange={setCurrentMonth}
+                  className="p-0"
+                  modifiers={modifiers}
+                  modifiersClassNames={{
+                      demand: 'day-with-demand',
+                      highPriorityDemand: 'day-with-high-priority-demand',
+                      vacation: 'day-with-vacation'
+                  }}
+              />
+            </div>
         </CardContent>
       </Card>
       <div className="lg:col-span-1">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Legenda</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Legenda</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
