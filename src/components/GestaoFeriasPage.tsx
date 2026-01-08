@@ -11,10 +11,9 @@ import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeList from '@/components/employees/EmployeeList';
 import DashboardTab from '@/components/dashboard/DashboardTab';
 import CardManagementPage from '@/components/cards/CardManagementPage';
-import CalendarView from '@/components/calendar/CalendarView'; // Importado
 import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, Card } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList, FileText, CreditCard, Calendar } from 'lucide-react'; // Importado Calendar
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList, FileText, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -151,7 +150,6 @@ export default function GestaoFeriasPage() {
     { value: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="mr-2 h-5 w-5" /> },
     { value: "demands", label: "Demandas", icon: <ListChecks className="mr-2 h-5 w-5" /> },
     { value: "vacations", label: "Férias/Afastamento", icon: <CalendarCheck className="mr-2 h-5 w-5" /> },
-    { value: "calendar", label: "Calendário", icon: <Calendar className="mr-2 h-5 w-5" /> },
     { value: "absences", label: "Faltas Justificadas", icon: <FileText className="mr-2 h-5 w-5" /> },
     { value: "employees", label: "Funcionários/Atestados", icon: <Users className="mr-2 h-5 w-5" /> },
     { value: "cards", label: "Cartões", icon: <CreditCard className="mr-2 h-5 w-5" /> },
@@ -652,10 +650,6 @@ export default function GestaoFeriasPage() {
               onUpdateVacation={handleUpdateVacation}
             />
           </section>
-        </TabsContent>
-
-         <TabsContent value="calendar" className={cn(containerClass, "space-y-6 mt-6")}>
-           <CalendarView demands={demands} vacations={vacations} />
         </TabsContent>
 
         <TabsContent value="absences" className={cn(containerClass, "space-y-6 mt-6")}>
