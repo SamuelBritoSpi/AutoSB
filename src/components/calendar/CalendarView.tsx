@@ -10,10 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '../ui/badge';
-import { Calendar as CalendarIcon, Briefcase, Plane } from 'lucide-react';
+import { Calendar as CalendarIcon, Briefcase, Plane, AlertTriangle } from 'lucide-react';
 import type { Modifiers } from 'react-day-picker';
 
-type CalendarEventType = 'demand' | 'vacation';
+type CalendarEventType = 'demand' | 'vacation' | 'highPriorityDemand';
 
 interface CalendarEvent {
   id: string;
@@ -31,10 +31,11 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(undefined);
 
-  const { eventsByDate, demandDays, vacationDays } = useMemo(() => {
+  const { eventsByDate, demandDays, vacationDays, highPriorityDemandDays } = useMemo(() => {
     const eventsMap = new Map<string, CalendarEvent[]>();
     const demandDates: Date[] = [];
     const vacationDates: Date[] = [];
+    const highPriorityDates: Date[] = [];
 
     demands.forEach(demand => {
       const demandDate = parseISO(demand.dueDate);
@@ -44,13 +45,21 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
       if (!eventsMap.has(dateKey)) {
         eventsMap.set(dateKey, []);
       }
+      
+      const eventType: CalendarEventType = demand.priority === 'alta' ? 'highPriorityDemand' : 'demand';
+      
       eventsMap.get(dateKey)?.push({
         id: demand.id,
         title: demand.title,
-        type: 'demand',
+        type: eventType,
         date: demandDate,
       });
-      demandDates.push(demandDate);
+
+      if (demand.priority === 'alta') {
+        highPriorityDates.push(demandDate);
+      } else {
+        demandDates.push(demandDate);
+      }
     });
 
     vacations.forEach(vacation => {
@@ -78,23 +87,25 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
       }
     });
 
-    return { eventsByDate: eventsMap, demandDays: demandDates, vacationDays: vacationDates };
+    return { eventsByDate: eventsMap, demandDays: demandDates, vacationDays: vacationDates, highPriorityDemandDays: highPriorityDates };
   }, [demands, vacations]);
 
   const modifiers: Modifiers = {
     demand: demandDays,
     vacation: vacationDays,
+    highPriorityDemand: highPriorityDemandDays,
   };
 
   const modifiersClassNames = {
     demand: 'day-with-demand',
     vacation: 'day-with-vacation',
+    highPriorityDemand: 'day-with-high-priority-demand',
   };
 
   const selectedDayEvents = selectedDay ? eventsByDate.get(startOfDay(selectedDay).toISOString()) || [] : [];
 
   const handleDayClick = (day: Date, modifiers: Modifiers) => {
-    if (modifiers.demand || modifiers.vacation) {
+    if (modifiers.demand || modifiers.vacation || modifiers.highPriorityDemand) {
       setSelectedDay(day);
     } else {
       setSelectedDay(undefined);
@@ -109,6 +120,18 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
   const footer = useMemo(() => {
     if(!selectedDay) return <p className="text-sm text-center text-muted-foreground p-2">Selecione um dia para ver os eventos.</p>;
 
+    const getEventBadge = (event: CalendarEvent) => {
+        switch(event.type) {
+            case 'vacation':
+                return <Badge variant="default" className="capitalize w-full justify-start text-left whitespace-normal h-auto bg-blue-500 hover:bg-blue-600"><Plane className="h-3 w-3 mr-1 flex-shrink-0" /><span>{event.title}</span></Badge>;
+            case 'highPriorityDemand':
+                return <Badge variant="destructive" className="capitalize w-full justify-start text-left whitespace-normal h-auto bg-orange-500 hover:bg-orange-600"><AlertTriangle className="h-3 w-3 mr-1 flex-shrink-0" /><span>{event.title}</span></Badge>;
+            case 'demand':
+            default:
+                return <Badge variant="destructive" className="capitalize w-full justify-start text-left whitespace-normal h-auto"><Briefcase className="h-3 w-3 mr-1 flex-shrink-0" /><span>{event.title}</span></Badge>;
+        }
+    }
+
     return (
       <div className="p-2 space-y-2">
         <h4 className="font-medium text-center">
@@ -117,10 +140,7 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
         <div className="grid gap-2">
             {selectedDayEvents.length > 0 ? selectedDayEvents.map(event => (
               <div key={`${event.id}-${event.type}`} className="text-sm">
-                <Badge variant={event.type === 'demand' ? 'destructive' : 'default'} className="capitalize w-full justify-start text-left whitespace-normal h-auto">
-                    {event.type === 'demand' ? <Briefcase className="h-3 w-3 mr-1 flex-shrink-0" /> : <Plane className="h-3 w-3 mr-1 flex-shrink-0" />}
-                    <span>{event.title}</span>
-                </Badge>
+                {getEventBadge(event)}
               </div>
             )) : <p className="text-sm text-muted-foreground text-center">Nenhum evento neste dia.</p>}
         </div>
@@ -162,14 +182,27 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
           <CardHeader>
             <CardTitle>Legenda</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <div className="flex items-center">
-              <div className="w-4 h-4 rounded-full bg-destructive mr-2" />
-              <span>Prazo de Demanda</span>
+              <div className="w-4 h-4 rounded-full bg-blue-500 mr-3 flex-shrink-0" />
+              <div className="flex items-center gap-2">
+                <Plane className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Dia de Afastamento</span>
+              </div>
             </div>
             <div className="flex items-center">
-              <div className="w-4 h-4 rounded-full bg-blue-500 mr-2" />
-              <span>Afastamento de Funcionário</span>
+              <div className="w-4 h-4 rounded-full bg-destructive mr-3 flex-shrink-0" />
+              <div className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Entrega de Demanda</span>
+              </div>
+            </div>
+             <div className="flex items-center">
+              <div className="w-4 h-4 rounded-full bg-orange-500 mr-3 flex-shrink-0" />
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Demanda (Alta Prioridade)</span>
+              </div>
             </div>
           </CardContent>
         </Card>
