@@ -169,7 +169,6 @@ export default function JustifiedAbsenceForm({ onAddAbsence, existingAbsence, on
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                      locale={ptBR}
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
@@ -204,7 +203,6 @@ export default function JustifiedAbsenceForm({ onAddAbsence, existingAbsence, on
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                      locale={ptBR}
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}

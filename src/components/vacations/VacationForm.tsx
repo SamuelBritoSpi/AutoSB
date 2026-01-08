@@ -203,7 +203,6 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                      locale={ptBR}
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
@@ -238,7 +237,6 @@ export default function VacationForm({ onAddVacation, existingVacation, onUpdate
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                      locale={ptBR}
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
