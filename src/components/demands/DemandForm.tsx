@@ -228,12 +228,12 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
                       <Button
                         variant={"outline"}
                         className={cn(
-                          "w-full pl-3 text-left font-normal",
+                          "w-full justify-start text-left font-normal",
                           !field.value && "text-muted-foreground"
                         )}
                       >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
                         {field.value ? format(field.value, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
@@ -244,6 +244,7 @@ export default function DemandForm({ onAddDemand, existingDemand, onUpdateDemand
                       onSelect={field.onChange}
                       disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} 
                       initialFocus
+                      locale={ptBR}
                     />
                   </PopoverContent>
                 </Popover>
