@@ -2,26 +2,12 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { startOfDay, parseISO, format, isValid, isSameDay, endOfDay } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { startOfDay, parseISO, isSameDay } from 'date-fns';
 import type { Demand, Vacation } from '@/lib/types';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Badge } from '../ui/badge';
-import { Calendar as CalendarIcon, Briefcase, Plane, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { DayPicker } from 'react-day-picker';
-
-type CalendarEventType = 'demand' | 'vacation' | 'highPriorityDemand';
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  type: CalendarEventType;
-  date: Date;
-}
+import { Briefcase, Plane, AlertTriangle, Calendar as CalendarIcon } from 'lucide-react';
 
 interface CalendarViewProps {
   demands: Demand[];
@@ -30,30 +16,15 @@ interface CalendarViewProps {
 
 export default function CalendarView({ demands, vacations }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [popoverDate, setPopoverDate] = useState<Date | null>(null);
 
-  const { eventsByDate, modifiers } = useMemo(() => {
-    const eventsMap = new Map<string, CalendarEvent[]>();
+  const modifiers = useMemo(() => {
     const demandDays: Date[] = [];
     const highPriorityDemandDays: Date[] = [];
     const vacationDays: Date[] = [];
 
     demands.forEach(demand => {
       const demandDate = startOfDay(parseISO(demand.dueDate));
-      if (!isValid(demandDate)) return;
-
-      const dateKey = demandDate.toISOString();
-      if (!eventsMap.has(dateKey)) eventsMap.set(dateKey, []);
-      
-      const eventType: CalendarEventType = demand.priority === 'alta' ? 'highPriorityDemand' : 'demand';
-      eventsMap.get(dateKey)?.push({
-        id: demand.id,
-        title: demand.title,
-        type: eventType,
-        date: demandDate,
-      });
-
-      if (eventType === 'highPriorityDemand') {
+      if (demand.priority === 'alta') {
         highPriorityDemandDays.push(demandDate);
       } else {
         demandDays.push(demandDate);
@@ -64,55 +35,26 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
       if (vacation.status === 'cancelado') return;
       let currentDate = parseISO(vacation.startDate);
       const endDate = parseISO(vacation.endDate);
-      
-      if (!isValid(currentDate) || !isValid(endDate)) return;
 
       while (currentDate <= endDate) {
         const day = startOfDay(currentDate);
-        const dateKey = day.toISOString();
-        if (!eventsMap.has(dateKey)) eventsMap.set(dateKey, []);
-        
-        if (!eventsMap.get(dateKey)?.some(e => e.id === vacation.id)) {
-          eventsMap.get(dateKey)?.push({
-            id: vacation.id,
-            title: `${vacation.employeeName} - ${vacation.type}`,
-            type: 'vacation',
-            date: new Date(day),
-          });
-        }
-        
         if (!vacationDays.some(d => isSameDay(d, day))) {
             vacationDays.push(day);
         }
-
         currentDate.setDate(currentDate.getDate() + 1);
       }
     });
     
-    const allModifiers = {
+    return {
         demand: demandDays,
         highPriorityDemand: highPriorityDemandDays,
         vacation: vacationDays,
     };
-
-    return { eventsByDate: eventsMap, modifiers: allModifiers };
   }, [demands, vacations]);
 
   const goToToday = () => {
     setCurrentMonth(new Date());
-    setPopoverDate(null);
   };
-  
-  const handleDayInteraction = (day: Date, modifiers: any) => {
-    const dayKey = startOfDay(day).toISOString();
-    if (eventsByDate.has(dayKey)) {
-        setPopoverDate(day);
-    } else {
-        setPopoverDate(null);
-    }
-  };
-
-  const dayEvents = popoverDate ? eventsByDate.get(startOfDay(popoverDate).toISOString()) || [] : [];
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -130,39 +72,18 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
           <Button onClick={goToToday} variant="outline">Hoje</Button>
         </CardHeader>
         <CardContent className="p-0 sm:p-0 flex justify-center">
-             <Popover open={!!popoverDate} onOpenChange={(isOpen) => !isOpen && setPopoverDate(null)}>
-                <PopoverTrigger asChild>
-                    <div />
-                </PopoverTrigger>
-                <Calendar
-                    variant="full"
-                    month={currentMonth}
-                    onMonthChange={setCurrentMonth}
-                    onDayClick={handleDayInteraction}
-                    onDayMouseEnter={handleDayInteraction}
-                    className="p-0"
-                    modifiers={modifiers}
-                    modifiersClassNames={{
-                        demand: 'day-with-demand',
-                        highPriorityDemand: 'day-with-high-priority-demand',
-                        vacation: 'day-with-vacation'
-                    }}
-                />
-                <PopoverContent className="w-auto p-2 space-y-2 z-10" align="start">
-                  <h4 className="font-medium text-center text-sm">
-                    Eventos em {popoverDate ? format(popoverDate, 'PPP', { locale: ptBR }) : ''}
-                  </h4>
-                  <div className="grid gap-1">
-                    {dayEvents.map(event => (
-                      <div key={event.id} className="text-xs">
-                        {event.type === 'vacation' && <Badge variant="default" className="bg-blue-500 hover:bg-blue-600"><Plane className="h-3 w-3 mr-1" />{event.title}</Badge>}
-                        {event.type === 'highPriorityDemand' && <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />{event.title}</Badge>}
-                        {event.type === 'demand' && <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-600"><Briefcase className="h-3 w-3 mr-1" />{event.title}</Badge>}
-                      </div>
-                    ))}
-                  </div>
-                </PopoverContent>
-             </Popover>
+            <Calendar
+                variant="full"
+                month={currentMonth}
+                onMonthChange={setCurrentMonth}
+                className="p-0"
+                modifiers={modifiers}
+                modifiersClassNames={{
+                    demand: 'day-with-demand',
+                    highPriorityDemand: 'day-with-high-priority-demand',
+                    vacation: 'day-with-vacation'
+                }}
+            />
         </CardContent>
       </Card>
       <div className="lg:col-span-1">
@@ -172,15 +93,21 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
+              <div className="h-4 w-4 rounded-full flex-shrink-0 flex items-center justify-center">
+                <Plane className="h-4 w-4 text-blue-500" />
+              </div>
               <span className="text-sm">Dia de Afastamento</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="h-2 w-2 rounded-full bg-orange-500 flex-shrink-0" />
+              <div className="h-4 w-4 rounded-full flex-shrink-0 flex items-center justify-center">
+                <Briefcase className="h-4 w-4 text-orange-500" />
+              </div>
               <span className="text-sm">Entrega de Demanda</span>
             </div>
              <div className="flex items-center gap-3">
-              <div className="h-2 w-2 rounded-full bg-destructive flex-shrink-0" />
+              <div className="h-4 w-4 rounded-full flex-shrink-0 flex items-center justify-center">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              </div>
               <span className="text-sm">Demanda (Alta Prioridade)</span>
             </div>
           </CardContent>
