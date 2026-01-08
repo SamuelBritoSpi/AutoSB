@@ -3,7 +3,7 @@
 // Não deve ser importado em código do lado do servidor (como fluxos Genkit ou rotas de API).
 
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getFirestore, enableIndexedDbPersistence, type Firestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, persistentLocalCache, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { getAuth, type Auth } from "firebase/auth";
 import { getMessaging, type Messaging } from "firebase/messaging";
@@ -79,24 +79,25 @@ export function getAuthInstance(): Auth {
 
 export function getDbInstance(): Firestore {
     if (!db) {
+        const firebaseApp = getFirebaseApp();
         try {
-            db = getFirestore(getFirebaseApp());
-            try {
-                enableIndexedDbPersistence(db);
-            } catch (err: any) {
-                if (err.code === 'failed-precondition') {
-                    console.warn("Persistência do Firestore falhou: múltiplas abas abertas.");
-                } else if (err.code === 'unimplemented') {
-                    console.warn("Persistência do Firestore não suportada neste navegador.");
-                }
+            // Usa initializeFirestore com configurações de cache
+            db = initializeFirestore(firebaseApp, {
+                localCache: persistentLocalCache({})
+            });
+        } catch (err: any) {
+            if (err.code === 'failed-precondition') {
+                console.warn("Persistência do Firestore falhou: múltiplas abas abertas. Usando fallback para cache em memória.");
+            } else if (err.code === 'unimplemented') {
+                console.warn("Persistência do Firestore não suportada neste navegador. Usando fallback para cache em memória.");
             }
-        } catch (error) {
-            console.error("Falha ao inicializar o Firestore:", error);
-            throw error;
+            // Fallback para getFirestore padrão (cache em memória) se a persistência falhar
+            db = getFirestore(firebaseApp);
         }
     }
     return db;
 }
+
 
 export function getStorageInstance(): FirebaseStorage {
     if (!storage) {
