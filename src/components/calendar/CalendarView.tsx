@@ -73,7 +73,6 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
         </CardHeader>
         <CardContent className="p-0 sm:p-0 flex justify-center">
             <Calendar
-                variant="full"
                 month={currentMonth}
                 onMonthChange={setCurrentMonth}
                 className="p-0"
