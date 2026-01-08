@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '../ui/badge';
 import { Calendar as CalendarIcon, Briefcase, Plane, AlertTriangle } from 'lucide-react';
-import type { Modifiers } from 'react-day-picker';
+import type { DayProps, Modifiers } from 'react-day-picker';
+import { cn } from '@/lib/utils';
 
 type CalendarEventType = 'demand' | 'vacation' | 'highPriorityDemand';
 
@@ -30,12 +31,10 @@ interface CalendarViewProps {
 export default function CalendarView({ demands, vacations }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(undefined);
+  const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
 
-  const { eventsByDate, demandDays, vacationDays, highPriorityDemandDays } = useMemo(() => {
+  const { eventsByDate } = useMemo(() => {
     const eventsMap = new Map<string, CalendarEvent[]>();
-    const demandDates: Date[] = [];
-    const vacationDates: Date[] = [];
-    const highPriorityDates: Date[] = [];
 
     demands.forEach(demand => {
       const demandDate = parseISO(demand.dueDate);
@@ -54,12 +53,6 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
         type: eventType,
         date: demandDate,
       });
-
-      if (demand.priority === 'alta') {
-        highPriorityDates.push(demandDate);
-      } else {
-        demandDates.push(demandDate);
-      }
     });
 
     vacations.forEach(vacation => {
@@ -82,72 +75,87 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
             date: new Date(currentDate),
           });
         }
-        vacationDates.push(new Date(currentDate));
         currentDate.setDate(currentDate.getDate() + 1);
       }
     });
 
-    return { eventsByDate: eventsMap, demandDays: demandDates, vacationDays: vacationDates, highPriorityDemandDays: highPriorityDates };
+    return { eventsByDate: eventsMap };
   }, [demands, vacations]);
-
-  const modifiers: Modifiers = {
-    demand: demandDays,
-    vacation: vacationDays,
-    highPriorityDemand: highPriorityDemandDays,
-  };
-
-  const modifiersClassNames = {
-    demand: 'day-with-demand',
-    vacation: 'day-with-vacation',
-    highPriorityDemand: 'day-with-high-priority-demand',
-  };
-
-  const selectedDayEvents = selectedDay ? eventsByDate.get(startOfDay(selectedDay).toISOString()) || [] : [];
-
-  const handleDayClick = (day: Date, modifiers: Modifiers) => {
-    if (modifiers.demand || modifiers.vacation || modifiers.highPriorityDemand) {
-      setSelectedDay(day);
-    } else {
-      setSelectedDay(undefined);
-    }
-  };
 
   const goToToday = () => {
     setCurrentMonth(new Date());
     setSelectedDay(undefined);
   };
   
-  const footer = useMemo(() => {
-    if(!selectedDay) return <p className="text-sm text-center text-muted-foreground p-2">Selecione um dia para ver os eventos.</p>;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-    const getEventBadge = (event: CalendarEvent) => {
-        switch(event.type) {
-            case 'vacation':
-                return <Badge variant="default" className="capitalize w-full justify-start text-left whitespace-normal h-auto bg-blue-500 hover:bg-blue-600"><Plane className="h-3 w-3 mr-1 flex-shrink-0" /><span>{event.title}</span></Badge>;
-            case 'highPriorityDemand':
-                return <Badge variant="destructive" className="capitalize w-full justify-start text-left whitespace-normal h-auto"><AlertTriangle className="h-3 w-3 mr-1 flex-shrink-0" /><span>{event.title}</span></Badge>;
-            case 'demand':
-            default:
-                return <Badge variant="destructive" className="capitalize w-full justify-start text-left whitespace-normal h-auto bg-orange-500 hover:bg-orange-600"><Briefcase className="h-3 w-3 mr-1 flex-shrink-0" /><span>{event.title}</span></Badge>;
-        }
+  function Day({ date, displayMonth }: DayProps) {
+    if (date.getMonth() !== displayMonth.getMonth()) {
+      return <div />;
     }
-
+  
+    const dateKey = startOfDay(date).toISOString();
+    const dayEvents = eventsByDate.get(dateKey) || [];
+    const eventTypes = new Set(dayEvents.map(e => e.type));
+  
     return (
-      <div className="p-2 space-y-2">
-        <h4 className="font-medium text-center">
-            Eventos em {format(selectedDay, 'PPP', { locale: ptBR })}
-        </h4>
-        <div className="grid gap-2">
-            {selectedDayEvents.length > 0 ? selectedDayEvents.map(event => (
-              <div key={`${event.id}-${event.type}`} className="text-sm">
-                {getEventBadge(event)}
-              </div>
-            )) : <p className="text-sm text-muted-foreground text-center">Nenhum evento neste dia.</p>}
-        </div>
+      <div className="relative w-full h-full flex flex-col items-center justify-center">
+        <span className="z-10">{format(date, 'd')}</span>
+        {eventTypes.size > 0 && (
+          <div className="absolute bottom-1 flex items-center justify-center gap-1">
+            {eventTypes.has('highPriorityDemand') && <AlertTriangle className="h-3 w-3 text-destructive" />}
+            {eventTypes.has('demand') && <Briefcase className="h-3 w-3 text-orange-500" />}
+            {eventTypes.has('vacation') && <Plane className="h-3 w-3 text-blue-500" />}
+          </div>
+        )}
       </div>
     );
-  }, [selectedDay, selectedDayEvents]);
+  }
 
+  const PopoverDay = (dayProps: DayProps) => {
+    const { date } = dayProps;
+    const validDate = date;
+    if (!isValid(validDate)) return <div />;
+
+    const dateKey = startOfDay(validDate).toISOString();
+    const hasEvents = eventsByDate.has(dateKey);
+
+    return (
+      <Popover open={!isMobile && hoveredDate ? isSameDay(hoveredDate, validDate) : undefined}>
+        <PopoverTrigger asChild>
+          <div
+            onMouseEnter={() => !isMobile && hasEvents && setHoveredDate(validDate)}
+            onMouseLeave={() => !isMobile && setHoveredDate(null)}
+            onClick={() => {
+              if (isMobile && hasEvents) {
+                setSelectedDay(selectedDay && isSameDay(selectedDay, validDate) ? undefined : validDate);
+              } else if (!isMobile) {
+                setSelectedDay(validDate);
+              }
+            }}
+            className="h-full w-full flex items-center justify-center relative cursor-pointer"
+          >
+            <Day {...dayProps} />
+          </div>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-2 space-y-2" align="center">
+          <h4 className="font-medium text-center text-sm">
+            Eventos em {format(validDate, 'PPP', { locale: ptBR })}
+          </h4>
+          <div className="grid gap-1">
+            {(eventsByDate.get(dateKey) || []).map(event => (
+              <div key={event.id} className="text-xs">
+                {event.type === 'vacation' && <Badge variant="default" className="bg-blue-500 hover:bg-blue-600"><Plane className="h-3 w-3 mr-1" />{event.title}</Badge>}
+                {event.type === 'highPriorityDemand' && <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />{event.title}</Badge>}
+                {event.type === 'demand' && <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-600"><Briefcase className="h-3 w-3 mr-1" />{event.title}</Badge>}
+              </div>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+  
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <Card className="lg:col-span-3 shadow-lg">
@@ -165,15 +173,13 @@ export default function CalendarView({ demands, vacations }: CalendarViewProps) 
         </CardHeader>
         <CardContent className="p-0 sm:p-0 flex justify-center">
             <Calendar
+              variant="full"
               mode="single"
               selected={selectedDay}
-              onDayClick={handleDayClick}
               month={currentMonth}
               onMonthChange={setCurrentMonth}
-              modifiers={modifiers}
-              modifiersClassNames={modifiersClassNames}
-              footer={footer}
               className="p-0"
+              components={{ Day: PopoverDay }}
             />
         </CardContent>
       </Card>
