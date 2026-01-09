@@ -168,7 +168,7 @@ export default function MedicalCertificateForm({ employeeId, onAddCertificate }:
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date > new Date()}
+                      disabled={{ after: new Date() }}
                       initialFocus
                       locale={ptBR}
                     />

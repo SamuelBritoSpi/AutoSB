@@ -207,7 +207,7 @@ export default function JustifiedAbsenceForm({ onAddAbsence, existingAbsence, on
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < (form.getValues("startDate") || new Date(new Date().setHours(0,0,0,0)))}
+                      disabled={{ before: form.getValues("startDate") || new Date() }}
                       initialFocus
                       locale={ptBR}
                     />
