@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -11,9 +12,10 @@ import EmployeeForm from '@/components/employees/EmployeeForm';
 import EmployeeList from '@/components/employees/EmployeeList';
 import DashboardTab from '@/components/dashboard/DashboardTab';
 import CardManagementPage from '@/components/cards/CardManagementPage';
-import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, Card } from '@/lib/types';
+import UniformManagementPage from '@/components/uniforms/UniformManagementPage';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, Card, Uniform, School } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList, FileText, CreditCard } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList, FileText, CreditCard, Shirt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -42,6 +44,11 @@ import {
   addCard as addDbCard,
   updateCard as updateDbCard,
   deleteCard as deleteDbCard,
+  addUniform as addDbUniform,
+  updateUniform as updateDbUniform,
+  deleteUniform as deleteDbUniform,
+  addSchool as addDbSchool,
+  getSchools as getDbSchools,
   getAllData,
   getDemandStatuses,
 } from '@/lib/idb';
@@ -58,12 +65,10 @@ const FIXED_STATUSES: Record<string, Omit<DemandStatus, 'id'>> = {
 
 
 // --- Initialization Logic with Lock ---
-// This lock prevents the initialization from running multiple times in React's strict mode
 let isInitializing = false;
 
 async function ensureFixedStatuses(): Promise<DemandStatus[]> {
     if (isInitializing) {
-        // If another initialization is already running, just fetch the latest statuses.
         return getDemandStatuses();
     }
     isInitializing = true;
@@ -80,16 +85,12 @@ async function ensureFixedStatuses(): Promise<DemandStatus[]> {
         }
 
         if (statusesToAdd.length > 0) {
-            // Add only the missing statuses to the database
             await Promise.all(statusesToAdd.map(statusData => addDbDemandStatus(statusData)));
-            // Fetch all statuses again to get a fresh list with correct IDs
             return getDemandStatuses();
         }
 
-        // If no statuses were added, return the ones we already fetched
         return currentStatuses;
     } finally {
-        // Release the lock
         isInitializing = false;
     }
 }
@@ -105,6 +106,8 @@ export default function GestaoFeriasPage() {
   const [certificates, setCertificates] = useState<MedicalCertificate[]>([]);
   const [demandStatuses, setDemandStatuses] = useState<DemandStatus[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
+  const [uniforms, setUniforms] = useState<Uniform[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
 
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -115,11 +118,9 @@ export default function GestaoFeriasPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Run the status check first, protected by the lock
         const finalStatuses = await ensureFixedStatuses();
         setDemandStatuses(finalStatuses.sort((a, b) => a.order - b.order));
         
-        // Load the rest of the data
         const initialData = await getAllData();
         setDemands(initialData.demands);
         setVacations(initialData.vacations);
@@ -127,10 +128,9 @@ export default function GestaoFeriasPage() {
         setEmployees(initialData.employees);
         setCertificates(initialData.certificates);
         setCards(initialData.cards || []);
+        setUniforms(initialData.uniforms || []);
+        setSchools(initialData.schools || []);
 
-        // This check is important: if ensureFixedStatuses ran and fetched new data,
-        // we might have a slightly newer list than what getAllData returned.
-        // We re-set the state to be sure we have the absolute latest.
         const freshStatuses = await getDemandStatuses();
         setDemandStatuses(freshStatuses.sort((a, b) => a.order - b.order));
 
@@ -153,6 +153,7 @@ export default function GestaoFeriasPage() {
     { value: "absences", label: "Faltas Justificadas", icon: <FileText className="mr-2 h-5 w-5" /> },
     { value: "employees", label: "Funcionários/Atestados", icon: <Users className="mr-2 h-5 w-5" /> },
     { value: "cards", label: "Cartões", icon: <CreditCard className="mr-2 h-5 w-5" /> },
+    { value: "uniforms", label: "Fardamento", icon: <Shirt className="mr-2 h-5 w-5" /> },
   ];
 
   const handleAddDemand = (demandData: Omit<Demand, 'id'>) => {
@@ -213,7 +214,6 @@ export default function GestaoFeriasPage() {
       handleUpdateDemand(updatedDemand);
       toast({ title: "Status Atualizado", description: `Status da demanda alterado.`});
 
-      // Send notification if finalized
       const finalStatus = demandStatuses.find(s => s.label === "Finalizado");
       if (status === finalStatus?.label) {
         const owner = employees.find(e => e.id === updatedDemand.ownerId);
@@ -513,6 +513,61 @@ export default function GestaoFeriasPage() {
         });
     };
 
+    // --- Uniform Handlers ---
+    const handleAddUniform = (uniformData: Omit<Uniform, 'id'>) => {
+        const tempId = `temp-uniform-${Date.now()}`;
+        const newUniform: Uniform = { ...uniformData, id: tempId };
+        const originalUniforms = [...uniforms];
+
+        setUniforms(prev => [newUniform, ...prev].sort((a, b) => new Date(b.arrivalDate).getTime() - new Date(a.arrivalDate).getTime()));
+        toast({ title: "Registro de Fardamento Adicionado", description: "Sincronizando..." });
+
+        addDbUniform(uniformData)
+            .then(savedUniform => {
+                setUniforms(prev => prev.map(u => u.id === tempId ? savedUniform : u));
+            })
+            .catch(error => {
+                console.error("Failed to add uniform record:", error);
+                toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar o registro.' });
+                setUniforms(originalUniforms);
+            });
+    };
+
+    const handleUpdateUniform = (updatedUniform: Uniform) => {
+        const originalUniforms = [...uniforms];
+        setUniforms(prev => prev.map(u => u.id === updatedUniform.id ? updatedUniform : u));
+
+        updateDbUniform(updatedUniform).catch(error => {
+            console.error("Failed to update uniform record:", error);
+            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível atualizar o registro.' });
+            setUniforms(originalUniforms);
+        });
+    };
+
+    const handleDeleteUniform = (id: string) => {
+        const originalUniforms = [...uniforms];
+        setUniforms(prev => prev.filter(u => u.id !== id));
+        toast({ title: "Registro Excluído" });
+
+        deleteDbUniform(id).catch(error => {
+            console.error("Failed to delete uniform record:", error);
+            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível excluir o registro.' });
+            setUniforms(originalUniforms);
+        });
+    };
+
+    const handleAddSchool = async (name: string) => {
+        try {
+            const newSchool = await addDbSchool({ name });
+            setSchools(prev => [...prev, newSchool].sort((a, b) => a.name.localeCompare(b.name)));
+            toast({ title: "Colégio Adicionado", description: `"${name}" agora está disponível na lista.` });
+            return newSchool;
+        } catch (error) {
+            toast({ variant: 'destructive', title: "Erro", description: "Não foi possível adicionar o colégio." });
+            throw error;
+        }
+    };
+
 
   if (!dataLoaded) {
     return (
@@ -710,9 +765,18 @@ export default function GestaoFeriasPage() {
           />
         </TabsContent>
 
+        <TabsContent value="uniforms" className={cn(containerClass, "space-y-6 mt-6")}>
+          <UniformManagementPage
+            uniforms={uniforms}
+            schools={schools}
+            onAddUniform={handleAddUniform}
+            onUpdateUniform={handleUpdateUniform}
+            onDeleteUniform={handleDeleteUniform}
+            onAddSchool={handleAddSchool}
+          />
+        </TabsContent>
+
       </Tabs>
     </div>
   );
 }
-
-    

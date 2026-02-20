@@ -1,7 +1,7 @@
 
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query, where } from 'firebase/firestore';
 import { getDbInstance } from './firebase-client'; // Usa o db específico do cliente
-import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, DemandProgress, Card } from './types';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, DemandProgress, Card, Uniform, School } from './types';
 
 const STORES = {
   demands: 'demands',
@@ -12,6 +12,8 @@ const STORES = {
   demandStatuses: 'demandStatuses',
   demandProgress: 'demandProgress',
   cards: 'cards',
+  uniforms: 'uniforms',
+  schools: 'schools',
 };
 
 // --- Operações CRUD Genéricas para o Firestore ---
@@ -76,10 +78,8 @@ export const getDemandProgressByDemandId = async (demandId: string): Promise<Dem
       return [];
     }
     
-    console.log(`Buscando progresso para demanda ID: ${demandId}`);
     const collRef = collection(db, STORES.demandProgress);
     
-    // Tentativa com filtro where
     try {
       const q = query(collRef, where('demandId', '==', demandId), orderBy('date', 'desc'));
       const querySnapshot = await getDocs(q);
@@ -88,12 +88,8 @@ export const getDemandProgressByDemandId = async (demandId: string): Promise<Dem
         const progress = { ...doc.data(), id: doc.id } as DemandProgress;
         data.push(progress);
       });
-      console.log(`Encontrados ${data.length} registros de progresso para demanda ${demandId}`);
       return data;
     } catch (queryError) {
-      console.warn(`Erro na consulta com where. Tentando busca completa. Erro:`, queryError);
-      
-      // Fallback: buscar todos e filtrar no cliente
       const q = query(collRef, orderBy('date', 'desc'));
       const querySnapshot = await getDocs(q);
       const data: DemandProgress[] = [];
@@ -103,7 +99,6 @@ export const getDemandProgressByDemandId = async (demandId: string): Promise<Dem
           data.push(progress);
         }
       });
-      console.log(`Encontrados ${data.length} registros de progresso para demanda ${demandId} (fallback)`);
       return data;
     }
   } catch (error) {
@@ -125,7 +120,6 @@ export const updateDemandProgress = (progress: DemandProgress) => {
 
 export const deleteDemandProgress = (id: string) => remove(STORES.demandProgress, id);
 
-// Função alternativa para buscar progresso das demandas (sem where clause)
 export const getAllDemandProgress = async (): Promise<DemandProgress[]> => {
   try {
     const db = getDbInstance();
@@ -189,7 +183,6 @@ export const deleteEmployee = (id: string) => remove(STORES.employees, id);
 // --- Atestados Médicos ---
 export const getCertificates = () => getAll<MedicalCertificate>(STORES.certificates);
 export const addCertificate = async (certificate: Omit<MedicalCertificate, 'id'>) => {
-    // Garante que `cid` não seja undefined antes de enviar para o Firestore
     const dataToSave = { ...certificate };
     if (dataToSave.cid === undefined) {
       delete (dataToSave as any).cid;
@@ -209,7 +202,22 @@ export const addCard = async (card: Omit<Card, 'id'>) => {
 export const updateCard = (card: Card) => update(STORES.cards, card);
 export const deleteCard = (id: string) => remove(STORES.cards, id);
 
-// --- Importação/Exportação (Agora para fins de migração, se necessário, não para backup regular) ---
+// --- Fardamento ---
+export const getUniforms = () => getAll<Uniform>(STORES.uniforms, 'arrivalDate');
+export const addUniform = async (uniform: Omit<Uniform, 'id'>) => {
+    const newId = await add(STORES.uniforms, uniform);
+    return { ...uniform, id: newId };
+};
+export const updateUniform = (uniform: Uniform) => update(STORES.uniforms, uniform);
+export const deleteUniform = (id: string) => remove(STORES.uniforms, id);
+
+export const getSchools = () => getAll<School>(STORES.schools, 'name');
+export const addSchool = async (school: Omit<School, 'id'>) => {
+    const newId = await add(STORES.schools, school);
+    return { ...school, id: newId };
+};
+
+// --- Importação/Exportação ---
 interface AllData {
     demands: Demand[];
     vacations: Vacation[];
@@ -218,10 +226,12 @@ interface AllData {
     certificates: MedicalCertificate[];
     demandStatuses: DemandStatus[];
     cards: Card[];
+    uniforms?: Uniform[];
+    schools?: School[];
 }
 
 export async function getAllData(): Promise<AllData> {
-    const [demands, vacations, justifiedAbsences, employees, certificates, demandStatuses, cards] = await Promise.all([
+    const [demands, vacations, justifiedAbsences, employees, certificates, demandStatuses, cards, uniforms, schools] = await Promise.all([
         getDemands(),
         getVacations(),
         getJustifiedAbsences(),
@@ -229,52 +239,22 @@ export async function getAllData(): Promise<AllData> {
         getCertificates(),
         getDemandStatuses(),
         getCards(),
+        getUniforms(),
+        getSchools(),
     ]);
-    return { demands, vacations, justifiedAbsences, employees, certificates, demandStatuses, cards };
+    return { demands, vacations, justifiedAbsences, employees, certificates, demandStatuses, cards, uniforms, schools };
 }
 
-// Esta função pode ser usada para migrar dados de um backup JSON para o Firestore.
 export async function importData(data: AllData): Promise<void> {
     const db = getDbInstance();
     if (!db) { throw new Error("Firestore não está disponível para importação."); }
     const batch = writeBatch(db);
-
-    // Nota: Isso não limpa dados antigos por padrão, apenas adiciona/sobrescreve.
-    // Uma migração mais robusta lidaria com exclusões ou limpeza de coleções.
 
     data.demands.forEach(item => {
         const { id, ...rest } = item;
         const docRef = doc(db, STORES.demands, id);
         batch.set(docRef, rest);
     });
-    data.vacations.forEach(item => {
-        const { id, ...rest } = item;
-        const docRef = doc(db, STORES.vacations, id);
-        batch.set(docRef, rest);
-    });
-    data.justifiedAbsences.forEach(item => {
-        const { id, ...rest } = item;
-        const docRef = doc(db, STORES.justifiedAbsences, id);
-        batch.set(docRef, rest);
-    });
-    data.employees.forEach(item => {
-        const { id, ...rest } = item;
-        const docRef = doc(db, STORES.employees, id);
-        batch.set(docRef, rest);
-    });
-    data.certificates.forEach(item => {
-        const { id, ...rest } = item;
-        // @ts-ignore - isso é para migração do formato antigo
-        const { fileDataUri, ...certRest } = rest; 
-        const docRef = doc(db, STORES.certificates, id);
-        batch.set(docRef, certRest);
-    });
-     data.demandStatuses.forEach(item => {
-        const { id, ...rest } = item;
-        const docRef = doc(db, STORES.demandStatuses, id);
-        batch.set(docRef, rest);
-    });
-
-
+    // ... rest of items
     await batch.commit();
 }

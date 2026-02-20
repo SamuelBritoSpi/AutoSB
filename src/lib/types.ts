@@ -1,5 +1,4 @@
 
-
 export type DemandPriority = 'alta' | 'media' | 'baixa';
 
 // O DemandStatus agora é uma string simples, já que os valores virão do banco.
@@ -94,6 +93,30 @@ export interface Card {
   status: CardStatus;
   arrivalDate: string; // Data de chegada do cartão
   deliveryDate?: string | null; // Data de entrega ao destinatário
+}
+
+// --- Fardamento ---
+
+export interface School {
+  id: string;
+  name: string;
+}
+
+export interface UniformItem {
+  name: string;
+  quantity: number;
+  size: string;
+}
+
+export interface Uniform {
+  id: string;
+  employeeName: string;
+  schoolId: string;
+  schoolName: string; // Denormalizado
+  arrivalDate: string;
+  deliveryDate?: string | null;
+  status: 'pending' | 'delivered';
+  items: UniformItem[];
 }
 
 
