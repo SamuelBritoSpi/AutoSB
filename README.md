@@ -22,7 +22,7 @@ Construída com as tecnologias mais recentes, a aplicação utiliza Firebase par
 ### 1. Gestão de Demandas
 - **Criação e Edição**: Registre novas tarefas com título, descrição, prioridade (alta, média, baixa) e data de entrega.
 - **Assistência com IA**: Utilize a inteligência artificial para **corrigir e aprimorar** os textos de títulos e descrições automaticamente.
-- **Controle de Status Customizável**: Acompanhe o progresso de cada demanda com um fluxo de trabalho personalizável (`Aberto`, `Aguardando Resposta`, `Finalizado`, etc.).
+- **Controle de Status Customizável**: Acompanhe o progresso de cada demanda com um fluxo trabalho personalizável (`Aberto`, `Aguardando Resposta`, `Finalizado`, etc.).
 - **Histórico de Andamento**: Adicione e visualize um histórico detalhado de todas as atualizações e passos tomados para cada demanda.
 - **Filtros e Ordenação**: Organize sua lista de demandas por status, data ou prioridade para focar no que é mais importante.
 
