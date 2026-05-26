@@ -725,7 +725,7 @@ export default function GestaoFeriasPage() {
             absences={justifiedAbsences} 
             employees={employees} 
             onDeleteAbsence={handleDeleteJustifiedAbsence}
-            updateAbsence={handleUpdateJustifiedAbsence}
+            onUpdateAbsence={handleUpdateJustifiedAbsence}
             onAddAbsence={handleAddJustifiedAbsence}
           />
         </TabsContent>
