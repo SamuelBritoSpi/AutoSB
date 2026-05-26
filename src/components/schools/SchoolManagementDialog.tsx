@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, Loader2, Building, Search, X } from 'lucide-react';
+import { Trash2, Loader2, Building, Search, X, School as SchoolIcon } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import type { School } from '@/lib/types';
+import { Badge } from '../ui/badge';
 
 interface SchoolManagementDialogProps {
   open: boolean;
@@ -37,7 +38,7 @@ export default function SchoolManagementDialog({
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir este colégio? Isso não afetará registros de cartões ou fardamentos já salvos, mas removerá a opção da lista de seleção.")) {
+    if (!window.confirm("Tem certeza que deseja excluir este colégio? Isso removerá a opção da lista de seleção tanto em Cartões quanto em Fardamento. (Registros já salvos não serão afetados)")) {
       return;
     }
     
@@ -53,12 +54,17 @@ export default function SchoolManagementDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Building className="h-5 w-5 text-primary" />
-            Gerenciar Colégios
-          </DialogTitle>
+          <div className="flex items-center justify-between pr-6">
+            <DialogTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5 text-primary" />
+                Gerenciar Colégios
+            </DialogTitle>
+            <Badge variant="secondary" className="font-mono">
+                {schools.length} total
+            </Badge>
+          </div>
           <DialogDescription>
-            Visualize ou exclua os colégios cadastrados no sistema.
+            Lista única compartilhada entre Cartões e Fardamento.
           </DialogDescription>
         </DialogHeader>
 
@@ -81,7 +87,10 @@ export default function SchoolManagementDialog({
                     key={school.id}
                     className="flex items-center justify-between p-2 rounded-md hover:bg-accent group"
                   >
-                    <span className="text-sm font-medium truncate pr-4">{school.name}</span>
+                    <div className="flex items-center gap-2 truncate pr-4">
+                        <SchoolIcon className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <span className="text-sm font-medium truncate">{school.name}</span>
+                    </div>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -109,7 +118,7 @@ export default function SchoolManagementDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
             Fechar
           </Button>
         </DialogFooter>
