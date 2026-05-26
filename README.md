@@ -27,7 +27,7 @@ Construída com as tecnologias mais recentes, a aplicação utiliza Firebase par
 - **Filtros e Ordenação**: Organize sua lista de demandas por status, data ou prioridade para focar no que é mais importante.
 
 ### 2. Gestão de Afastamentos (Férias e Licenças)
-- **Registro Simplificado**: Adicione rapidamente os períodos de afastamento dos funcionários (férias, licença prêmio, médica, etc...).
+- **Registro Simplificado**: Adicione rapidamente os períodos de afastamento dos funcionários (férias, licença prêmio, médica, etc..).
 - **Visão Inteligente**: O card de cada funcionário exibe o afastamento mais relevante (o que está acontecendo hoje, o próximo agendado ou o último ocorrido).
 - **Histórico Completo**: Acesse um histórico detalhado de todos os afastamentos de um funcionário, com opções para gerenciar cada registro.
 - **Gerenciamento de Status**: Altere o status de cada afastamento de forma clara (`Planejado`, `Usufruído`, `Não Usufruído`).
