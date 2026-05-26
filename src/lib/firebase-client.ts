@@ -1,3 +1,4 @@
+
 // @/lib/firebase-client.ts
 // Este arquivo é designado para a inicialização e uso do Firebase no lado do cliente.
 // Não deve ser importado em código do lado do servidor (como fluxos Genkit ou rotas de API).
@@ -8,7 +9,7 @@ import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { getAuth, type Auth } from "firebase/auth";
 import { getMessaging, type Messaging } from "firebase/messaging";
 
-// É crucial garantir que essas variáveis sejam carregadas corretamente da Vercel.
+// É crucial garantir que essas variáveis sejam carregadas corretamente da Vercel ou do arquivo .env local.
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -34,23 +35,21 @@ let messaging: Messaging | null = null;
 function getFirebaseApp(): FirebaseApp {
     // Esta verificação é crítica. Se o projectId estiver ausente, as variáveis de ambiente não foram carregadas.
     if (!firebaseConfig.projectId) {
-        // Registra um aviso em vez de lançar um erro para evitar que o aplicativo quebre
-        console.warn("A configuração do Firebase está ausente. Alguns recursos podem não funcionar corretamente. Por favor, configure suas variáveis de ambiente da Vercel.");
-        // Retorna um aplicativo simulado ou lança um erro com base no ambiente
-        if (process.env.NODE_ENV === 'development') {
-            throw new Error("A configuração do Firebase está ausente. Certifique-se de ter configurado suas variáveis de ambiente corretamente.");
-        }
-        // Em produção, criaremos uma configuração mínima para evitar falhas
-        const fallbackConfig = {
-            apiKey: "fallback",
-            authDomain: "fallback.firebaseapp.com",
-            projectId: "fallback-project",
-            storageBucket: "fallback.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "fallback-app-id"
+        // Registra um erro no console em vez de travar a renderização do React
+        console.error("ERRO DE CONFIGURAÇÃO: As chaves do Firebase não foram encontradas no arquivo .env. Verifique o arquivo .env.example para saber como configurar.");
+        
+        // Retorna uma configuração dummy para que o AuthProvider e outros hooks não quebrem o ciclo do React
+        const mockConfig = {
+            apiKey: "missing",
+            authDomain: "missing.firebaseapp.com",
+            projectId: "missing-project",
+            storageBucket: "missing.appspot.com",
+            messagingSenderId: "000000000",
+            appId: "missing-app-id"
         };
+        
         if (!getApps().length) {
-            app = initializeApp(fallbackConfig);
+            app = initializeApp(mockConfig);
         } else {
             app = getApp();
         }
@@ -118,11 +117,10 @@ export function getMessagingObject(): Messaging | null {
     if (!messaging) {
       try {
         const firebaseApp = getFirebaseApp();
-        // Verifica se o projectId existe e não é o de fallback antes de inicializar o messaging
-        if (firebaseApp.options.projectId && firebaseApp.options.projectId !== 'fallback-project') {
+        // Verifica se o projectId existe e não é o mock antes de inicializar o messaging
+        if (firebaseApp.options.projectId && firebaseApp.options.projectId !== 'missing-project') {
             messaging = getMessaging(firebaseApp);
         } else {
-            console.warn("Firebase App não configurado completamente para mensagens devido a projectId ausente ou de fallback.");
             return null;
         }
       } catch (error) {
