@@ -563,7 +563,6 @@ export default function GestaoFeriasPage() {
         try {
             const newSchool = await addDbSchool({ name });
             setSchools(prev => [...prev, newSchool].sort((a, b) => a.name.localeCompare(b.name)));
-            toast({ title: "Colégio Adicionado", description: `"${name}" agora está disponível na lista.` });
             return newSchool;
         } catch (error) {
             toast({ variant: 'destructive', title: "Erro", description: "Não foi possível adicionar o colégio." });
@@ -800,6 +799,7 @@ export default function GestaoFeriasPage() {
         onOpenChange={setShowSchoolManagement}
         schools={schools}
         onDeleteSchool={handleDeleteSchool}
+        onAddSchool={handleAddSchool}
       />
     </div>
   );
