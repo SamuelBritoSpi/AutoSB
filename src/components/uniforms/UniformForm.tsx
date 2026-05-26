@@ -8,12 +8,13 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, X, Search, Check, Plus, Loader2 } from 'lucide-react';
+import { PlusCircle, X, Search, Check, Plus, Loader2, AlertCircle } from 'lucide-react';
 import type { Uniform, School, UniformItem } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
+import { useToast } from '@/hooks/use-toast';
 
 const itemSchema = z.object({
   name: z.string().min(1, "Nome do item é obrigatório"),
@@ -42,7 +43,37 @@ interface UniformFormProps {
   onClose?: () => void;
 }
 
+/**
+ * Converte uma string para Title Case (Cada Palavra Com Inicial Maiúscula)
+ */
+function toTitleCase(str: string) {
+    return str
+        .toLowerCase()
+        .split(/\s+/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+/**
+ * Gera uma chave de comparação simplificada para detectar duplicatas "fuzzy"
+ */
+function getComparisonKey(name: string) {
+    const noiseWords = [
+        'colegio', 'escola', 'estadual', 'municipal', 'tempo', 'integral', 
+        'ceti', 'de', 'da', 'do', 'das', 'dos', 'e', 'centro', 'educacional'
+    ];
+    
+    return name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+        .split(/\s+/)
+        .filter(word => !noiseWords.includes(word) && word.length > 1)
+        .join('');
+}
+
 export default function UniformForm({ schools, onAddUniform, onAddSchool, onClose }: UniformFormProps) {
+  const { toast } = useToast();
   const [isSchoolPopoverOpen, setIsSchoolPopoverOpen] = useState(false);
   const [isAddingSchool, setIsAddingSchool] = useState(false);
   const [newSchoolName, setNewSchoolName] = useState("");
@@ -68,10 +99,27 @@ export default function UniformForm({ schools, onAddUniform, onAddSchool, onClos
   });
 
   const handleCreateSchool = async () => {
-    if (!newSchoolName.trim()) return;
+    const trimmedName = newSchoolName.trim();
+    if (!trimmedName) return;
+    
+    const formattedName = toTitleCase(trimmedName);
+    const newKey = getComparisonKey(formattedName);
+    
+    // Verifica se já existe um colégio com nome similar
+    const duplicate = schools.find(s => getComparisonKey(s.name) === newKey);
+    
+    if (duplicate) {
+        toast({
+            variant: 'destructive',
+            title: "Colégio já cadastrado",
+            description: `O colégio "${duplicate.name}" já existe e é similar ao que você digitou.`,
+        });
+        return;
+    }
+
     setIsAddingSchool(true);
     try {
-      const created = await onAddSchool(newSchoolName.trim());
+      const created = await onAddSchool(formattedName);
       form.setValue('schoolId', created.id);
       setIsSchoolPopoverOpen(false);
       setNewSchoolName("");
@@ -149,14 +197,17 @@ export default function UniformForm({ schools, onAddUniform, onAddSchool, onClos
                   <PopoverContent className="w-[300px] p-0" align="start">
                     <Command>
                       <CommandInput 
-                        placeholder="Buscar colégio..." 
+                        placeholder="Buscar ou digitar novo..." 
                         value={newSchoolName}
                         onValueChange={setNewSchoolName}
                       />
                       <CommandList>
                         <CommandEmpty>
                           <div className="p-2 space-y-2">
-                            <p className="text-xs text-muted-foreground">Nenhum colégio encontrado.</p>
+                            <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                                <AlertCircle className="h-4 w-4 shrink-0" />
+                                <p>Este colégio não está na lista.</p>
+                            </div>
                             <Button 
                               type="button" 
                               size="sm" 
@@ -165,12 +216,14 @@ export default function UniformForm({ schools, onAddUniform, onAddSchool, onClos
                               disabled={isAddingSchool || !newSchoolName.trim()}
                             >
                               {isAddingSchool ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                              Adicionar "{newSchoolName}"
+                              Cadastrar "{toTitleCase(newSchoolName)}"
                             </Button>
                           </div>
                         </CommandEmpty>
-                        <CommandGroup>
-                          {schools.map((school) => (
+                        <CommandGroup heading="Colégios Cadastrados">
+                          {schools
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            .map((school) => (
                             <CommandItem
                               key={school.id}
                               value={school.name}
