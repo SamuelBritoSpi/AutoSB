@@ -211,11 +211,13 @@ export const addUniform = async (uniform: Omit<Uniform, 'id'>) => {
 export const updateUniform = (uniform: Uniform) => update(STORES.uniforms, uniform);
 export const deleteUniform = (id: string) => remove(STORES.uniforms, id);
 
+// --- Colégios ---
 export const getSchools = () => getAll<School>(STORES.schools, 'name');
 export const addSchool = async (school: Omit<School, 'id'>) => {
     const newId = await add(STORES.schools, school);
     return { ...school, id: newId };
 };
+export const deleteSchool = (id: string) => remove(STORES.schools, id);
 
 // --- Importação/Exportação ---
 interface AllData {

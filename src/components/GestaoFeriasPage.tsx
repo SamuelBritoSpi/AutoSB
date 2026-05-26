@@ -13,6 +13,7 @@ import EmployeeList from '@/components/employees/EmployeeList';
 import DashboardTab from '@/components/dashboard/DashboardTab';
 import CardManagementPage from '@/components/cards/CardManagementPage';
 import UniformManagementPage from '@/components/uniforms/UniformManagementPage';
+import SchoolManagementDialog from '@/components/schools/SchoolManagementDialog';
 import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, Card, Uniform, School } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList, FileText, CreditCard, Shirt } from 'lucide-react';
@@ -48,6 +49,7 @@ import {
   updateUniform as updateDbUniform,
   deleteUniform as deleteDbUniform,
   addSchool as addDbSchool,
+  deleteSchool as deleteDbSchool,
   getSchools as getDbSchools,
   getAllData,
   getDemandStatuses,
@@ -114,6 +116,7 @@ export default function GestaoFeriasPage() {
   const [showDemandForm, setShowDemandForm] = useState(false);
   const [showVacationForm, setShowVacationForm] = useState(false);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
+  const [showSchoolManagement, setShowSchoolManagement] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -568,6 +571,16 @@ export default function GestaoFeriasPage() {
         }
     };
 
+    const handleDeleteSchool = async (id: string) => {
+        try {
+            await deleteDbSchool(id);
+            setSchools(prev => prev.filter(s => s.id !== id));
+            toast({ title: "Colégio Excluído" });
+        } catch (error) {
+            toast({ variant: 'destructive', title: "Erro", description: "Não foi possível excluir o colégio." });
+        }
+    };
+
 
   if (!dataLoaded) {
     return (
@@ -712,7 +725,7 @@ export default function GestaoFeriasPage() {
             absences={justifiedAbsences} 
             employees={employees} 
             onDeleteAbsence={handleDeleteJustifiedAbsence}
-            onUpdateAbsence={handleUpdateJustifiedAbsence}
+            updateAbsence={handleUpdateJustifiedAbsence}
             onAddAbsence={handleAddJustifiedAbsence}
           />
         </TabsContent>
@@ -764,6 +777,7 @@ export default function GestaoFeriasPage() {
             onUpdateCard={handleUpdateCard}
             onDeleteCard={handleDeleteCard}
             onAddSchool={handleAddSchool}
+            onOpenSchoolManagement={() => setShowSchoolManagement(true)}
           />
         </TabsContent>
 
@@ -775,10 +789,18 @@ export default function GestaoFeriasPage() {
             onUpdateUniform={handleUpdateUniform}
             onDeleteUniform={handleDeleteUniform}
             onAddSchool={handleAddSchool}
+            onOpenSchoolManagement={() => setShowSchoolManagement(true)}
           />
         </TabsContent>
 
       </Tabs>
+
+      <SchoolManagementDialog
+        open={showSchoolManagement}
+        onOpenChange={setShowSchoolManagement}
+        schools={schools}
+        onDeleteSchool={handleDeleteSchool}
+      />
     </div>
   );
 }
