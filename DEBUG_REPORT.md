@@ -1,51 +1,33 @@
-# Relatório de Depuração e Segurança - AutoSB
+# 🚨 ALERTA DE SEGURANÇA: Credenciais Expostas
 
-**Data**: 8 de janeiro de 2026  
-**Status**: ⚠️ ALERTA DE SEGURANÇA - REMEDIAÇÃO EM CURSO
+Suas variáveis de ambiente foram detectadas no histórico do GitHub. Siga estes passos imediatamente para proteger sua aplicação.
 
-## 🚨 Incidente de Segurança: Exposição de Credenciais
-O arquivo `.env` foi detectado como tendo sido enviado ao GitHub. Isso expõe suas chaves de API do Firebase e Google AI publicamente.
+## 1. Rotacionar Chaves (MAIS IMPORTANTE)
+Como as chaves foram expostas, elas não são mais seguras.
+1. Vá ao [Console do Firebase](https://console.firebase.google.com/) > Configurações do Projeto > Contas de Serviço > Chaves de API.
+2. Gere uma nova chave e desative a antiga.
+3. Vá ao [Google AI Studio](https://aistudio.google.com/) e gere uma nova `GOOGLE_API_KEY`.
 
-### Ações de Remediação Realizadas
-1.  ✅ **Criação de `.gitignore`**: Configurado para bloquear futuras inclusões de arquivos `.env`.
-2.  ✅ **Criação de `.env.example`**: Modelo de configuração sem dados sensíveis.
+## 2. Limpar o Histórico do Git
+Para remover o arquivo `.env` de todos os seus commits passados, execute no seu terminal local:
 
-### 🛑 Ações OBRIGATÓRIAS do Usuário
-Para garantir a segurança total, você deve realizar estes passos:
-
-#### 1. Rotacionar as Chaves (MAIS IMPORTANTE)
-Simplesmente deletar o arquivo no GitHub **não é suficiente**, pois as chaves ficam no histórico de commits.
-- Vá ao [Console do Firebase](https://console.firebase.google.com/).
-- Vá em Configurações do Projeto > Chaves de API.
-- Gere uma nova chave e desative/remova a antiga.
-- Faça o mesmo para a sua `GOOGLE_API_KEY` no Google AI Studio.
-
-#### 2. Limpar o Histórico do Git
-Para remover o arquivo permanentemente de todos os commits anteriores, execute no seu terminal local:
 ```bash
-# Instale o BFG Repo-Cleaner ou use git filter-branch (exemplo simplificado abaixo)
+# Instale o BFG Repo-Cleaner ou use este comando nativo (mais lento):
 git filter-branch --force --index-filter \
   "git rm --cached --ignore-unmatch .env" \
   --prune-empty --tag-name-filter cat -- --all
 
-# Force o push para o GitHub (Atenção: isso reescreve a história do repositório)
+# Force o push para o GitHub (isso reescreverá a história do repo)
 git push origin --force --all
 ```
 
----
-
-## 🔍 Verificações Gerais da Aplicação
-
-### 1. **TypeScript Check**
-- ✅ **Status**: PASSOU
-
-### 2. **Build Production**
-- ✅ **Status**: PASSOU
-
-### 3. **Variáveis de Ambiente**
-- ⚠️ **ATENÇÃO**: O arquivo `.env` local foi mantido para não quebrar sua visualização, mas **NÃO** o adicione novamente ao Git. Use o `.env.example` como referência.
+## 3. Configurar a Vercel
+Não envie o arquivo `.env` para a Vercel. Em vez disso:
+1. Vá ao painel da Vercel > Seu Projeto > Settings > Environment Variables.
+2. Adicione cada variável listada no `.env.example` manualmente lá.
 
 ---
-
-**Gerado por**: Ferramenta de Segurança Automática  
-**Data**: 8 de janeiro de 2026
+**Status da Remediação**: 
+- `.gitignore` atualizado: ✅
+- `.env.example` criado: ✅
+- Chaves rotacionadas: ⚠️ (Aguardando ação do usuário)
