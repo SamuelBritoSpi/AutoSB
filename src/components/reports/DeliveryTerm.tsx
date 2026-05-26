@@ -25,7 +25,7 @@ export default function DeliveryTerm({ cards }: DeliveryTermProps) {
         <ul style={{ listStyle: 'decimal', paddingLeft: '2rem', marginBottom: '3rem' }}>
           {cards.map(card => (
             <li key={card.id} style={{ marginBottom: '0.5rem' }}>
-              <strong>{card.recipientName}</strong>
+              <strong>{card.recipientName}</strong> {card.schoolName && <span style={{ color: '#666', fontSize: '0.9rem', fontStyle: 'italic' }}> - Colégio: {card.schoolName}</span>}
             </li>
           ))}
         </ul>

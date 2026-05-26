@@ -27,14 +27,15 @@ export default function CardList({ cards, onUpdateCard, onDeleteCard }: CardList
   const [filter, setFilter] = useState('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
-  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isTermDialogOpen, setIsTermDialogOpen] = useState(false);
 
   const filteredCards = useMemo(() => {
     return cards
       .filter(card => {
         const matchesFilter = filter === 'all' || card.status === filter;
-        const matchesSearch = card.recipientName.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = 
+          card.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (card.schoolName && card.schoolName.toLowerCase().includes(searchTerm.toLowerCase()));
         return matchesFilter && matchesSearch;
       })
       .sort((a, b) => new Date(a.arrivalDate).getTime() - new Date(b.arrivalDate).getTime());
@@ -93,8 +94,8 @@ export default function CardList({ cards, onUpdateCard, onDeleteCard }: CardList
           <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome..."
-              className="pl-10 w-full"
+              placeholder="Buscar por nome ou colégio..."
+              className="pl-10 w-full sm:w-[300px]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -109,12 +110,12 @@ export default function CardList({ cards, onUpdateCard, onDeleteCard }: CardList
             <Button onClick={() => handleGenerateReport(selectedCards)} className="w-full sm:w-auto">
                 <FileText className="mr-2 h-4 w-4" /> Gerar Relatório
             </Button>
-            <Button onClick={handleGenerateDeliveryTerm} className="w-full sm:w-auto">
+            <Button onClick={handleGenerateDeliveryTerm} className="w-full sm:w-auto" variant="secondary">
                 <Send className="mr-2 h-4 w-4" /> Gerar Termo de Entrega
             </Button>
         </div>
 
-        <div className="rounded-md border">
+        <div className="rounded-md border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
@@ -130,10 +131,10 @@ export default function CardList({ cards, onUpdateCard, onDeleteCard }: CardList
                     }}
                   />
                 </TableHead>
-                <TableHead>Destinatário</TableHead>
+                <TableHead>Destinatário / Colégio</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Data de Chegada</TableHead>
-                <TableHead>Data de Entrega</TableHead>
+                <TableHead>Chegada</TableHead>
+                <TableHead>Entrega</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -153,17 +154,20 @@ export default function CardList({ cards, onUpdateCard, onDeleteCard }: CardList
                         }}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{card.recipientName}</TableCell>
+                    <TableCell>
+                      <p className="font-medium">{card.recipientName}</p>
+                      <p className="text-xs text-muted-foreground">{card.schoolName || 'Não Informado'}</p>
+                    </TableCell>
                     <TableCell>
                       {card.status === 'pending' ? (
-                        <span className="flex items-center gap-2 text-yellow-600"><Clock className="h-4 w-4" /> Pendente</span>
+                        <span className="flex items-center gap-2 text-yellow-600 text-xs font-medium"><Clock className="h-3 w-3" /> Pendente</span>
                       ) : (
-                        <span className="flex items-center gap-2 text-green-600"><CheckCircle className="h-4 w-4" /> Entregue</span>
+                        <span className="flex items-center gap-2 text-green-600 text-xs font-medium"><CheckCircle className="h-3 w-3" /> Entregue</span>
                       )}
                     </TableCell>
-                    <TableCell>{format(parseISO(card.arrivalDate), 'dd/MM/yyyy')}</TableCell>
-                    <TableCell>
-                      {card.deliveryDate ? format(parseISO(card.deliveryDate), 'dd/MM/yyyy HH:mm') : '—'}
+                    <TableCell className="text-xs">{format(parseISO(card.arrivalDate), 'dd/MM/yy')}</TableCell>
+                    <TableCell className="text-xs">
+                      {card.deliveryDate ? format(parseISO(card.deliveryDate), 'dd/MM/yy HH:mm') : '—'}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -193,7 +197,7 @@ export default function CardList({ cards, onUpdateCard, onDeleteCard }: CardList
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                     Nenhum cartão encontrado.
                   </TableCell>
                 </TableRow>

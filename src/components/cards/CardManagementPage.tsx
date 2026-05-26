@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import type { Card } from '@/lib/types';
+import type { Card, School } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card as ShadCnCard, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle, CreditCard } from 'lucide-react';
@@ -11,16 +11,20 @@ import CardList from './CardList';
 
 interface CardManagementPageProps {
   cards: Card[];
+  schools: School[];
   onAddCard: (card: Omit<Card, 'id'>) => void;
   onUpdateCard: (card: Card) => void;
   onDeleteCard: (id: string) => void;
+  onAddSchool: (name: string) => Promise<School>;
 }
 
 export default function CardManagementPage({
   cards,
+  schools,
   onAddCard,
   onUpdateCard,
   onDeleteCard,
+  onAddSchool,
 }: CardManagementPageProps) {
   const [showForm, setShowForm] = useState(false);
 
@@ -43,10 +47,12 @@ export default function CardManagementPage({
         {showForm && (
           <div className="mt-4">
             <CardForm 
+              schools={schools}
               onAddCard={(data) => {
                 onAddCard(data);
                 setShowForm(false);
               }} 
+              onAddSchool={onAddSchool}
               onClose={() => setShowForm(false)} 
             />
           </div>

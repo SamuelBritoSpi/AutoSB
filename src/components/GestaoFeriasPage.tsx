@@ -394,7 +394,7 @@ export default function GestaoFeriasPage() {
 
     deleteDbCertificate(id).catch(error => {
        console.error("Failed to delete certificate:", error);
-       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível excluir o atestado.' });
+       toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível excluir the atestado.' });
        setCertificates(originalCertificates);
     });
   };
@@ -759,9 +759,11 @@ export default function GestaoFeriasPage() {
         <TabsContent value="cards" className={cn(containerClass, "space-y-6 mt-6")}>
           <CardManagementPage
             cards={cards}
+            schools={schools}
             onAddCard={handleAddCard}
             onUpdateCard={handleUpdateCard}
             onDeleteCard={handleDeleteCard}
+            onAddSchool={handleAddSchool}
           />
         </TabsContent>
 

@@ -90,6 +90,8 @@ export type CardStatus = 'pending' | 'delivered';
 export interface Card {
   id: string;
   recipientName: string;
+  schoolId?: string; // ID do colégio onde trabalha
+  schoolName?: string; // Nome denormalizado para relatórios
   status: CardStatus;
   arrivalDate: string; // Data de chegada do cartão
   deliveryDate?: string | null; // Data de entrega ao destinatário

@@ -20,6 +20,7 @@ export default function CardsReport({ cards }: CardsReportProps) {
         <thead>
           <tr>
             <th>Destinatário</th>
+            <th>Colégio</th>
             <th>Status</th>
             <th>Data de Chegada</th>
             <th>Data de Entrega</th>
@@ -29,7 +30,8 @@ export default function CardsReport({ cards }: CardsReportProps) {
           {cards.length > 0 ? (
             cards.map(card => (
               <tr key={card.id}>
-                <td>{card.recipientName}</td>
+                <td style={{ fontWeight: 'bold' }}>{card.recipientName}</td>
+                <td>{card.schoolName || 'Não Informado'}</td>
                 <td>{statusMap[card.status]}</td>
                 <td>{format(parseISO(card.arrivalDate), 'P', { locale: ptBR })}</td>
                 <td>{card.deliveryDate ? format(parseISO(card.deliveryDate), "P 'às' HH:mm", { locale: ptBR }) : 'N/A'}</td>
@@ -37,7 +39,7 @@ export default function CardsReport({ cards }: CardsReportProps) {
             ))
           ) : (
             <tr>
-              <td colSpan={4} style={{ textAlign: 'center', padding: '2rem' }}>
+              <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>
                 Nenhum cartão encontrado para os filtros selecionados.
               </td>
             </tr>
