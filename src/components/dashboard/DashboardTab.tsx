@@ -1,20 +1,17 @@
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { Demand, Employee, MedicalCertificate, DemandStatus, Vacation, AbsenceType, AbsenceStatus } from '@/lib/types';
 import StatCard from './StatCard';
 import PriorityChart from './PriorityChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Mailbox, Hourglass, CalendarOff, Plane, Gift, Stethoscope, Baby, Clock, CalendarCheck, CalendarX, type LucideProps, icons, Smile, Download, Database } from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle2, ListTodo, Mailbox, Hourglass, CalendarOff, Plane, Gift, Stethoscope, Baby, Clock, CalendarCheck, CalendarX, type LucideProps, icons, Smile } from 'lucide-react';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeCertificates } from '@/lib/certificate-logic';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
-import { Button } from '../ui/button';
-import { getAllData } from '@/lib/idb';
-import { useToast } from '@/hooks/use-toast';
 
 
 interface DashboardTabProps {
@@ -51,8 +48,6 @@ const absenceStatusDetails: Record<AbsenceStatus, { label: string, icon: React.R
 
 
 export default function DashboardTab({ demands, employees, certificates, demandStatuses, vacations }: DashboardTabProps) {
-  const { toast } = useToast();
-  const [isExporting, setIsExporting] = useState(false);
   
   const demandStats = useMemo(() => {
     const openDemands = demands.filter(d => d.status !== FINAL_STATUS_LABEL);
@@ -114,51 +109,11 @@ export default function DashboardTab({ demands, employees, certificates, demandS
     }).sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
   }, [vacations]);
 
-  const handleExportBackup = async () => {
-    try {
-      setIsExporting(true);
-      const data = await getAllData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `autosb-backup-${format(new Date(), 'yyyy-MM-dd-HHmm')}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast({
-        title: "Backup Concluído",
-        description: "Todos os dados do sistema foram exportados com sucesso.",
-      });
-    } catch (error) {
-      console.error("Erro ao exportar backup:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro no Backup",
-        description: "Não foi possível gerar o arquivo de exportação.",
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-3xl font-headline font-bold text-primary">Visão Geral</h2>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleExportBackup} 
-          disabled={isExporting}
-          className="bg-background shadow-sm hover:bg-accent"
-        >
-          {isExporting ? <Database className="mr-2 h-4 w-4 animate-pulse" /> : <Download className="mr-2 h-4 w-4" />}
-          Exportar Backup de Dados
-        </Button>
       </div>
 
       {/* Cards de Estatísticas */}
