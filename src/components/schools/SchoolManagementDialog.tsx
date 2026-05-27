@@ -179,32 +179,34 @@ export default function SchoolManagementDialog({
           <div className="flex-1 min-h-0 border rounded-md bg-muted/5 overflow-hidden">
             <ScrollArea className="h-full">
                 {filteredSchools.length > 0 ? (
-                <div className="p-2 space-y-1">
+                <div className="p-2 space-y-1.5">
                     {filteredSchools.map((school) => (
                     <div
                         key={school.id}
-                        className="flex items-center justify-between p-2 rounded-md bg-background border border-border/40 group gap-2"
+                        className="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/60 hover:border-primary/20 transition-colors gap-3"
                     >
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
                             <SchoolIcon className="h-4 w-4 text-primary/60 shrink-0" />
-                            <span className="text-sm font-medium truncate leading-none">
+                            <span className="text-sm font-medium truncate leading-tight block w-full">
                               {school.name}
                             </span>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:bg-destructive/10 shrink-0"
-                          onClick={() => handleDelete(school.id)}
-                          disabled={deletingId === school.id}
-                          title="Excluir colégio"
-                        >
-                        {deletingId === school.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <Trash2 className="h-4 w-4" />
-                        )}
-                        </Button>
+                        <div className="flex shrink-0">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 text-destructive border-destructive/20 hover:bg-destructive hover:text-white transition-all"
+                              onClick={() => handleDelete(school.id)}
+                              disabled={deletingId === school.id}
+                              title="Excluir colégio"
+                            >
+                            {deletingId === school.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Trash2 className="h-4 w-4" />
+                            )}
+                            </Button>
+                        </div>
                     </div>
                     ))}
                 </div>
