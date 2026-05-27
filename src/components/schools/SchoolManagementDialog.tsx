@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, Loader2, Building, Search, School as SchoolIcon, Plus, AlertCircle, X } from 'lucide-react';
+import { Trash2, Loader2, Building, Search, School as SchoolIcon, Plus, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import type { School } from '@/lib/types';
 import { Badge } from '../ui/badge';
@@ -86,7 +86,7 @@ export default function SchoolManagementDialog({
         toast({
             variant: 'destructive',
             title: "Colégio já cadastrado",
-            description: `O colégio "${duplicate.name}" já existe e é similar ao que você digitou.`,
+            description: `O colégio "${duplicate.name}" já existe ou é muito similar.`,
         });
         return;
     }
@@ -95,16 +95,16 @@ export default function SchoolManagementDialog({
     try {
       await onAddSchool(formattedName);
       setNewSchoolName("");
-      toast({ title: "Sucesso", description: "Colégio adicionado à lista global." });
+      toast({ title: "Sucesso", description: "Colégio adicionado à lista." });
     } catch (error) {
-      // Erro tratado no pai
+      // Erro já tratado no pai via toast
     } finally {
       setIsAdding(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir este colégio? Isso removerá a opção da lista de seleção global para Cartões e Fardamento.")) {
+    if (!window.confirm("Deseja realmente excluir este colégio?")) {
       return;
     }
     
@@ -118,37 +118,36 @@ export default function SchoolManagementDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl w-[95vw] h-[85vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-2">
-          <div className="flex items-center justify-between gap-4 pr-8">
-            <DialogTitle className="flex items-center gap-2 truncate text-xl">
-                <Building className="h-6 w-6 text-primary shrink-0" />
-                <span className="truncate">Gerenciar Colégios</span>
+      <DialogContent className="sm:max-w-lg w-[95vw] h-[85vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="p-4 sm:p-6 pb-2">
+          <div className="flex items-center justify-between gap-2 pr-6">
+            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl truncate">
+                <Building className="h-5 w-5 text-primary shrink-0" />
+                <span>Gerenciar Colégios</span>
             </DialogTitle>
-            <Badge variant="secondary" className="font-mono whitespace-nowrap shrink-0">
-                {schools.length} total
+            <Badge variant="secondary" className="shrink-0">
+                {schools.length}
             </Badge>
           </div>
-          <DialogDescription>
-            Adicione ou remova colégios da lista compartilhada pelo sistema.
+          <DialogDescription className="text-xs sm:text-sm">
+            Adicione ou remova colégios da lista global.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 px-6 py-4 flex flex-col min-h-0 space-y-4">
+        <div className="flex-1 px-4 sm:px-6 py-2 flex flex-col min-h-0 space-y-4">
           {/* Sessão de Adicionar Novo */}
-          <div className="space-y-2 bg-primary/5 p-4 rounded-lg border border-primary/10">
-            <label className="text-xs font-bold uppercase text-primary/70">Cadastrar Novo Colégio</label>
+          <div className="space-y-2 bg-primary/5 p-3 rounded-lg border border-primary/10">
+            <label className="text-[10px] font-bold uppercase text-primary/70">Cadastrar Novo</label>
             <div className="flex gap-2">
                 <Input
                   placeholder="Nome do colégio..."
                   value={newSchoolName}
                   onChange={(e) => setNewSchoolName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-                  className="bg-background"
+                  className="bg-background h-9 text-sm"
                 />
-                <Button onClick={handleAdd} disabled={isAdding || !newSchoolName.trim()} className="shrink-0">
-                   {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
-                   {isAdding ? '' : 'Adicionar'}
+                <Button onClick={handleAdd} disabled={isAdding || !newSchoolName.trim()} size="sm" className="shrink-0 h-9">
+                   {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 </Button>
             </div>
           </div>
@@ -157,10 +156,10 @@ export default function SchoolManagementDialog({
 
           {/* Busca */}
           <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar colégio na lista..."
-              className="pl-9 w-full"
+              placeholder="Buscar na lista..."
+              className="pl-8 h-9 text-sm w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -171,51 +170,48 @@ export default function SchoolManagementDialog({
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                     onClick={() => setSearchTerm("")}
                 >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3" />
                 </Button>
             )}
           </div>
 
           {/* Lista com Scroll */}
-          <div className="flex-1 min-h-0 border rounded-md bg-muted/10 overflow-hidden flex flex-col">
-            <ScrollArea className="flex-1">
+          <div className="flex-1 min-h-0 border rounded-md bg-muted/5 overflow-hidden">
+            <ScrollArea className="h-full">
                 {filteredSchools.length > 0 ? (
                 <div className="p-2 space-y-1">
                     {filteredSchools.map((school) => (
                     <div
                         key={school.id}
-                        className="flex items-center justify-between p-3 rounded-md bg-background border border-border/50 group gap-3 transition-all hover:border-primary/30"
+                        className="flex items-center justify-between p-2 rounded-md bg-background border border-border/40 group gap-2"
                     >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                <SchoolIcon className="h-4 w-4 text-primary" />
-                            </div>
-                            <span className="text-sm font-medium truncate">{school.name}</span>
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <SchoolIcon className="h-4 w-4 text-primary/60 shrink-0" />
+                            <span className="text-sm font-medium truncate leading-none">
+                              {school.name}
+                            </span>
                         </div>
                         <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-9 px-3 text-destructive hover:bg-destructive/10 shrink-0 flex items-center gap-2"
-                        onClick={() => handleDelete(school.id)}
-                        disabled={deletingId === school.id}
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10 shrink-0"
+                          onClick={() => handleDelete(school.id)}
+                          disabled={deletingId === school.id}
+                          title="Excluir colégio"
                         >
                         {deletingId === school.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                            <>
-                                <Trash2 className="h-4 w-4" />
-                                <span className="hidden sm:inline">Excluir</span>
-                            </>
+                            <Trash2 className="h-4 w-4" />
                         )}
                         </Button>
                     </div>
                     ))}
                 </div>
                 ) : (
-                <div className="flex flex-col items-center justify-center h-40 text-center">
-                    <Building className="h-10 w-10 text-muted-foreground/20 mb-2" />
-                    <p className="text-sm text-muted-foreground px-4">
-                    {searchTerm ? "Nenhum colégio encontrado para esta busca." : "Nenhum colégio cadastrado."}
+                <div className="flex flex-col items-center justify-center h-32 text-center p-4">
+                    <p className="text-xs text-muted-foreground">
+                    {searchTerm ? "Nenhum resultado." : "Nenhum colégio cadastrado."}
                     </p>
                 </div>
                 )}
@@ -223,9 +219,9 @@ export default function SchoolManagementDialog({
           </div>
         </div>
 
-        <DialogFooter className="p-6 pt-2 bg-muted/20 border-t mt-auto">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full">
-            Fechar Gerenciamento
+        <DialogFooter className="p-4 bg-muted/20 border-t mt-auto">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full h-9 text-sm">
+            Fechar
           </Button>
         </DialogFooter>
       </DialogContent>
