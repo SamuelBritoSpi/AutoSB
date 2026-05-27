@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, Loader2, Building, Search, School as SchoolIcon, Plus, AlertCircle } from 'lucide-react';
+import { Trash2, Loader2, Building, Search, School as SchoolIcon, Plus, AlertCircle, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import type { School } from '@/lib/types';
 import { Badge } from '../ui/badge';
@@ -104,7 +104,7 @@ export default function SchoolManagementDialog({
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir este colégio? Isso removerá a opção da lista de seleção global.")) {
+    if (!window.confirm("Tem certeza que deseja excluir este colégio? Isso removerá a opção da lista de seleção global para Cartões e Fardamento.")) {
       return;
     }
     
@@ -130,14 +130,14 @@ export default function SchoolManagementDialog({
             </Badge>
           </div>
           <DialogDescription>
-            Controle a lista de colégios compartilhada pelo sistema.
+            Adicione ou remova colégios da lista compartilhada pelo sistema.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 px-6 py-4 flex flex-col min-h-0 space-y-4">
           {/* Sessão de Adicionar Novo */}
-          <div className="space-y-2 bg-muted/30 p-3 rounded-lg border border-border">
-            <label className="text-xs font-bold uppercase text-muted-foreground">Cadastrar Novo Colégio</label>
+          <div className="space-y-2 bg-primary/5 p-4 rounded-lg border border-primary/10">
+            <label className="text-xs font-bold uppercase text-primary/70">Cadastrar Novo Colégio</label>
             <div className="flex gap-2">
                 <Input
                   placeholder="Nome do colégio..."
@@ -146,8 +146,9 @@ export default function SchoolManagementDialog({
                   onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
                   className="bg-background"
                 />
-                <Button onClick={handleAdd} disabled={isAdding || !newSchoolName.trim()} size="icon">
-                   {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-5 w-5" />}
+                <Button onClick={handleAdd} disabled={isAdding || !newSchoolName.trim()} className="shrink-0">
+                   {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+                   {isAdding ? '' : 'Adicionar'}
                 </Button>
             </div>
           </div>
@@ -163,6 +164,16 @@ export default function SchoolManagementDialog({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                    onClick={() => setSearchTerm("")}
+                >
+                    <X className="h-4 w-4" />
+                </Button>
+            )}
           </div>
 
           {/* Lista com Scroll */}
@@ -173,7 +184,7 @@ export default function SchoolManagementDialog({
                     {filteredSchools.map((school) => (
                     <div
                         key={school.id}
-                        className="flex items-center justify-between p-3 rounded-md hover:bg-background border border-transparent hover:border-border group gap-3 transition-all"
+                        className="flex items-center justify-between p-3 rounded-md bg-background border border-border/50 group gap-3 transition-all hover:border-primary/30"
                     >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -183,16 +194,18 @@ export default function SchoolManagementDialog({
                         </div>
                         <Button
                         variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 text-destructive hover:bg-destructive/10 shrink-0"
+                        size="sm"
+                        className="h-9 px-3 text-destructive hover:bg-destructive/10 shrink-0 flex items-center gap-2"
                         onClick={() => handleDelete(school.id)}
                         disabled={deletingId === school.id}
-                        title="Excluir colégio"
                         >
                         {deletingId === school.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                            <Trash2 className="h-4 w-4" />
+                            <>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="hidden sm:inline">Excluir</span>
+                            </>
                         )}
                         </Button>
                     </div>
@@ -210,8 +223,8 @@ export default function SchoolManagementDialog({
           </div>
         </div>
 
-        <DialogFooter className="p-6 pt-2 bg-muted/20 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+        <DialogFooter className="p-6 pt-2 bg-muted/20 border-t mt-auto">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full">
             Fechar Gerenciamento
           </Button>
         </DialogFooter>
