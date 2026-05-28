@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState } from 'react';
@@ -43,7 +42,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
             placeholder="Buscar por nome, escola ou CPF..." 
             className="pl-10"
             value={search}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <Button variant="secondary" onClick={onOpenReport} className="w-full sm:w-auto">
