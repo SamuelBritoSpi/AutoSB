@@ -13,6 +13,13 @@ interface ThirdPartyReportProps {
 }
 
 export default function ThirdPartyReport({ employees, filters }: ThirdPartyReportProps) {
+  // Coleta todas as chaves únicas de extraData presentes na lista filtrada
+  const extraKeys = Array.from(
+    new Set(
+      employees.flatMap(emp => emp.extraData ? Object.keys(emp.extraData) : [])
+    )
+  );
+
   return (
     <ReportLayout title="Relatório de Funcionários Terceirizados">
       <div style={{ marginBottom: '1.5rem', fontSize: '0.85rem', color: '#666' }}>
@@ -20,42 +27,42 @@ export default function ThirdPartyReport({ employees, filters }: ThirdPartyRepor
         {filters.schoolId !== 'all' && ` | Lotação Específica`}
       </div>
       
-      <table style={{ fontSize: '0.75rem' }}>
+      <table style={{ fontSize: '0.7rem' }}>
         <thead>
           <tr>
-            <th>NTE</th>
-            <th>Município</th>
             <th>Lotação</th>
-            <th>COD.sec</th>
             <th>Nome Completo</th>
             <th>CPF</th>
             <th>Função</th>
-            <th>Contato</th>
             <th>Empresa</th>
             <th>Status</th>
             <th>Admissão</th>
+            {/* Renderiza cabeçalhos dinâmicos para colunas extras */}
+            {extraKeys.map(key => (
+              <th key={key} style={{ backgroundColor: '#FFF9C4', color: '#827717' }}>{key}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
           {employees.length > 0 ? (
             employees.map(emp => (
               <tr key={emp.id}>
-                <td>{emp.nte}</td>
-                <td>{emp.municipio}</td>
                 <td style={{ fontWeight: 'bold' }}>{emp.schoolName}</td>
-                <td>{emp.codSec}</td>
                 <td>{emp.name}</td>
                 <td>{emp.cpf}</td>
                 <td>{emp.role}</td>
-                <td>{emp.contact}</td>
                 <td>{emp.company}</td>
                 <td>{emp.status}</td>
                 <td>{format(parseISO(emp.admissionDate), 'dd/MM/yyyy')}</td>
+                {/* Preenche os dados extras dinamicamente */}
+                {extraKeys.map(key => (
+                  <td key={key}>{emp.extraData ? String(emp.extraData[key] || '-') : '-'}</td>
+                ))}
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan={11} style={{ textAlign: 'center', padding: '2rem' }}>
+              <td colSpan={7 + extraKeys.length} style={{ textAlign: 'center', padding: '2rem' }}>
                 Nenhum funcionário encontrado com os filtros selecionados.
               </td>
             </tr>
@@ -64,7 +71,7 @@ export default function ThirdPartyReport({ employees, filters }: ThirdPartyRepor
       </table>
       
       <div style={{ marginTop: '2rem', fontSize: '0.8rem', fontStyle: 'italic', color: '#888' }}>
-        * Este relatório pode ser copiado e colado diretamente em uma planilha Excel para manter a sincronização com o OneDrive.
+        * Colunas em amarelo foram identificadas como dados extras da sua planilha original e foram preservadas.
       </div>
     </ReportLayout>
   );

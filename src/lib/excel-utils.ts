@@ -4,7 +4,7 @@ import type { ThirdPartyEmployee, School } from './types';
 
 /**
  * Processa um arquivo Excel e retorna uma lista de funcionários terceirizados.
- * Tenta mapear as colunas baseadas em nomes comuns.
+ * Identifica colunas mapeadas e agrupa as extras em 'extraData'.
  */
 export async function parseEmployeesExcel(file: File, schools: School[]): Promise<Omit<ThirdPartyEmployee, 'id'>[]> {
   return new Promise((resolve, reject) => {
@@ -17,13 +17,27 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         
-        // Converte para JSON
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
         const employees: Omit<ThirdPartyEmployee, 'id'>[] = jsonData.map(row => {
-          // Busca escola por nome (tenta encontrar a melhor correspondência)
           const lotacao = String(row['Lotação'] || row['LOTACAO'] || row['Escola'] || '').trim();
           const school = schools.find(s => s.name.toLowerCase() === lotacao.toLowerCase());
+
+          // Lista de chaves que já mapeamos manualmente
+          const mappedKeys = [
+            'Lotação', 'LOTACAO', 'Escola', 'NTE', 'Município', 'MUNICIPIO', 
+            'COD.sec', 'CODSEC', 'Nome completo', 'NOME', 'CPF', 
+            'Função', 'FUNCAO', 'Contato', 'TELEFONE', 'Empresa', 
+            'Status', 'Data de admissão', 'Observação', 'OBS'
+          ];
+
+          // Captura colunas extras
+          const extraData: Record<string, any> = {};
+          Object.keys(row).forEach(key => {
+            if (!mappedKeys.includes(key)) {
+              extraData[key] = row[key];
+            }
+          });
 
           return {
             nte: String(row['NTE'] || 'NTE 20'),
@@ -39,6 +53,7 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
             status: String(row['Status'] || 'Ativo'),
             admissionDate: row['Data de admissão'] ? new Date(row['Data de admissão']).toISOString() : new Date().toISOString(),
             observation: String(row['Observação'] || row['OBS'] || ''),
+            extraData: Object.keys(extraData).length > 0 ? extraData : undefined,
           };
         });
 

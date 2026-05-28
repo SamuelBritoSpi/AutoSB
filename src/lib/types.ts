@@ -82,6 +82,7 @@ export interface ThirdPartyEmployee {
   status: string;
   admissionDate: string;
   observation: string;
+  extraData?: Record<string, any>; // Campos dinâmicos da planilha
 }
 
 export interface MedicalCertificate {
