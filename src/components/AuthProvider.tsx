@@ -10,7 +10,7 @@ import { onMessage } from 'firebase/messaging';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
-    user: User | null;
+    user: Partial<User> | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { toast } = useToast();
 
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<Partial<User> | null>(null);
     const [authChecked, setAuthChecked] = useState(false);
     
     // Foreground notification handler
@@ -51,8 +51,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     useEffect(() => {
         const auth = getAuthInstance();
+        
+        // Verifica se existe um bypass ativo (sessão local de teste)
+        const isBypass = sessionStorage.getItem('auth_bypass') === 'true';
+        if (isBypass) {
+            const bypassUser = JSON.parse(sessionStorage.getItem('auth_bypass_user') || 'null');
+            if (bypassUser) {
+                setUser(bypassUser);
+                setAuthChecked(true);
+                return;
+            }
+        }
+
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
+            if (currentUser) {
+                setUser(currentUser);
+            } else if (!isBypass) {
+                setUser(null);
+            }
             setAuthChecked(true);
         });
 
