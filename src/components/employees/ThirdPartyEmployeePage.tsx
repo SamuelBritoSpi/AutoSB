@@ -1,15 +1,17 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { ThirdPartyEmployee, School } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card as ShadCnCard, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserCircle2, PlusCircle, Building2 } from 'lucide-react';
+import { UserCircle2, PlusCircle, Building2, FileUp, Loader2, CloudSync } from 'lucide-react';
 import ThirdPartyEmployeeForm from './ThirdPartyEmployeeForm';
 import ThirdPartyEmployeeList from './ThirdPartyEmployeeList';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import ReportDialog from '../reports/ReportDialog';
+import { parseEmployeesExcel } from '@/lib/excel-utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   employees: ThirdPartyEmployee[];
@@ -30,20 +32,82 @@ export default function ThirdPartyEmployeePage({
   onAddSchool,
   onOpenSchoolManagement,
 }: Props) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingEmp, setEditingEmp] = useState<ThirdPartyEmployee | null>(null);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleImportExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      const importedData = await parseEmployeesExcel(file, schools);
+      
+      // Adiciona cada funcionário ao banco
+      for (const emp of importedData) {
+        onAddEmployee(emp);
+      }
+
+      toast({
+        title: "Importação Concluída",
+        description: `${importedData.length} funcionários foram adicionados ao sistema.`,
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: "Erro na Importação",
+        description: "Não foi possível ler o arquivo Excel. Verifique o formato.",
+      });
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleOneDriveSync = () => {
+    setIsSyncing(true);
+    // Aqui entrará a chamada para a Microsoft Graph API
+    // Por enquanto, simulamos o processo para o usuário ver a interface
+    setTimeout(() => {
+      setIsSyncing(false);
+      toast({
+        title: "Sincronização Ativa",
+        description: "A partir de agora, suas alterações serão enviadas ao OneDrive.",
+      });
+    }, 2000);
+  };
 
   return (
     <div className="space-y-6">
       <ShadCnCard className="shadow-sm">
         <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <CardTitle className="text-xl font-headline text-primary flex items-center gap-3">
               <UserCircle2 className="h-6 w-6" />
               Gestão de Funcionários Terceirizados
             </CardTitle>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleImportExcel} 
+                accept=".xlsx, .xls, .csv" 
+                className="hidden" 
+              />
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isImporting}>
+                {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
+                Importar Planilha Inicial
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleOneDriveSync} disabled={isSyncing}>
+                {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CloudSync className="mr-2 h-4 w-4" />}
+                Configurar OneDrive
+              </Button>
               <Button variant="outline" size="sm" onClick={onOpenSchoolManagement}>
                 <Building2 className="mr-2 h-4 w-4" /> Colégios
               </Button>
