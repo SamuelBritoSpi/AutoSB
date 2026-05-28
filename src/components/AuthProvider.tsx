@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState, type ReactNode, useContext, createContext } from 'react';
+import React, { useEffect, useState, useContext, createContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { getAuthInstance, getMessagingObject } from '@/lib/firebase-client';
@@ -35,19 +35,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
       try {
         const messaging = getMessagingObject();
-        // Só registra o listener se o serviço de mensagens estiver disponível e configurado
-        if (typeof window !== 'undefined' && messaging && process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+        if (typeof window !== 'undefined' && messaging) {
           const unsubscribe = onMessage(messaging, (payload) => {
-            console.log('Foreground message received. ', payload);
             toast({
-              title: payload.notification?.title,
+              title: payload.notification?.title || 'Nova Notificação',
               description: payload.notification?.body,
             });
           });
           return unsubscribe;
         }
       } catch (error) {
-        // Silencioso para não travar a UI
+        // Silencioso
       }
     }, [toast]);
     
@@ -73,20 +71,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [user, authChecked, pathname, router]);
 
-    // Determine what to render
-    const isLoading = !authChecked;
     const isAuthPage = pathname === '/login';
 
     if (isAuthPage) {
         return <>{children}</>;
     }
     
-    if (isLoading) {
+    if (!authChecked) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
+            <div className="flex justify-center items-center min-h-screen bg-background">
                 <div className="text-center flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-lg font-semibold">Verificando autenticação...</p>
+                    <p className="text-lg font-semibold">Verificando acesso...</p>
                 </div>
             </div>
         );
@@ -100,9 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
     }
 
-    // This case handles the brief moment of redirection if not on /login
     return (
-       <div className="flex justify-center items-center min-h-screen">
+       <div className="flex justify-center items-center min-h-screen bg-background">
          <div className="text-center flex flex-col items-center gap-2">
            <Loader2 className="h-8 w-8 animate-spin text-primary" />
            <p className="text-lg font-semibold">Redirecionando...</p>
