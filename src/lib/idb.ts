@@ -1,13 +1,14 @@
 
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query, where } from 'firebase/firestore';
 import { getDbInstance } from './firebase-client'; // Usa o db específico do cliente
-import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, DemandProgress, Card, Uniform, School } from './types';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, DemandProgress, Card, Uniform, School, ThirdPartyEmployee } from './types';
 
 const STORES = {
   demands: 'demands',
   vacations: 'vacations',
   justifiedAbsences: 'justifiedAbsences',
   employees: 'employees',
+  thirdPartyEmployees: 'thirdPartyEmployees',
   certificates: 'certificates',
   demandStatuses: 'demandStatuses',
   demandProgress: 'demandProgress',
@@ -180,6 +181,16 @@ export const addEmployee = async (employee: Omit<Employee, 'id'>) => {
 export const updateEmployee = (employee: Employee) => update(STORES.employees, employee);
 export const deleteEmployee = (id: string) => remove(STORES.employees, id);
 
+// --- Funcionários Terceirizados ---
+export const getThirdPartyEmployees = () => getAll<ThirdPartyEmployee>(STORES.thirdPartyEmployees, 'name');
+export const addThirdPartyEmployee = async (emp: Omit<ThirdPartyEmployee, 'id'>) => {
+    const newId = await add(STORES.thirdPartyEmployees, emp);
+    return { ...emp, id: newId } as ThirdPartyEmployee;
+};
+export const updateThirdPartyEmployee = (emp: ThirdPartyEmployee) => update(STORES.thirdPartyEmployees, emp);
+export const deleteThirdPartyEmployee = (id: string) => remove(STORES.thirdPartyEmployees, id);
+
+
 // --- Atestados Médicos ---
 export const getCertificates = () => getAll<MedicalCertificate>(STORES.certificates);
 export const addCertificate = async (certificate: Omit<MedicalCertificate, 'id'>) => {
@@ -225,6 +236,7 @@ interface AllData {
     vacations: Vacation[];
     justifiedAbsences: JustifiedAbsence[];
     employees: Employee[];
+    thirdPartyEmployees?: ThirdPartyEmployee[];
     certificates: MedicalCertificate[];
     demandStatuses: DemandStatus[];
     cards: Card[];
@@ -233,18 +245,19 @@ interface AllData {
 }
 
 export async function getAllData(): Promise<AllData> {
-    const [demands, vacations, justifiedAbsences, employees, certificates, demandStatuses, cards, uniforms, schools] = await Promise.all([
+    const [demands, vacations, justifiedAbsences, employees, thirdPartyEmployees, certificates, demandStatuses, cards, uniforms, schools] = await Promise.all([
         getDemands(),
         getVacations(),
         getJustifiedAbsences(),
         getEmployees(),
+        getThirdPartyEmployees(),
         getCertificates(),
         getDemandStatuses(),
         getCards(),
         getUniforms(),
         getSchools(),
     ]);
-    return { demands, vacations, justifiedAbsences, employees, certificates, demandStatuses, cards, uniforms, schools };
+    return { demands, vacations, justifiedAbsences, employees, thirdPartyEmployees, certificates, demandStatuses, cards, uniforms, schools };
 }
 
 export async function importData(data: AllData): Promise<void> {

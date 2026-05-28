@@ -64,6 +64,26 @@ export interface Employee {
   fcmTokens?: string[]; // Para notificações push
 }
 
+// --- Funcionários Terceirizados (Base Excel) ---
+export type ThirdPartyCompany = 'CONFIANÇA' | 'CSH';
+
+export interface ThirdPartyEmployee {
+  id: string;
+  nte: string;
+  municipio: string;
+  schoolId: string; // Lotação (Relacionado a School)
+  schoolName: string; // Denormalizado
+  codSec: string;
+  name: string;
+  cpf: string;
+  role: string;
+  contact: string;
+  company: ThirdPartyCompany;
+  status: string;
+  admissionDate: string;
+  observation: string;
+}
+
 export interface MedicalCertificate {
   id: string;
   employeeId: string;

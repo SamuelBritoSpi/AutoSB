@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DemandForm from '@/components/demands/DemandForm';
 import DemandList from '@/components/demands/DemandList';
@@ -14,9 +14,10 @@ import DashboardTab from '@/components/dashboard/DashboardTab';
 import CardManagementPage from '@/components/cards/CardManagementPage';
 import UniformManagementPage from '@/components/uniforms/UniformManagementPage';
 import SchoolManagementDialog from '@/components/schools/SchoolManagementDialog';
-import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, Card, Uniform, School } from '@/lib/types';
+import ThirdPartyEmployeePage from '@/components/employees/ThirdPartyEmployeePage';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, Card, Uniform, School, ThirdPartyEmployee } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Menu, Loader2, ListPlus, Edit, UserPlus, ClipboardList, FileText, CreditCard, Shirt } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Menu, Loader2, ListPlus, UserPlus, ClipboardList, FileText, CreditCard, Shirt, UserCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -37,6 +38,9 @@ import {
   addEmployee as addDbEmployee,
   updateEmployee as updateDbEmployee,
   deleteEmployee as deleteDbEmployee,
+  addThirdPartyEmployee as addDbThirdPartyEmployee,
+  updateThirdPartyEmployee as updateDbThirdPartyEmployee,
+  deleteThirdPartyEmployee as deleteDbThirdPartyEmployee,
   addCertificate as addDbCertificate,
   deleteCertificate as deleteDbCertificate,
   addDemandStatus as addDbDemandStatus,
@@ -50,7 +54,6 @@ import {
   deleteUniform as deleteDbUniform,
   addSchool as addDbSchool,
   deleteSchool as deleteDbSchool,
-  getSchools as getDbSchools,
   getAllData,
   getDemandStatuses,
 } from '@/lib/idb';
@@ -105,6 +108,7 @@ export default function GestaoFeriasPage() {
   const [vacations, setVacations] = useState<Vacation[]>([]);
   const [justifiedAbsences, setJustifiedAbsences] = useState<JustifiedAbsence[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [thirdPartyEmployees, setThirdPartyEmployees] = useState<ThirdPartyEmployee[]>([]);
   const [certificates, setCertificates] = useState<MedicalCertificate[]>([]);
   const [demandStatuses, setDemandStatuses] = useState<DemandStatus[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
@@ -129,6 +133,7 @@ export default function GestaoFeriasPage() {
         setVacations(initialData.vacations);
         setJustifiedAbsences(initialData.justifiedAbsences || []);
         setEmployees(initialData.employees);
+        setThirdPartyEmployees(initialData.thirdPartyEmployees || []);
         setCertificates(initialData.certificates);
         setCards(initialData.cards || []);
         setUniforms(initialData.uniforms || []);
@@ -155,6 +160,7 @@ export default function GestaoFeriasPage() {
     { value: "vacations", label: "Férias/Afastamento", icon: <CalendarCheck className="mr-2 h-5 w-5" /> },
     { value: "absences", label: "Faltas Justificadas", icon: <FileText className="mr-2 h-5 w-5" /> },
     { value: "employees", label: "Funcionários/Atestados", icon: <Users className="mr-2 h-5 w-5" /> },
+    { value: "third-party", label: "Terceirizados", icon: <UserCircle2 className="mr-2 h-5 w-5" /> },
     { value: "cards", label: "Cartões", icon: <CreditCard className="mr-2 h-5 w-5" /> },
     { value: "uniforms", label: "Fardamento", icon: <Shirt className="mr-2 h-5 w-5" /> },
   ];
@@ -368,6 +374,49 @@ export default function GestaoFeriasPage() {
       toast({ variant: 'destructive', title: 'Erro de Sincronização', description: 'Não foi possível excluir o funcionário.' });
       setEmployees(originalEmployees);
       setCertificates(originalCertificates);
+    });
+  };
+
+  // --- Third Party Employee Handlers ---
+  const handleAddThirdPartyEmployee = (empData: Omit<ThirdPartyEmployee, 'id'>) => {
+    const tempId = `temp-tp-${Date.now()}`;
+    const newEmp: ThirdPartyEmployee = { ...empData, id: tempId };
+    const original = [...thirdPartyEmployees];
+
+    setThirdPartyEmployees(prev => [newEmp, ...prev]);
+    toast({ title: "Funcionário Terceirizado Adicionado" });
+
+    addDbThirdPartyEmployee(empData)
+      .then(saved => {
+        setThirdPartyEmployees(prev => prev.map(e => e.id === tempId ? saved : e));
+      })
+      .catch(error => {
+        console.error(error);
+        toast({ variant: 'destructive', title: 'Erro ao salvar' });
+        setThirdPartyEmployees(original);
+      });
+  };
+
+  const handleUpdateThirdPartyEmployee = (emp: ThirdPartyEmployee) => {
+    const original = [...thirdPartyEmployees];
+    setThirdPartyEmployees(prev => prev.map(e => e.id === emp.id ? emp : e));
+
+    updateDbThirdPartyEmployee(emp).catch(error => {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Erro ao atualizar' });
+      setThirdPartyEmployees(original);
+    });
+  };
+
+  const handleDeleteThirdPartyEmployee = (id: string) => {
+    const original = [...thirdPartyEmployees];
+    setThirdPartyEmployees(prev => prev.filter(e => e.id !== id));
+    toast({ title: "Funcionário Excluído" });
+
+    deleteDbThirdPartyEmployee(id).catch(error => {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Erro ao excluir' });
+      setThirdPartyEmployees(original);
     });
   };
 
@@ -601,7 +650,7 @@ export default function GestaoFeriasPage() {
         {/* Desktop Navigation */}
         <div className="hidden md:flex justify-center border-b">
             <div className="container mx-auto">
-                <TabsList className="grid w-full grid-cols-7 bg-transparent">
+                <TabsList className="grid w-full grid-cols-8 bg-transparent">
                     {tabOptions.map(tab => (
                         <TabsTrigger key={tab.value} value={tab.value} className="bg-transparent shadow-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none">
                             {tab.icon} {tab.label}
@@ -766,6 +815,18 @@ export default function GestaoFeriasPage() {
               onDeleteCertificate={handleDeleteCertificate}
             />
           </section>
+        </TabsContent>
+
+        <TabsContent value="third-party" className={cn(containerClass, "space-y-6 mt-6")}>
+          <ThirdPartyEmployeePage
+            employees={thirdPartyEmployees}
+            schools={schools}
+            onAddEmployee={handleAddThirdPartyEmployee}
+            onUpdateEmployee={handleUpdateThirdPartyEmployee}
+            onDeleteEmployee={handleDeleteThirdPartyEmployee}
+            onAddSchool={handleAddSchool}
+            onOpenSchoolManagement={() => setShowSchoolManagement(true)}
+          />
         </TabsContent>
         
         <TabsContent value="cards" className={cn(containerClass, "space-y-6 mt-6")}>
