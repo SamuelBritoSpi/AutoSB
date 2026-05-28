@@ -9,6 +9,7 @@ import { UserCircle2, PlusCircle, Building2 } from 'lucide-react';
 import ThirdPartyEmployeeForm from './ThirdPartyEmployeeForm';
 import ThirdPartyEmployeeList from './ThirdPartyEmployeeList';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import ReportDialog from '../reports/ReportDialog';
 
 interface Props {
   employees: ThirdPartyEmployee[];
@@ -31,6 +32,7 @@ export default function ThirdPartyEmployeePage({
 }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [editingEmp, setEditingEmp] = useState<ThirdPartyEmployee | null>(null);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -71,6 +73,7 @@ export default function ThirdPartyEmployeePage({
         employees={employees}
         onEdit={setEditingEmp}
         onDelete={onDeleteEmployee}
+        onOpenReport={() => setIsReportDialogOpen(true)}
       />
 
       <Dialog open={!!editingEmp} onOpenChange={(open) => !open && setEditingEmp(null)}>
@@ -93,6 +96,14 @@ export default function ThirdPartyEmployeePage({
           )}
         </DialogContent>
       </Dialog>
+
+      <ReportDialog 
+        open={isReportDialogOpen}
+        onOpenChange={setIsReportDialogOpen}
+        reportType="third-party"
+        thirdPartyEmployees={employees}
+        schools={schools}
+      />
     </div>
   );
 }

@@ -7,16 +7,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Edit, Trash2, FileSpreadsheet, Building2, UserCircle2 } from 'lucide-react';
+import { Search, Edit, Trash2, FileSpreadsheet, Building2, UserCircle2, FileText } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 interface Props {
   employees: ThirdPartyEmployee[];
   onEdit: (emp: ThirdPartyEmployee) => void;
   onDelete: (id: string) => void;
+  onOpenReport: () => void;
 }
 
-export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete }: Props) {
+export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, onOpenReport }: Props) {
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -26,10 +27,6 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete }: 
       e.cpf.includes(search)
     );
   }, [employees, search]);
-
-  const handleExportSim = () => {
-    alert("Funcionalidade de integração com OneDrive está sendo configurada. Por enquanto, use os relatórios visuais.");
-  };
 
   return (
     <div className="space-y-4">
@@ -43,8 +40,8 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete }: 
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Button variant="outline" onClick={handleExportSim} className="w-full sm:w-auto">
-          <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" /> Sincronizar com OneDrive
+        <Button variant="secondary" onClick={onOpenReport} className="w-full sm:w-auto">
+          <FileText className="mr-2 h-4 w-4" /> Gerar Relatório / Exportar
         </Button>
       </div>
 

@@ -19,22 +19,25 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import type { Demand, Vacation, Employee, DemandStatus, MedicalCertificate, DemandProgress } from '@/lib/types';
+import type { Demand, Vacation, Employee, DemandStatus, MedicalCertificate, DemandProgress, ThirdPartyEmployee, School } from '@/lib/types';
 import { renderReport } from '@/lib/print-utils';
 import DemandsReport from './DemandsReport';
 import VacationsReport from './VacationsReport';
 import CertificatesReport from './CertificatesReport';
+import ThirdPartyReport from './ThirdPartyReport';
 import { getAllDemandProgress } from '@/lib/idb';
 
 interface ReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  reportType: 'demands' | 'vacations' | 'certificates';
+  reportType: 'demands' | 'vacations' | 'certificates' | 'third-party';
   demands?: Demand[];
   demandStatuses?: DemandStatus[];
   vacations?: Vacation[];
   employees?: Employee[];
   certificates?: MedicalCertificate[];
+  thirdPartyEmployees?: ThirdPartyEmployee[];
+  schools?: School[];
 }
 
 export default function ReportDialog({
@@ -45,28 +48,27 @@ export default function ReportDialog({
   demandStatuses = [],
   vacations = [],
   employees = [],
-  certificates = []
+  certificates = [],
+  thirdPartyEmployees = [],
+  schools = []
 }: ReportDialogProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [dateRange, setDateRange] = useState<{ from: Date | undefined, to: Date | undefined }>({ from: undefined, to: undefined });
   const [selectedDemandId, setSelectedDemandId] = useState('all');
-  const [employeeFilter, setEmployeeFilter] = useState('all'); // Mantido para outros tipos de relatório
+  const [employeeFilter, setEmployeeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [companyFilter, setCompanyFilter] = useState('all');
+  const [schoolFilter, setSchoolFilter] = useState('all');
 
   const handleGenerateReport = async () => {
     setIsGenerating(true);
 
-    let filteredDemands = demands;
-    let filteredVacations = vacations;
-    let filteredCertificates = certificates;
     let title = "Relatório";
 
-    const filterByDate = (items: {dueDate: string}[] | {startDate: string}[] | {certificateDate: string}[]) => {
+    const filterByDate = (items: any[], field: string) => {
         if (!dateRange.from && !dateRange.to) return items;
         return items.filter(item => {
-            const itemDate = new Date(
-              'dueDate' in item ? item.dueDate : 'startDate' in item ? item.startDate : item.certificateDate
-            );
+            const itemDate = new Date(item[field]);
             const from = dateRange.from ? new Date(dateRange.from.setHours(0, 0, 0, 0)) : null;
             const to = dateRange.to ? new Date(dateRange.to.setHours(23, 59, 59, 999)) : null;
             if (from && to) return itemDate >= from && itemDate <= to;
@@ -78,44 +80,34 @@ export default function ReportDialog({
 
     if (reportType === 'demands') {
         title = "Relatório de Demandas";
-        filteredDemands = filterByDate(demands) as Demand[];
-        if (selectedDemandId !== 'all') {
-            filteredDemands = filteredDemands.filter(d => d.id === selectedDemandId);
-        }
-        if (statusFilter !== 'all') {
-            filteredDemands = filteredDemands.filter(d => d.status === statusFilter);
-        }
+        let filtered = filterByDate(demands, 'dueDate');
+        if (selectedDemandId !== 'all') filtered = filtered.filter(d => d.id === selectedDemandId);
+        if (statusFilter !== 'all') filtered = filtered.filter(d => d.status === statusFilter);
         
         const demandProgress = await getAllDemandProgress();
-        
-        const reportElement = <DemandsReport 
-            demands={filteredDemands} 
-            employees={employees} 
-            demandStatuses={demandStatuses}
-            demandProgress={demandProgress}
-            filters={{dateRange, employeeId: 'all', status: statusFilter}}
-        />;
-        renderReport(reportElement, title);
+        renderReport(<DemandsReport demands={filtered} employees={employees} demandStatuses={demandStatuses} demandProgress={demandProgress} filters={{dateRange, employeeId: 'all', status: statusFilter}} />, title);
     }
 
     if (reportType === 'vacations') {
         title = "Relatório de Afastamentos";
-        filteredVacations = filterByDate(vacations) as Vacation[];
-        if (employeeFilter !== 'all') {
-            filteredVacations = filteredVacations.filter(v => v.employeeId === employeeFilter);
-        }
-        const reportElement = <VacationsReport vacations={filteredVacations} filters={{dateRange, employeeId: employeeFilter}} />;
-        renderReport(reportElement, title);
+        let filtered = filterByDate(vacations, 'startDate');
+        if (employeeFilter !== 'all') filtered = filtered.filter(v => v.employeeId === employeeFilter);
+        renderReport(<VacationsReport vacations={filtered} filters={{dateRange, employeeId: employeeFilter}} />, title);
     }
     
     if (reportType === 'certificates') {
         title = "Relatório de Atestados Médicos";
-        filteredCertificates = filterByDate(certificates) as MedicalCertificate[];
-        if (employeeFilter !== 'all') {
-            filteredCertificates = filteredCertificates.filter(c => c.employeeId === employeeFilter);
-        }
-        const reportElement = <CertificatesReport certificates={filteredCertificates} employees={employees} filters={{dateRange, employeeId: employeeFilter}} />;
-        renderReport(reportElement, title);
+        let filtered = filterByDate(certificates, 'certificateDate');
+        if (employeeFilter !== 'all') filtered = filtered.filter(c => c.employeeId === employeeFilter);
+        renderReport(<CertificatesReport certificates={filtered} employees={employees} filters={{dateRange, employeeId: employeeFilter}} />, title);
+    }
+
+    if (reportType === 'third-party') {
+        title = "Base de Dados Terceirizados";
+        let filtered = [...thirdPartyEmployees];
+        if (companyFilter !== 'all') filtered = filtered.filter(e => e.company === companyFilter);
+        if (schoolFilter !== 'all') filtered = filtered.filter(e => e.schoolId === schoolFilter);
+        renderReport(<ThirdPartyReport employees={filtered} filters={{company: companyFilter, schoolId: schoolFilter}} />, title);
     }
 
     setIsGenerating(false);
@@ -127,6 +119,7 @@ export default function ReportDialog({
         case 'demands': return 'Gerar Relatório de Demandas';
         case 'vacations': return 'Gerar Relatório de Afastamentos';
         case 'certificates': return 'Gerar Relatório de Atestados';
+        case 'third-party': return 'Exportar Base Terceirizados';
         default: return 'Gerar Relatório';
     }
   }
@@ -141,120 +134,92 @@ export default function ReportDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="date-range" className="text-right">
-                    Período
-                </Label>
-                <div className="col-span-3">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                        <Button
-                            id="date-range"
-                            variant={"outline"}
-                            className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !dateRange.from && !dateRange.to && "text-muted-foreground"
-                            )}
-                        >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {dateRange.from ? (
-                                dateRange.to ? (
-                                    <>
-                                    {format(dateRange.from, "LLL dd, y", {locale: ptBR})} - {format(dateRange.to, "LLL dd, y", {locale: ptBR})}
-                                    </>
-                                ) : (
-                                    format(dateRange.from, "LLL dd, y", {locale: ptBR})
-                                )
-                            ) : (
-                                <span>Selecione o período</span>
-                            )}
-                        </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                            initialFocus
-                            mode="range"
-                            defaultMonth={dateRange?.from}
-                            selected={{ from: dateRange.from, to: dateRange.to }}
-                            onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-                            numberOfMonths={2}
-                            locale={ptBR}
-                        />
-                        </PopoverContent>
-                    </Popover>
-                </div>
-            </div>
-            {reportType === 'demands' && (
+            {reportType !== 'third-party' && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="date-range" className="text-right">Período</Label>
+                  <div className="col-span-3">
+                      <Popover>
+                          <PopoverTrigger asChild>
+                          <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !dateRange.from && !dateRange.to && "text-muted-foreground")}>
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {dateRange.from ? (dateRange.to ? <>{format(dateRange.from, "P", {locale: ptBR})} - {format(dateRange.to, "P", {locale: ptBR})}</> : format(dateRange.from, "P", {locale: ptBR})) : <span>Selecione o período</span>}
+                          </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="range" selected={{ from: dateRange.from, to: dateRange.to }} onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })} numberOfMonths={2} locale={ptBR} />
+                          </PopoverContent>
+                      </Popover>
+                  </div>
+              </div>
+            )}
+
+            {reportType === 'third-party' && (
                 <>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="demand-filter" className="text-right">
-                            Demanda
-                        </Label>
-                        <div className="col-span-3">
-                            <Select value={selectedDemandId} onValueChange={setSelectedDemandId}>
-                                <SelectTrigger id="demand-filter">
-                                    <SelectValue placeholder="Selecione uma demanda..." />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-[200px] overflow-auto">
-                                    <SelectItem value="all">Todas as demandas</SelectItem>
-                                    {demands
-                                        ?.filter(d => {
-                                            // Filtrar demandas ativas por padrão
-                                            return statusFilter === 'all' || 
-                                                (statusFilter !== 'all' && d.status === statusFilter);
-                                        })
-                                        .sort((a, b) => a.title.localeCompare(b.title))
-                                        .map(demand => (
-                                            <SelectItem key={demand.id} value={demand.id}>
-                                                {demand.title}
-                                            </SelectItem>
-                                        ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <Label className="text-right">Empresa</Label>
+                        <Select value={companyFilter} onValueChange={setCompanyFilter}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Todas as empresas" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas as empresas</SelectItem>
+                                <SelectItem value="CONFIANÇA">CONFIANÇA</SelectItem>
+                                <SelectItem value="CSH">CSH</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="status-filter" className="text-right">
-                            Status
-                        </Label>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger id="status-filter" className="col-span-3">
-                                <SelectValue placeholder="Selecione..." />
+                        <Label className="text-right">Escola</Label>
+                        <Select value={schoolFilter} onValueChange={setSchoolFilter}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Todas as escolas" />
                             </SelectTrigger>
-                            <SelectContent className="max-h-[200px] overflow-auto">
-                                <SelectItem value="all">Todos os status</SelectItem>
-                                {demandStatuses?.map(status => (
-                                    <SelectItem key={status.id} value={status.label}>{status.label}</SelectItem>
+                            <SelectContent className="max-h-[200px]">
+                                <SelectItem value="all">Todas as escolas</SelectItem>
+                                {schools.sort((a,b) => a.name.localeCompare(b.name)).map(s => (
+                                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </div>
                 </>
             )}
-            {reportType !== 'demands' && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="employee-filter" className="text-right">
-                        Funcionário
-                    </Label>
-                    <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-                        <SelectTrigger id="employee-filter" className="col-span-3">
-                            <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[200px] overflow-auto">
-                            <SelectItem value="all">Todos os funcionários</SelectItem>
-                            {employees?.sort((a,b) => a.name.localeCompare(b.name)).map(emp => (
-                                <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+
+            {reportType === 'demands' && (
+                <>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Demanda</Label>
+                        <Select value={selectedDemandId} onValueChange={setSelectedDemandId}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Todas as demandas" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[200px]">
+                                <SelectItem value="all">Todas as demandas</SelectItem>
+                                {demands.sort((a, b) => a.title.localeCompare(b.title)).map(d => (
+                                    <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Status</Label>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Todos os status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos os status</SelectItem>
+                                {demandStatuses.map(s => <SelectItem key={s.id} value={s.label}>{s.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </>
             )}
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button type="button" onClick={handleGenerateReport} disabled={isGenerating}>
-            {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Gerar Relatório
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={handleGenerateReport} disabled={isGenerating}>
+            {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Gerar Relatório"}
           </Button>
         </DialogFooter>
       </DialogContent>
