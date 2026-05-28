@@ -33,12 +33,8 @@ let messaging: Messaging | null = null;
  * Esta função deve ser chamada apenas no lado do cliente.
  */
 function getFirebaseApp(): FirebaseApp {
-    // Esta verificação é crítica. Se o projectId estiver ausente, as variáveis de ambiente não foram carregadas.
+    // Se o projectId estiver ausente, retornamos um app com config mock para não quebrar o React
     if (!firebaseConfig.projectId) {
-        // Registra um erro no console em vez de travar a renderização do React
-        console.error("ERRO DE CONFIGURAÇÃO: As chaves do Firebase não foram encontradas no arquivo .env. Verifique o arquivo .env.example para saber como configurar.");
-        
-        // Retorna uma configuração dummy para que o AuthProvider e outros hooks não quebrem o ciclo do React
         const mockConfig = {
             apiKey: "missing",
             authDomain: "missing.firebaseapp.com",
@@ -69,7 +65,7 @@ export function getAuthInstance(): Auth {
         try {
             auth = getAuth(getFirebaseApp());
         } catch (error) {
-            console.error("Falha ao inicializar o Firebase Auth:", error);
+            console.warn("Falha ao inicializar o Firebase Auth:", error);
             throw error;
         }
     }
@@ -79,18 +75,16 @@ export function getAuthInstance(): Auth {
 export function getDbInstance(): Firestore {
     if (!db) {
         const firebaseApp = getFirebaseApp();
+        // Se for o projeto de fallback, não tenta habilitar cache persistente
+        if (firebaseApp.options.projectId === 'missing-project') {
+            return getFirestore(firebaseApp);
+        }
+
         try {
-            // Usa initializeFirestore com configurações de cache
             db = initializeFirestore(firebaseApp, {
                 localCache: persistentLocalCache({})
             });
         } catch (err: any) {
-            if (err.code === 'failed-precondition') {
-                console.warn("Persistência do Firestore falhou: múltiplas abas abertas. Usando fallback para cache em memória.");
-            } else if (err.code === 'unimplemented') {
-                console.warn("Persistência do Firestore não suportada neste navegador. Usando fallback para cache em memória.");
-            }
-            // Fallback para getFirestore padrão (cache em memória) se a persistência falhar
             db = getFirestore(firebaseApp);
         }
     }
@@ -103,7 +97,7 @@ export function getStorageInstance(): FirebaseStorage {
         try {
             storage = getStorage(getFirebaseApp());
         } catch (error) {
-            console.error("Falha ao inicializar o Firebase Storage:", error);
+            console.warn("Falha ao inicializar o Firebase Storage:", error);
             throw error;
         }
     }
@@ -117,14 +111,13 @@ export function getMessagingObject(): Messaging | null {
     if (!messaging) {
       try {
         const firebaseApp = getFirebaseApp();
-        // Verifica se o projectId existe e não é o mock antes de inicializar o messaging
+        // Só tenta inicializar o messaging se as chaves forem reais
         if (firebaseApp.options.projectId && firebaseApp.options.projectId !== 'missing-project') {
             messaging = getMessaging(firebaseApp);
         } else {
             return null;
         }
       } catch (error) {
-        console.warn("Não foi possível inicializar o serviço de mensagens:", error);
         messaging = null;
       }
     }

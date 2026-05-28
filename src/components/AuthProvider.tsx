@@ -35,7 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
       try {
         const messaging = getMessagingObject();
-        if (typeof window !== 'undefined' && messaging) {
+        // Só registra o listener se o serviço de mensagens estiver disponível e configurado
+        if (typeof window !== 'undefined' && messaging && process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
           const unsubscribe = onMessage(messaging, (payload) => {
             console.log('Foreground message received. ', payload);
             toast({
@@ -46,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return unsubscribe;
         }
       } catch (error) {
-        console.warn('Firebase messaging not available:', error);
+        // Silencioso para não travar a UI
       }
     }, [toast]);
     
