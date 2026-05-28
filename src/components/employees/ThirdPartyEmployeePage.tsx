@@ -5,7 +5,7 @@ import React, { useState, useRef } from 'react';
 import type { ThirdPartyEmployee, School } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card as ShadCnCard, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserCircle2, PlusCircle, Building2, FileUp, Loader2, CloudSync } from 'lucide-react';
+import { UserCircle2, PlusCircle, Building2, FileUp, Loader2, RefreshCw } from 'lucide-react';
 import ThirdPartyEmployeeForm from './ThirdPartyEmployeeForm';
 import ThirdPartyEmployeeList from './ThirdPartyEmployeeList';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -105,7 +105,7 @@ export default function ThirdPartyEmployeePage({
                 Importar Planilha Inicial
               </Button>
               <Button variant="outline" size="sm" onClick={handleOneDriveSync} disabled={isSyncing}>
-                {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CloudSync className="mr-2 h-4 w-4" />}
+                {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                 Configurar OneDrive
               </Button>
               <Button variant="outline" size="sm" onClick={onOpenSchoolManagement}>
