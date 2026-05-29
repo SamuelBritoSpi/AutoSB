@@ -1,11 +1,9 @@
-
 import * as XLSX from 'xlsx';
 import type { ThirdPartyEmployee, School, ThirdPartyHistoryEntry } from './types';
+import { normalizeForComparison } from './utils';
 
 /**
  * Processa um arquivo Excel de Terceirizados conforme as colunas específicas do usuário.
- * Colunas esperadas: NTE, MUNICÍPIO LOTAÇÃO, LOTAÇÃO, COD SEC, LOTAÇÃO ATUALIZADA, COD SEC2, 
- * NOME, CPF, FUNÇÃO, CONTATO, CONTATO ATUALIZADO, CONTRATO ATUAL, EMPRESA, STATUS, DATA DE ADMISSÃO, OBSERVAÇÃO.
  */
 export async function parseEmployeesExcel(file: File, schools: School[]): Promise<Omit<ThirdPartyEmployee, 'id'>[]> {
   return new Promise((resolve, reject) => {
@@ -21,24 +19,31 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
         const employees: Omit<ThirdPartyEmployee, 'id'>[] = jsonData.map(row => {
-          // 1. Normalização de CPF (11 dígitos com zeros à esquerda)
-          const rawCpf = String(row['CPF'] || '').replace(/\D/g, '');
+          // Normalização de chaves da linha (ignora maiúsculas/minúsculas e acentos)
+          const normalizedRow: Record<string, any> = {};
+          Object.keys(row).forEach(key => {
+            const normalizedKey = key.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+            normalizedRow[normalizedKey] = row[key];
+          });
+
+          // 1. Normalização de CPF (11 dígitos)
+          const rawCpf = String(normalizedRow['CPF'] || '').replace(/\D/g, '');
           const formattedCpf = rawCpf ? rawCpf.padStart(11, '0') : '';
 
           // 2. Lógica de Prioridade (Atualizado vs Antigo)
-          const lotacaoAntiga = String(row['LOTAÇÃO'] || '').trim();
-          const lotacaoNova = String(row['LOTAÇÃO ATUALIZADA'] || '').trim();
+          const lotacaoAntiga = String(normalizedRow['LOTACAO'] || '').trim();
+          const lotacaoNova = String(normalizedRow['LOTACAO ATUALIZADA'] || '').trim();
           const finalSchoolName = lotacaoNova || lotacaoAntiga || 'Não Informado';
 
-          const codSecAntigo = String(row['COD SEC'] || '').trim();
-          const codSecNovo = String(row['COD SEC2'] || '').trim();
+          const codSecAntigo = String(normalizedRow['COD SEC'] || '').trim();
+          const codSecNovo = String(normalizedRow['COD SEC2'] || '').trim();
           const finalCodSec = codSecNovo || codSecAntigo || '';
 
-          const contatoAntigo = String(row['CONTATO'] || '').trim();
-          const contatoNovo = String(row['CONTATO ATUALIZADO'] || '').trim();
+          const contatoAntigo = String(normalizedRow['CONTATO'] || '').trim();
+          const contatoNovo = String(normalizedRow['CONTATO ATUALIZADO'] || '').trim();
           const finalContact = contatoNovo || contatoAntigo || '';
 
-          // 3. Montagem do Histórico Inicial se houver dados "antigos" diferentes dos "novos"
+          // 3. Montagem do Histórico
           const history: ThirdPartyHistoryEntry[] = [];
           const now = new Date().toISOString();
 
@@ -52,34 +57,50 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
             history.push({ date: now, field: 'Contato', oldValue: contatoAntigo, newValue: contatoNovo });
           }
 
-          // 4. Mapeamento de Escola por nome para obter ID
-          const school = schools.find(s => s.name.toLowerCase() === finalSchoolName.toLowerCase());
+          // 4. Mapeamento de Escola Robusto (Fuzzy Match)
+          const normalizedSearchName = normalizeForComparison(finalSchoolName);
+          const school = schools.find(s => normalizeForComparison(s.name) === normalizedSearchName);
 
-          // 5. Data de Admissão (Tratamento Excel)
+          // 5. Data de Admissão
           let admissionDate = new Date().toISOString();
-          if (row['DATA DE ADMISSÃO']) {
-            const d = new Date(row['DATA DE ADMISSÃO']);
+          if (normalizedRow['DATA DE ADMISSAO']) {
+            const d = new Date(normalizedRow['DATA DE ADMISSAO']);
             if (!isNaN(d.getTime())) {
               admissionDate = d.toISOString();
             }
           }
 
+          // 6. Captura de Dados Extras (Colunas não mapeadas)
+          const standardKeys = [
+            'NTE', 'MUNICIPIO LOTACAO', 'LOTACAO', 'COD SEC', 'LOTACAO ATUALIZADA', 
+            'COD SEC2', 'NOME', 'CPF', 'FUNCAO', 'CONTATO', 'CONTATO ATUALIZADO', 
+            'CONTRATO ATUAL', 'EMPRESA', 'STATUS', 'DATA DE ADMISSAO', 'OBSERVACAO'
+          ];
+          
+          const extraData: Record<string, any> = {};
+          Object.keys(normalizedRow).forEach(key => {
+            if (!standardKeys.includes(key)) {
+              extraData[key] = normalizedRow[key];
+            }
+          });
+
           return {
-            nte: String(row['NTE'] || 'NTE 20'),
-            municipio: String(row['MUNICÍPIO LOTAÇÃO'] || ''),
+            nte: String(normalizedRow['NTE'] || 'NTE 20'),
+            municipio: String(normalizedRow['MUNICIPIO LOTACAO'] || ''),
             schoolId: school?.id || 'importado',
             schoolName: finalSchoolName,
             codSec: finalCodSec,
-            name: String(row['NOME'] || ''),
+            name: String(normalizedRow['NOME'] || ''),
             cpf: formattedCpf,
-            role: String(row['FUNÇÃO'] || ''),
+            role: String(normalizedRow['FUNCAO'] || ''),
             contact: finalContact,
-            company: String(row['EMPRESA'] || '').toUpperCase().includes('CSH') ? 'CSH' : 'CONFIANÇA',
-            status: String(row['STATUS'] || 'Ativo'),
+            company: String(normalizedRow['EMPRESA'] || '').toUpperCase().includes('CSH') ? 'CSH' : 'CONFIANÇA',
+            status: String(normalizedRow['STATUS'] || 'Ativo'),
             admissionDate: admissionDate,
-            observation: String(row['OBSERVAÇÃO'] || ''),
-            contractType: String(row['CONTRATO ATUAL'] || ''),
+            observation: String(normalizedRow['OBSERVACAO'] || ''),
+            contractType: String(normalizedRow['CONTRATO ATUAL'] || ''),
             history: history,
+            extraData: Object.keys(extraData).length > 0 ? extraData : undefined
           };
         });
 

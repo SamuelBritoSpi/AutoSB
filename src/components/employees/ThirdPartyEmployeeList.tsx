@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState } from 'react';
@@ -21,7 +20,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { cn, formatCPF } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,7 +51,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
     return employees.filter(e => 
       e.name.toLowerCase().includes(search.toLowerCase()) ||
       e.schoolName.toLowerCase().includes(search.toLowerCase()) ||
-      e.cpf.includes(search)
+      e.cpf.includes(search.replace(/\D/g, ''))
     );
   }, [employees, search]);
 
@@ -162,7 +161,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-bold text-primary">{emp.name}</span>
-                        <span className="text-[10px] text-muted-foreground uppercase">CPF: {emp.cpf}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">CPF: {formatCPF(emp.cpf)}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -173,7 +172,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{emp.schoolName}</span>
-                        <span className="text-[10px] uppercase text-muted-foreground">{emp.municipio} - {emp.nte}</span>
+                        <span className="text-[10px] uppercase text-muted-foreground">{emp.municipio || 'Não Informado'} - {emp.nte}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">{emp.role}</TableCell>
@@ -214,6 +213,21 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
                                       <p>{emp.contractType || '—'}</p>
                                     </div>
                                 </div>
+                                
+                                {emp.extraData && (
+                                    <div className="mt-4 pt-4 border-t border-dashed">
+                                        <p className="text-[9px] font-bold text-amber-600 uppercase mb-2">Dados Adicionais da Planilha:</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {Object.entries(emp.extraData).map(([key, value]) => (
+                                                <div key={key} className="bg-amber-50/50 p-1.5 rounded border border-amber-100">
+                                                    <p className="text-[8px] font-bold text-amber-700 uppercase leading-none mb-1">{key}</p>
+                                                    <p className="text-[10px]">{String(value)}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {emp.observation && (
                                     <div className="mt-2">
                                         <p className="text-[9px] font-bold text-muted-foreground uppercase">Observação:</p>

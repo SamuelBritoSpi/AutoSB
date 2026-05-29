@@ -1,8 +1,8 @@
-
 import type { ThirdPartyEmployee } from '@/lib/types';
 import ReportLayout from './ReportLayout';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatCPF } from '@/lib/utils';
 
 interface ThirdPartyReportProps {
   employees: ThirdPartyEmployee[];
@@ -13,6 +13,13 @@ interface ThirdPartyReportProps {
 }
 
 export default function ThirdPartyReport({ employees, filters }: ThirdPartyReportProps) {
+  // Identificar todas as colunas extras presentes em pelo menos um funcionário
+  const allExtraKeys = Array.from(
+    new Set(
+      employees.flatMap(emp => emp.extraData ? Object.keys(emp.extraData) : [])
+    )
+  );
+
   return (
     <ReportLayout title="Base de Dados de Funcionários Terceirizados">
       <div style={{ marginBottom: '1.5rem', fontSize: '0.85rem', color: '#666' }}>
@@ -37,6 +44,10 @@ export default function ThirdPartyReport({ employees, filters }: ThirdPartyRepor
             <th>EMPRESA</th>
             <th>STATUS</th>
             <th>ADMISSÃO</th>
+            {/* Colunas Dinâmicas */}
+            {allExtraKeys.map(key => (
+                <th key={key} style={{ backgroundColor: '#fff9c4', color: '#827717' }}>{key}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -48,18 +59,24 @@ export default function ThirdPartyReport({ employees, filters }: ThirdPartyRepor
                 <td style={{ fontWeight: 'bold' }}>{emp.schoolName}</td>
                 <td>{emp.codSec}</td>
                 <td>{emp.name}</td>
-                <td>{emp.cpf}</td>
+                <td style={{ fontFamily: 'monospace' }}>{formatCPF(emp.cpf)}</td>
                 <td>{emp.role}</td>
                 <td>{emp.contact}</td>
                 <td>{emp.contractType || '—'}</td>
                 <td>{emp.company}</td>
                 <td>{emp.status}</td>
                 <td>{format(parseISO(emp.admissionDate), 'dd/MM/yyyy')}</td>
+                {/* Dados Dinâmicos */}
+                {allExtraKeys.map(key => (
+                    <td key={key} style={{ fontStyle: 'italic' }}>
+                        {emp.extraData?.[key] || '—'}
+                    </td>
+                ))}
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan={12} style={{ textAlign: 'center', padding: '2rem' }}>
+              <td colSpan={12 + allExtraKeys.length} style={{ textAlign: 'center', padding: '2rem' }}>
                 Nenhum funcionário encontrado.
               </td>
             </tr>
@@ -68,7 +85,7 @@ export default function ThirdPartyReport({ employees, filters }: ThirdPartyRepor
       </table>
       
       <div style={{ marginTop: '2rem', fontSize: '0.75rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
-        <p><strong>Nota:</strong> Este relatório exibe as informações mais atualizadas de cada colaborador. Históricos detalhados de mudanças de lotação ou contato podem ser consultados diretamente no perfil individual do funcionário no sistema.</p>
+        <p><strong>Nota:</strong> Este relatório exibe as informações mais atualizadas de cada colaborador. Colunas destacadas em amarelo foram detectadas automaticamente na planilha de origem.</p>
       </div>
     </ReportLayout>
   );
