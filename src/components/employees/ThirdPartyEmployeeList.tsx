@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import type { ThirdPartyEmployee, ThirdPartyHistoryEntry } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,9 @@ import {
   ChevronUp, 
   History,
   Info, 
-  AlertTriangle 
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -46,14 +48,46 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  
+  // Estados para Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
+  // Reseta para a primeira página quando a busca mudar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  // Lógica de Busca Corrigida e Aprimorada
   const filtered = useMemo(() => {
-    return employees.filter(e => 
-      e.name.toLowerCase().includes(search.toLowerCase()) ||
-      e.schoolName.toLowerCase().includes(search.toLowerCase()) ||
-      e.cpf.includes(search.replace(/\D/g, ''))
-    );
+    const term = search.toLowerCase().trim();
+    if (!term) return employees;
+
+    const cpfTerm = term.replace(/\D/g, '');
+
+    return employees.filter(e => {
+      const name = (e.name || '').toLowerCase();
+      const school = (e.schoolName || '').toLowerCase();
+      const cpf = (e.cpf || '').replace(/\D/g, '');
+      const role = (e.role || '').toLowerCase();
+      const municipio = (e.municipio || '').toLowerCase();
+      const company = (e.company || '').toLowerCase();
+
+      return name.includes(term) || 
+             school.includes(term) || 
+             (cpfTerm && cpf.includes(cpfTerm)) ||
+             role.includes(term) ||
+             municipio.includes(term) ||
+             company.includes(term);
+    });
   }, [employees, search]);
+
+  // Cálculo da Paginação
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(startIndex, startIndex + itemsPerPage);
+  }, [filtered, currentPage]);
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -98,7 +132,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder="Buscar por nome, escola ou CPF..." 
+            placeholder="Buscar por nome, escola, CPF ou função..." 
             className="pl-10"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -141,7 +175,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length > 0 ? filtered.map((emp) => (
+              {paginatedItems.length > 0 ? paginatedItems.map((emp) => (
                 <React.Fragment key={emp.id}>
                   <TableRow className={cn(
                     expandedId === emp.id && "bg-muted/30 border-b-0",
@@ -198,7 +232,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
                                 <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs">
                                     <div>
                                       <p className="text-muted-foreground font-bold uppercase text-[9px]">Admissão</p>
-                                      <p>{format(parseISO(emp.admissionDate), 'dd/MM/yyyy')}</p>
+                                      <p>{emp.admissionDate ? format(parseISO(emp.admissionDate), 'dd/MM/yyyy') : '—'}</p>
                                     </div>
                                     <div>
                                       <p className="text-muted-foreground font-bold uppercase text-[9px]">Contato Atual</p>
@@ -214,20 +248,6 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
                                     </div>
                                 </div>
                                 
-                                {emp.extraData && (
-                                    <div className="mt-4 pt-4 border-t border-dashed">
-                                        <p className="text-[9px] font-bold text-amber-600 uppercase mb-2">Dados Adicionais da Planilha:</p>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {Object.entries(emp.extraData).map(([key, value]) => (
-                                                <div key={key} className="bg-amber-50/50 p-1.5 rounded border border-amber-100">
-                                                    <p className="text-[8px] font-bold text-amber-700 uppercase leading-none mb-1">{key}</p>
-                                                    <p className="text-[10px]">{String(value)}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
                                 {emp.observation && (
                                     <div className="mt-2">
                                         <p className="text-[9px] font-bold text-muted-foreground uppercase">Observação:</p>
@@ -263,7 +283,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
               )) : (
                 <TableRow>
                   <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
-                    Nenhum funcionário encontrado.
+                    {search ? "Nenhum funcionário encontrado para esta busca." : "Nenhum funcionário cadastrado."}
                   </TableCell>
                 </TableRow>
               )}
@@ -271,6 +291,46 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
           </Table>
         </div>
       </div>
+
+      {/* Controles de Paginação */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between bg-card p-4 rounded-lg border shadow-sm">
+          <div className="text-sm text-muted-foreground">
+            Mostrando <strong>{paginatedItems.length}</strong> de <strong>{filtered.length}</strong> funcionários
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "ghost"}
+                  size="sm"
+                  className="w-8 h-8 p-0"
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Próximo <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <AlertDialogContent>
