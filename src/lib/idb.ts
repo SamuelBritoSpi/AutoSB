@@ -21,6 +21,7 @@ const STORES = {
  * Remove recursivamente campos com valor 'undefined' para evitar erros no Firestore.
  */
 function cleanData(obj: any): any {
+    if (obj === null || obj === undefined) return null;
     return JSON.parse(JSON.stringify(obj, (key, value) => {
         return value === undefined ? null : value;
     }));
@@ -85,36 +86,17 @@ export const deleteDemand = (id: string) => remove(STORES.demands, id);
 export const getDemandProgressByDemandId = async (demandId: string): Promise<DemandProgress[]> => {
   try {
     const db = getDbInstance();
-    if (!db) {
-      console.warn("Firestore não está disponível. Retornando array vazio.");
-      return [];
-    }
-    
+    if (!db) return [];
     const collRef = collection(db, STORES.demandProgress);
-    
-    try {
-      const q = query(collRef, where('demandId', '==', demandId), orderBy('date', 'desc'));
-      const querySnapshot = await getDocs(q);
-      const data: DemandProgress[] = [];
-      querySnapshot.forEach((doc) => {
-        const progress = { ...doc.data(), id: doc.id } as DemandProgress;
-        data.push(progress);
-      });
-      return data;
-    } catch (queryError) {
-      const q = query(collRef, orderBy('date', 'desc'));
-      const querySnapshot = await getDocs(q);
-      const data: DemandProgress[] = [];
-      querySnapshot.forEach((doc) => {
-        const progress = { ...doc.data(), id: doc.id } as DemandProgress;
-        if (progress.demandId === demandId) {
-          data.push(progress);
-        }
-      });
-      return data;
-    }
+    const q = query(collRef, where('demandId', '==', demandId), orderBy('date', 'desc'));
+    const querySnapshot = await getDocs(q);
+    const data: DemandProgress[] = [];
+    querySnapshot.forEach((doc) => {
+      data.push({ ...doc.data(), id: doc.id } as DemandProgress);
+    });
+    return data;
   } catch (error) {
-    console.error(`Erro geral ao buscar progresso para demanda ${demandId}:`, error);
+    console.error(`Erro ao buscar progresso para demanda ${demandId}:`, error);
     return [];
   }
 };
@@ -133,26 +115,7 @@ export const updateDemandProgress = (progress: DemandProgress) => {
 export const deleteDemandProgress = (id: string) => remove(STORES.demandProgress, id);
 
 export const getAllDemandProgress = async (): Promise<DemandProgress[]> => {
-  try {
-    const db = getDbInstance();
-    if (!db) {
-      console.warn("Firestore não está disponível. Retornando array vazio.");
-      return [];
-    }
-    
-    const collRef = collection(db, STORES.demandProgress);
-    const q = query(collRef, orderBy('date', 'desc'));
-    const querySnapshot = await getDocs(q);
-    const data: DemandProgress[] = [];
-    querySnapshot.forEach((doc) => {
-      const progress = { ...doc.data(), id: doc.id } as DemandProgress;
-      data.push(progress);
-    });
-    return data;
-  } catch (error) {
-    console.error('Erro ao buscar todo o progresso das demandas:', error);
-    return [];
-  }
+  return getAll<DemandProgress>(STORES.demandProgress, 'date');
 };
 
 // --- Status de Demanda ---
@@ -195,22 +158,23 @@ export const deleteEmployee = (id: string) => remove(STORES.employees, id);
 // --- Funcionários Terceirizados ---
 export const getThirdPartyEmployees = () => getAll<ThirdPartyEmployee>(STORES.thirdPartyEmployees, 'name');
 export const addThirdPartyEmployee = async (emp: Omit<ThirdPartyEmployee, 'id'>) => {
-    const newId = await add(STORES.thirdPartyEmployees, emp);
-    return { ...emp, id: newId } as ThirdPartyEmployee;
+    const cleaned = cleanData(emp);
+    const newId = await add(STORES.thirdPartyEmployees, cleaned);
+    return { ...cleaned, id: newId } as ThirdPartyEmployee;
 };
-export const updateThirdPartyEmployee = (emp: ThirdPartyEmployee) => update(STORES.thirdPartyEmployees, emp);
+export const updateThirdPartyEmployee = (emp: ThirdPartyEmployee) => {
+    const cleaned = cleanData(emp);
+    return update(STORES.thirdPartyEmployees, cleaned);
+};
 export const deleteThirdPartyEmployee = (id: string) => remove(STORES.thirdPartyEmployees, id);
 
 
 // --- Atestados Médicos ---
 export const getCertificates = () => getAll<MedicalCertificate>(STORES.certificates);
 export const addCertificate = async (certificate: Omit<MedicalCertificate, 'id'>) => {
-    const dataToSave = { ...certificate };
-    if (dataToSave.cid === undefined) {
-      delete (dataToSave as any).cid;
-    }
-    const newId = await add(STORES.certificates, dataToSave);
-    return { ...dataToSave, id: newId } as MedicalCertificate;
+    const cleaned = cleanData(certificate);
+    const newId = await add(STORES.certificates, cleaned);
+    return { ...cleaned, id: newId } as MedicalCertificate;
 };
 export const updateCertificate = (certificate: MedicalCertificate) => update(STORES.certificates, certificate);
 export const deleteCertificate = (id: string) => remove(STORES.certificates, id);

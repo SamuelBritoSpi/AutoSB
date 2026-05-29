@@ -11,15 +11,19 @@ export async function POST(request: Request) {
     const clientId = process.env.NEXT_PUBLIC_MS_CLIENT_ID;
     const clientSecret = process.env.MS_CLIENT_SECRET;
     const spreadsheetId = process.env.NEXT_PUBLIC_MS_SPREADSHEET_ID;
+    const tenantId = process.env.MS_TENANT_ID || 'common';
 
     if (!clientId || !clientSecret || !spreadsheetId) {
-      return NextResponse.json({ message: "Variáveis de ambiente do Microsoft Graph não configuradas." }, { status: 500 });
+      return NextResponse.json({ 
+        message: "Variáveis de ambiente do Microsoft Graph não configuradas (Client ID, Secret ou Spreadsheet ID ausentes)." 
+      }, { status: 500 });
     }
 
     // 1. Obter Token de Acesso (Client Credentials Flow)
-    // Nota: Em contas pessoais, isso pode exigir um refresh token pré-autorizado.
-    // Esta lógica assume uma conta corporativa ou App Registration com permissões de aplicação.
-    const tokenResponse = await fetch(`https://login.microsoftonline.com/common/oauth2/v2.0/token`, {
+    // NOTA: Para contas PESSOAIS (@outlook, @hotmail, @gmail), o fluxo 'client_credentials' 
+    // NÃO é suportado pela Microsoft para acessar o OneDrive pessoal. 
+    // Requer uma conta corporativa (Work/School) ou um Azure Tenant ativo.
+    const tokenResponse = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -31,8 +35,12 @@ export async function POST(request: Request) {
     });
 
     if (!tokenResponse.ok) {
-      const error = await tokenResponse.json();
-      return NextResponse.json({ message: "Falha na autenticação com Microsoft", error }, { status: 401 });
+      const errorDetail = await tokenResponse.json();
+      console.error("[Microsoft Auth Error]", errorDetail);
+      return NextResponse.json({ 
+        message: "Falha na autenticação com Microsoft. Verifique se sua conta é Corporativa/Escolar. Contas pessoais não suportam este tipo de sincronização automática.", 
+        error: errorDetail 
+      }, { status: 401 });
     }
 
     const { access_token } = await tokenResponse.json();
@@ -47,30 +55,35 @@ export async function POST(request: Request) {
     });
 
     if (!rowsResponse.ok) {
-      return NextResponse.json({ message: "Não foi possível acessar as linhas da Tabela1 no Excel." }, { status: 500 });
+      const rowError = await rowsResponse.json();
+      return NextResponse.json({ 
+        message: "Não foi possível acessar a 'Tabela1' no Excel. Certifique-se de que selecionou os dados e clicou em 'Inserir Tabela' no Excel Online.", 
+        error: rowError 
+      }, { status: 500 });
     }
 
     const rowsData = await rowsResponse.json();
     const rows = rowsData.value;
     
-    // Procura o CPF na coluna correta (ex: índice 7 conforme sua ordem informada)
-    // Ordem: NTE(0), MUN(1), LOT(2), COD(3), LOT_ATU(4), COD2(5), NOME(6), CPF(7)...
-    const rowIndex = rows.findIndex((r: any) => String(r.values[0][7]).replace(/\D/g, '') === employee.cpf.replace(/\D/g, ''));
+    const rowIndex = rows.findIndex((r: any) => {
+        const cpfValue = String(r.values[0][7] || '').replace(/\D/g, '');
+        return cpfValue === employee.cpf.replace(/\D/g, '');
+    });
 
     const values = [[
         employee.nte,
         employee.municipio,
-        employee.schoolName, // Lotação original (ou histórica)
+        employee.schoolName, 
         employee.codSec,
-        employee.schoolName, // Lotação Atualizada
-        employee.codSec,     // COD SEC2
+        employee.schoolName, 
+        employee.codSec,     
         employee.name,
         employee.cpf,
         employee.role,
         employee.contact,
-        employee.contact,    // Contato Atualizado
+        employee.contact,    
         employee.contractType || '',
-        employee.contractType || '', // Duplicado conforme sua lista
+        employee.contractType || '', 
         employee.company,
         employee.status,
         employee.admissionDate,
@@ -78,7 +91,6 @@ export async function POST(request: Request) {
     ]];
 
     if (rowIndex !== -1) {
-      // 3. Atualiza linha existente
       await fetch(`${tableUrl}/rows/itemAt(index=${rowIndex})`, {
         method: 'PATCH',
         headers: { 
@@ -88,7 +100,6 @@ export async function POST(request: Request) {
         body: JSON.stringify({ values })
       });
     } else {
-      // 4. Adiciona nova linha se não existir
       await fetch(`${tableUrl}/rows/add`, {
         method: 'POST',
         headers: { 

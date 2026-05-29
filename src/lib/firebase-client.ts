@@ -26,19 +26,21 @@ let storage: FirebaseStorage;
 let messaging: Messaging | null = null;
 
 /**
- * Inicializa e retorna a instância do Firebase App.
+ * Inicializa e retorna a instância do Firebase App com tratamento de erro robusto.
  */
 function getFirebaseApp(): FirebaseApp {
     if (!getApps().length) {
-        // Fallback silencioso apenas se o projeto ID estiver realmente ausente (ex: primeiro build sem env)
-        if (!firebaseConfig.projectId) {
+        // Se o projectId estiver ausente, retornamos uma instância "dummy" para evitar crash no build,
+        // mas o sistema emitirá erros úteis no console.
+        if (!firebaseConfig.projectId || firebaseConfig.apiKey === 'missing') {
+            console.error("Firebase Config está incompleto. Verifique as variáveis de ambiente na Vercel.");
             return initializeApp({
-                apiKey: "missing",
-                authDomain: "missing.firebaseapp.com",
-                projectId: "missing-project",
-                storageBucket: "missing.appspot.com",
+                apiKey: "dummy-key",
+                authDomain: "dummy.firebaseapp.com",
+                projectId: "dummy-project",
+                storageBucket: "dummy.appspot.com",
                 messagingSenderId: "000000000",
-                appId: "missing-app-id"
+                appId: "dummy-app-id"
             });
         }
         app = initializeApp(firebaseConfig);
@@ -58,15 +60,13 @@ export function getAuthInstance(): Auth {
 export function getDbInstance(): Firestore {
     if (!db) {
         const firebaseApp = getFirebaseApp();
-        if (firebaseApp.options.projectId === 'missing-project') {
-            return getFirestore(firebaseApp);
-        }
-
         try {
+            // Tenta inicializar com cache persistente para modo offline
             db = initializeFirestore(firebaseApp, {
                 localCache: persistentLocalCache({})
             });
         } catch (err: any) {
+            // Se já estiver inicializado, apenas pega a instância
             db = getFirestore(firebaseApp);
         }
     }
@@ -85,7 +85,7 @@ export function getMessagingObject(): Messaging | null {
     if (!messaging) {
       try {
         const firebaseApp = getFirebaseApp();
-        if (firebaseApp.options.projectId && firebaseApp.options.projectId !== 'missing-project') {
+        if (firebaseApp.options.projectId && !firebaseApp.options.projectId.includes('dummy')) {
             messaging = getMessaging(firebaseApp);
         }
       } catch (error) {
