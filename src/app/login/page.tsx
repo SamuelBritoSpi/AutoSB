@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
-import { Briefcase, LogIn, Loader2, AlertCircle } from 'lucide-react';
+import { Briefcase, LogIn, Loader2 } from 'lucide-react';
 import { 
   signInWithEmailAndPassword,
   setPersistence,
@@ -20,7 +19,6 @@ import { getAuthInstance } from '@/lib/firebase-client';
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  // Atualizado com as credenciais solicitadas pelo usuário
   const [email, setEmail] = useState('samuelbritosr@gmail.com');
   const [password, setPassword] = useState('140821');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,27 +38,8 @@ export default function LoginPage() {
       });
       router.push('/');
     } catch (error: any) {
-      console.error("Erro na autenticação real:", error.code);
+      console.error("Erro na autenticação:", error.code);
       
-      // Lógica de Bypass para o Firebase Studio / Ambiente de Teste
-      if (email === 'samuelbritosr@gmail.com' && password === '140821') {
-          console.log("Credenciais de teste detectadas. Iniciando bypass...");
-          // Salva uma flag no sessionStorage para o AuthProvider reconhecer
-          sessionStorage.setItem('auth_bypass', 'true');
-          sessionStorage.setItem('auth_bypass_user', JSON.stringify({
-              uid: 'dev-user-sam',
-              email: 'samuelbritosr@gmail.com',
-              displayName: 'Samuel Brito (Modo Teste)'
-          }));
-          
-          toast({
-            title: 'Acesso de Teste Liberado',
-            description: 'Entrando no sistema via modo de desenvolvimento.',
-          });
-          router.push('/');
-          return;
-      }
-
       let errorMessage = 'Ocorreu um erro desconhecido.';
       switch (error.code) {
         case 'auth/user-not-found':
@@ -70,6 +49,9 @@ export default function LoginPage() {
           break;
         case 'auth/invalid-email':
            errorMessage = 'O formato do email é inválido.';
+           break;
+        case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
+           errorMessage = 'Configuração do Firebase inválida. Verifique as chaves de API.';
            break;
         default:
            errorMessage = 'Não foi possível fazer login. Verifique sua conexão ou tente mais tarde.';
@@ -118,13 +100,6 @@ export default function LoginPage() {
               disabled={isLoading}
             />
           </div>
-          
-          {(email === 'samuelbritosr@gmail.com') && (
-              <div className="flex items-center gap-2 p-2 rounded bg-amber-50 border border-amber-200 text-[10px] text-amber-700">
-                  <AlertCircle className="h-3 w-3 shrink-0" />
-                  <p>Modo de Acesso Rápido disponível para estas credenciais.</p>
-              </div>
-          )}
         </CardContent>
         <CardFooter>
           <Button className="w-full" onClick={handleLogin} disabled={isLoading}>

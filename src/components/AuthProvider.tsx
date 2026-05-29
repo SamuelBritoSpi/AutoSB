@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState, useContext, createContext } from 'react';
@@ -52,21 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const auth = getAuthInstance();
         
-        // Verifica se existe um bypass ativo (sessão local de teste)
-        const isBypass = sessionStorage.getItem('auth_bypass') === 'true';
-        if (isBypass) {
-            const bypassUser = JSON.parse(sessionStorage.getItem('auth_bypass_user') || 'null');
-            if (bypassUser) {
-                setUser(bypassUser);
-                setAuthChecked(true);
-                return;
-            }
-        }
-
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             if (currentUser) {
                 setUser(currentUser);
-            } else if (!isBypass) {
+            } else {
                 setUser(null);
             }
             setAuthChecked(true);
