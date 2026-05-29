@@ -22,7 +22,11 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
           // Normalização de chaves da linha (ignora maiúsculas/minúsculas e acentos)
           const normalizedRow: Record<string, any> = {};
           Object.keys(row).forEach(key => {
-            const normalizedKey = key.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+            const normalizedKey = key.toUpperCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/\s+/g, ' ')
+              .trim();
             normalizedRow[normalizedKey] = row[key];
           });
 
@@ -43,7 +47,12 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
           const contatoNovo = String(normalizedRow['CONTATO ATUALIZADO'] || '').trim();
           const finalContact = contatoNovo || contatoAntigo || '';
 
-          // 3. Montagem do Histórico
+          // 3. Município (Tratamento de múltiplas variações de nome de coluna)
+          const municipio = normalizedRow['MUNICIPIO LOTACAO'] || 
+                            normalizedRow['MUNICIPIO'] || 
+                            normalizedRow['MUNICIPIO DE LOTACAO'] || '';
+
+          // 4. Montagem do Histórico
           const history: ThirdPartyHistoryEntry[] = [];
           const now = new Date().toISOString();
 
@@ -57,11 +66,11 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
             history.push({ date: now, field: 'Contato', oldValue: contatoAntigo, newValue: contatoNovo });
           }
 
-          // 4. Mapeamento de Escola Robusto (Fuzzy Match)
+          // 5. Mapeamento de Escola Robusto (Fuzzy Match)
           const normalizedSearchName = normalizeForComparison(finalSchoolName);
           const school = schools.find(s => normalizeForComparison(s.name) === normalizedSearchName);
 
-          // 5. Data de Admissão
+          // 6. Data de Admissão
           let admissionDate = new Date().toISOString();
           if (normalizedRow['DATA DE ADMISSAO']) {
             const d = new Date(normalizedRow['DATA DE ADMISSAO']);
@@ -70,11 +79,12 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
             }
           }
 
-          // 6. Captura de Dados Extras (Colunas não mapeadas)
+          // 7. Captura de Dados Extras (Tudo que não foi mapeado explicitamente)
           const standardKeys = [
-            'NTE', 'MUNICIPIO LOTACAO', 'LOTACAO', 'COD SEC', 'LOTACAO ATUALIZADA', 
-            'COD SEC2', 'NOME', 'CPF', 'FUNCAO', 'CONTATO', 'CONTATO ATUALIZADO', 
-            'CONTRATO ATUAL', 'EMPRESA', 'STATUS', 'DATA DE ADMISSAO', 'OBSERVACAO'
+            'NTE', 'MUNICIPIO LOTACAO', 'MUNICIPIO', 'MUNICIPIO DE LOTACAO', 'LOTACAO', 
+            'COD SEC', 'LOTACAO ATUALIZADA', 'COD SEC2', 'NOME', 'CPF', 'FUNCAO', 
+            'CONTATO', 'CONTATO ATUALIZADO', 'CONTRATO ATUAL', 'EMPRESA', 'STATUS', 
+            'DATA DE ADMISSAO', 'OBSERVACAO'
           ];
           
           const extraData: Record<string, any> = {};
@@ -86,9 +96,9 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
 
           return {
             nte: String(normalizedRow['NTE'] || 'NTE 20'),
-            municipio: String(normalizedRow['MUNICIPIO LOTACAO'] || ''),
+            municipio: String(municipio).trim(),
             schoolId: school?.id || 'importado',
-            schoolName: finalSchoolName,
+            schoolName: school?.name || finalSchoolName,
             codSec: finalCodSec,
             name: String(normalizedRow['NOME'] || ''),
             cpf: formattedCpf,
@@ -104,7 +114,8 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
           };
         });
 
-        resolve(employees.filter(e => e.name && e.name !== 'undefined' && e.name.length > 2));
+        // Filtra linhas vazias ou inválidas
+        resolve(employees.filter(e => e.name && e.name.length > 2));
       } catch (error) {
         reject(error);
       }
