@@ -16,8 +16,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, PlusCircle, X, Search, Check, Plus, Loader2, AlertCircle } from 'lucide-react';
-import type { ThirdPartyEmployee, School, ThirdPartyCompany } from '@/lib/types';
+import { CalendarIcon, PlusCircle, X, Search, Check, Plus, Loader2 } from 'lucide-react';
+import type { ThirdPartyEmployee, School, ThirdPartyHistoryEntry } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 const employeeSchema = z.object({
@@ -26,13 +26,14 @@ const employeeSchema = z.object({
   schoolId: z.string().min(1, "Lotação é obrigatória"),
   codSec: z.string().min(1, "COD.sec é obrigatório"),
   name: z.string().min(3, "Nome completo é obrigatório"),
-  cpf: z.string().min(11, "CPF inválido"),
+  cpf: z.string().min(11, "CPF deve ter 11 dígitos"),
   role: z.string().min(1, "Função é obrigatória"),
   contact: z.string().min(1, "Contato é obrigatório"),
   company: z.enum(['CONFIANÇA', 'CSH']),
   status: z.string().default("Ativo"),
   admissionDate: z.date({ required_error: "Data de admissão é obrigatória" }),
   observation: z.string().optional(),
+  contractType: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof employeeSchema>;
@@ -44,14 +45,6 @@ interface ThirdPartyEmployeeFormProps {
   onClose?: () => void;
   existingEmployee?: ThirdPartyEmployee | null;
   onUpdateEmployee?: (emp: ThirdPartyEmployee) => void;
-}
-
-function toTitleCase(str: string) {
-    return str
-        .toLowerCase()
-        .split(/\s+/)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
 }
 
 export default function ThirdPartyEmployeeForm({ 
@@ -84,7 +77,7 @@ export default function ThirdPartyEmployeeForm({
     if (!trimmedName) return;
     setIsAddingSchool(true);
     try {
-      const created = await onAddSchool(toTitleCase(trimmedName));
+      const created = await onAddSchool(trimmedName);
       form.setValue('schoolId', created.id);
       setIsSchoolPopoverOpen(false);
       setNewSchoolName("");
@@ -95,15 +88,34 @@ export default function ThirdPartyEmployeeForm({
 
   const onSubmit = (values: FormValues) => {
     const school = schools.find(s => s.id === values.schoolId);
+    const now = new Date().toISOString();
+    
+    // Gerar Histórico se estiver editando
+    let history: ThirdPartyHistoryEntry[] = existingEmployee?.history || [];
+    
+    if (existingEmployee) {
+      if (values.contact !== existingEmployee.contact) {
+        history = [{ date: now, field: 'Contato', oldValue: existingEmployee.contact, newValue: values.contact }, ...history].slice(0, 5);
+      }
+      if (school?.name !== existingEmployee.schoolName) {
+        history = [{ date: now, field: 'Lotação', oldValue: existingEmployee.schoolName, newValue: school?.name || 'Não Informado' }, ...history].slice(0, 5);
+      }
+      if (values.codSec !== existingEmployee.codSec) {
+        history = [{ date: now, field: 'COD SEC', oldValue: existingEmployee.codSec, newValue: values.codSec }, ...history].slice(0, 5);
+      }
+    }
+
     const empData: Omit<ThirdPartyEmployee, 'id'> = {
       ...values,
+      cpf: values.cpf.padStart(11, '0'),
       schoolName: school?.name || 'Não Informado',
       admissionDate: values.admissionDate.toISOString(),
       observation: values.observation || '',
+      history: history,
     };
 
     if (existingEmployee && onUpdateEmployee) {
-      onUpdateEmployee({ ...empData, id: existingEmployee.id });
+      onUpdateEmployee({ ...empData, id: existingEmployee.id } as ThirdPartyEmployee);
     } else {
       onAddEmployee(empData);
     }
@@ -120,7 +132,7 @@ export default function ThirdPartyEmployeeForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>NTE</FormLabel>
-                <Input placeholder="Ex: NTE 20" {...field} />
+                <Input placeholder="NTE 20" {...field} />
                 <FormMessage />
               </FormItem>
             )}
@@ -131,18 +143,18 @@ export default function ThirdPartyEmployeeForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Município</FormLabel>
-                <Input placeholder="Ex: Vitória da Conquista" {...field} />
+                <Input placeholder="Cidade" {...field} />
                 <FormMessage />
               </FormItem>
             )}
           />
-          <FormField
+           <FormField
             control={form.control}
             name="codSec"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>COD.sec</FormLabel>
-                <Input placeholder="Código da Secretaria" {...field} />
+                <Input placeholder="Código Secretaria" {...field} />
                 <FormMessage />
               </FormItem>
             )}
@@ -155,7 +167,7 @@ export default function ThirdPartyEmployeeForm({
             name="schoolId"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Lotação (Escola)</FormLabel>
+                <FormLabel>Lotação Atual</FormLabel>
                 <Popover open={isSchoolPopoverOpen} onOpenChange={setIsSchoolPopoverOpen}>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -167,15 +179,16 @@ export default function ThirdPartyEmployeeForm({
                   </PopoverTrigger>
                   <PopoverContent className="w-[300px] p-0" align="start">
                     <Command>
-                      <CommandInput placeholder="Buscar..." value={newSchoolName} onValueChange={setNewSchoolName} />
+                      <CommandInput placeholder="Buscar ou cadastrar..." value={newSchoolName} onValueChange={setNewSchoolName} />
                       <CommandList>
                         <CommandEmpty>
                           <Button size="sm" className="w-full" onClick={handleCreateSchool} disabled={isAddingSchool}>
+                            {isAddingSchool ? <Loader2 className="animate-spin h-3 w-3 mr-2" /> : <Plus className="h-3 w-3 mr-2" />}
                             Cadastrar "{newSchoolName}"
                           </Button>
                         </CommandEmpty>
                         <CommandGroup>
-                          {schools.map(s => (
+                          {schools.sort((a,b) => a.name.localeCompare(b.name)).map(s => (
                             <CommandItem key={s.id} onSelect={() => { form.setValue('schoolId', s.id); setIsSchoolPopoverOpen(false); }}>
                               <Check className={cn("mr-2 h-4 w-4", s.id === field.value ? "opacity-100" : "opacity-0")} />
                               {s.name}
@@ -210,7 +223,7 @@ export default function ThirdPartyEmployeeForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>CPF</FormLabel>
-                <Input placeholder="000.000.000-00" {...field} />
+                <Input placeholder="00000000000" maxLength={11} {...field} />
                 <FormMessage />
               </FormItem>
             )}
@@ -231,7 +244,7 @@ export default function ThirdPartyEmployeeForm({
             name="contact"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Contato</FormLabel>
+                <FormLabel>Contato Atual</FormLabel>
                 <Input placeholder="(00) 00000-0000" {...field} />
                 <FormMessage />
               </FormItem>
@@ -239,7 +252,7 @@ export default function ThirdPartyEmployeeForm({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <FormField
             control={form.control}
             name="company"
@@ -253,6 +266,17 @@ export default function ThirdPartyEmployeeForm({
                     <SelectItem value="CSH">CSH</SelectItem>
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="contractType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contrato Atual</FormLabel>
+                <Input placeholder="Ex: 001/2023" {...field} />
                 <FormMessage />
               </FormItem>
             )}
@@ -273,7 +297,7 @@ export default function ThirdPartyEmployeeForm({
             name="admissionDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Data de Admissão</FormLabel>
+                <FormLabel>Admissão</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
@@ -301,11 +325,11 @@ export default function ThirdPartyEmployeeForm({
           )}
         />
 
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-2 justify-end pt-2 border-t mt-4">
           {onClose && <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>}
           <Button type="submit">
             <PlusCircle className="mr-2 h-4 w-4" />
-            {existingEmployee ? "Atualizar" : "Cadastrar"}
+            {existingEmployee ? "Salvar Alterações" : "Cadastrar Funcionário"}
           </Button>
         </div>
       </form>

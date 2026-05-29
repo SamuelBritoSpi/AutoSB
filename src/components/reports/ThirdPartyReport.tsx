@@ -13,65 +13,62 @@ interface ThirdPartyReportProps {
 }
 
 export default function ThirdPartyReport({ employees, filters }: ThirdPartyReportProps) {
-  // Coleta todas as chaves únicas de extraData presentes na lista filtrada
-  const extraKeys = Array.from(
-    new Set(
-      employees.flatMap(emp => emp.extraData ? Object.keys(emp.extraData) : [])
-    )
-  );
-
   return (
-    <ReportLayout title="Relatório de Funcionários Terceirizados">
+    <ReportLayout title="Base de Dados de Funcionários Terceirizados">
       <div style={{ marginBottom: '1.5rem', fontSize: '0.85rem', color: '#666' }}>
         <strong>Filtros:</strong> {filters.company === 'all' ? 'Todas Empresas' : `Empresa: ${filters.company}`} 
         {filters.schoolId !== 'all' && ` | Lotação Específica`}
+        <br />
+        <strong>Total de Registros:</strong> {employees.length}
       </div>
       
-      <table style={{ fontSize: '0.7rem' }}>
+      <table style={{ fontSize: '0.65rem' }}>
         <thead>
           <tr>
-            <th>Lotação</th>
-            <th>Nome Completo</th>
+            <th>NTE</th>
+            <th>MUNICÍPIO</th>
+            <th>LOTAÇÃO</th>
+            <th>COD SEC</th>
+            <th>NOME</th>
             <th>CPF</th>
-            <th>Função</th>
-            <th>Empresa</th>
-            <th>Status</th>
-            <th>Admissão</th>
-            {/* Renderiza cabeçalhos dinâmicos para colunas extras */}
-            {extraKeys.map(key => (
-              <th key={key} style={{ backgroundColor: '#FFF9C4', color: '#827717' }}>{key}</th>
-            ))}
+            <th>FUNÇÃO</th>
+            <th>CONTATO</th>
+            <th>CONTRATO ATUAL</th>
+            <th>EMPRESA</th>
+            <th>STATUS</th>
+            <th>ADMISSÃO</th>
           </tr>
         </thead>
         <tbody>
           {employees.length > 0 ? (
             employees.map(emp => (
               <tr key={emp.id}>
+                <td>{emp.nte}</td>
+                <td>{emp.municipio}</td>
                 <td style={{ fontWeight: 'bold' }}>{emp.schoolName}</td>
+                <td>{emp.codSec}</td>
                 <td>{emp.name}</td>
                 <td>{emp.cpf}</td>
                 <td>{emp.role}</td>
+                <td>{emp.contact}</td>
+                <td>{emp.contractType || '—'}</td>
                 <td>{emp.company}</td>
                 <td>{emp.status}</td>
                 <td>{format(parseISO(emp.admissionDate), 'dd/MM/yyyy')}</td>
-                {/* Preenche os dados extras dinamicamente */}
-                {extraKeys.map(key => (
-                  <td key={key}>{emp.extraData ? String(emp.extraData[key] || '-') : '-'}</td>
-                ))}
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan={7 + extraKeys.length} style={{ textAlign: 'center', padding: '2rem' }}>
-                Nenhum funcionário encontrado com os filtros selecionados.
+              <td colSpan={12} style={{ textAlign: 'center', padding: '2rem' }}>
+                Nenhum funcionário encontrado.
               </td>
             </tr>
           )}
         </tbody>
       </table>
       
-      <div style={{ marginTop: '2rem', fontSize: '0.8rem', fontStyle: 'italic', color: '#888' }}>
-        * Colunas em amarelo foram identificadas como dados extras da sua planilha original e foram preservadas.
+      <div style={{ marginTop: '2rem', fontSize: '0.75rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+        <p><strong>Nota:</strong> Este relatório exibe as informações mais atualizadas de cada colaborador. Históricos detalhados de mudanças de lotação ou contato podem ser consultados diretamente no perfil individual do funcionário no sistema.</p>
       </div>
     </ReportLayout>
   );

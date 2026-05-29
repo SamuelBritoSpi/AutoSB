@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useMemo, useState } from 'react';
-import type { ThirdPartyEmployee } from '@/lib/types';
+import type { ThirdPartyEmployee, ThirdPartyHistoryEntry } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,10 +15,12 @@ import {
   FileText, 
   ChevronDown, 
   ChevronUp, 
+  History,
   Info, 
   AlertTriangle 
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -73,13 +76,12 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
 
   const handleBulkDelete = async () => {
     try {
-      // Exclui um por um usando a função onUpdate existente
       for (const id of selectedIds) {
         onDelete(id);
       }
       toast({
         title: "Exclusão Concluída",
-        description: `${selectedIds.length} funcionários foram removidos com sucesso.`,
+        description: `${selectedIds.length} funcionários foram removidos.`,
       });
       setSelectedIds([]);
       setIsConfirmOpen(false);
@@ -87,7 +89,6 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
       toast({
         variant: 'destructive',
         title: "Erro na Exclusão",
-        description: "Ocorreu um problema ao tentar excluir os funcionários.",
       });
     }
   };
@@ -132,9 +133,9 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
                   />
                 </TableHead>
                 <TableHead className="w-10"></TableHead>
-                <TableHead>Funcionário</TableHead>
+                <TableHead>Funcionário / CPF</TableHead>
                 <TableHead>Empresa</TableHead>
-                <TableHead>Lotação</TableHead>
+                <TableHead>Lotação Atual</TableHead>
                 <TableHead>Função</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -191,36 +192,55 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
                     <TableRow className="bg-muted/30 border-t-0">
                       <TableCell colSpan={8} className="pb-4 px-12">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-lg bg-background border shadow-inner">
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 <h4 className="text-[10px] font-bold uppercase text-primary border-b pb-1 flex items-center gap-2">
                                     <Info className="h-3 w-3" /> Detalhes Gerais
                                 </h4>
-                                <div className="grid grid-cols-2 gap-2 text-xs">
-                                    <p><span className="text-muted-foreground">Admissão:</span> {format(parseISO(emp.admissionDate), 'dd/MM/yyyy')}</p>
-                                    <p><span className="text-muted-foreground">Contato:</span> {emp.contact}</p>
-                                    <p><span className="text-muted-foreground">COD.sec:</span> {emp.codSec}</p>
+                                <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs">
+                                    <div>
+                                      <p className="text-muted-foreground font-bold uppercase text-[9px]">Admissão</p>
+                                      <p>{format(parseISO(emp.admissionDate), 'dd/MM/yyyy')}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-muted-foreground font-bold uppercase text-[9px]">Contato Atual</p>
+                                      <p>{emp.contact}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-muted-foreground font-bold uppercase text-[9px]">COD.sec</p>
+                                      <p>{emp.codSec}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-muted-foreground font-bold uppercase text-[9px]">Contrato</p>
+                                      <p>{emp.contractType || '—'}</p>
+                                    </div>
                                 </div>
                                 {emp.observation && (
                                     <div className="mt-2">
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Observação:</p>
+                                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Observação:</p>
                                         <p className="text-xs bg-primary/5 p-2 rounded italic">"{emp.observation}"</p>
                                     </div>
                                 )}
                             </div>
                             
-                            {(emp.extraData && Object.keys(emp.extraData).length > 0) && (
-                                <div className="space-y-3">
-                                    <h4 className="text-[10px] font-bold uppercase text-amber-600 border-b pb-1">Colunas Extras da Planilha</h4>
-                                    <div className="grid grid-cols-1 gap-1">
-                                        {Object.entries(emp.extraData).map(([key, value]) => (
-                                            <div key={key} className="flex justify-between text-[10px] p-1 border-b border-dashed">
-                                                <span className="text-muted-foreground font-semibold uppercase">{key}:</span>
-                                                <span className="font-medium">{String(value)}</span>
+                            <div className="space-y-4">
+                                <h4 className="text-[10px] font-bold uppercase text-amber-600 border-b pb-1 flex items-center gap-2">
+                                    <History className="h-3 w-3" /> Histórico de Alterações
+                                </h4>
+                                <div className="max-h-40 overflow-y-auto space-y-2">
+                                    {emp.history && emp.history.length > 0 ? emp.history.map((h, i) => (
+                                        <div key={i} className="text-[10px] p-2 rounded border border-dashed bg-amber-50/50">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="font-bold text-amber-700">{h.field}</span>
+                                                <span className="text-muted-foreground">{format(parseISO(h.date), 'dd/MM/yy HH:mm')}</span>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <p><span className="text-muted-foreground">De:</span> <span className="line-through">{h.oldValue}</span></p>
+                                            <p><span className="text-muted-foreground">Para:</span> <span className="font-medium">{h.newValue}</span></p>
+                                        </div>
+                                    )) : (
+                                        <p className="text-[10px] text-muted-foreground italic py-2">Sem alterações registradas no sistema.</p>
+                                    )}
                                 </div>
-                            )}
+                            </div>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -229,7 +249,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
               )) : (
                 <TableRow>
                   <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
-                    Nenhum funcionário terceirizado encontrado.
+                    Nenhum funcionário encontrado.
                   </TableCell>
                 </TableRow>
               )}
@@ -238,7 +258,6 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
         </div>
       </div>
 
-      {/* Alerta de Confirmação de Exclusão em Massa */}
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -247,16 +266,13 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
               Confirmar Exclusão em Massa
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Você está prestes a excluir permanentemente <strong>{selectedIds.length}</strong> funcionário(s). 
-              Esta ação não pode ser desfeita e os dados serão removidos do sistema.
+              Você está prestes a excluir <strong>{selectedIds.length}</strong> funcionário(s). 
+              Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleBulkDelete}
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-            >
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
               Sim, Excluir Tudo
             </AlertDialogAction>
           </AlertDialogFooter>
