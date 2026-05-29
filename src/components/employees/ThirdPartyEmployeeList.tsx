@@ -12,7 +12,6 @@ import {
   Search, 
   Edit, 
   Trash2, 
-  FileText, 
   ChevronDown, 
   ChevronUp, 
   History,
@@ -22,10 +21,10 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { cn, formatCPF } from '@/lib/utils';
 import {
   AlertDialog,
@@ -80,13 +79,14 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
     });
   }, [employees, search]);
 
-  // Sempre que a busca mudar, voltamos para a página 1 para não "perder" os resultados
+  // Sempre que a busca mudar, voltamos para a página 1
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setCurrentPage(1);
   };
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  
   const paginatedItems = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filtered.slice(startIndex, startIndex + itemsPerPage);
@@ -117,18 +117,16 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
       }
       toast({
         title: "Exclusão Concluída",
-        description: `${selectedIds.length} funcionários foram removidos.`,
+        description: `${selectedIds.length} funcionários removidos.`,
       });
       setSelectedIds([]);
       setIsConfirmOpen(false);
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: "Erro na Exclusão",
-      });
+      toast({ variant: 'destructive', title: "Erro na Exclusão" });
     }
   };
 
+  // Lógica para mostrar apenas um bloco de páginas (ex: 5 por vez)
   const getVisiblePages = () => {
     const maxVisible = 5;
     let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
@@ -140,19 +138,20 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
 
     const pages = [];
     for (let i = start; i <= end; i++) {
-      pages.push(i);
+      if (i > 0) pages.push(i);
     }
     return pages;
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-card p-4 rounded-lg border shadow-sm">
+      {/* Top Bar: Search & Actions */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-card p-4 rounded-xl border shadow-sm">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder="Buscar por nome, escola, CPF ou função..." 
-            className="pl-10 pr-10"
+            placeholder="Pesquisar..." 
+            className="pl-10 pr-10 border-none bg-muted/50 focus-visible:ring-1 focus-visible:ring-primary/30"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
@@ -160,7 +159,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
             <Button 
               variant="ghost" 
               size="icon" 
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:bg-transparent"
               onClick={() => handleSearchChange('')}
             >
               <X className="h-4 w-4" />
@@ -171,136 +170,138 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
           {selectedIds.length > 0 && (
             <Button 
               variant="destructive" 
+              size="sm"
               onClick={() => setIsConfirmOpen(true)}
-              className="animate-in fade-in slide-in-from-right-2"
+              className="rounded-full px-4"
             >
-              <Trash2 className="mr-2 h-4 w-4" /> Excluir ({selectedIds.length})
+              <Trash2 className="mr-2 h-3.5 w-3.5" /> Excluir ({selectedIds.length})
             </Button>
           )}
-          <Button variant="secondary" onClick={onOpenReport} className="w-full md:w-auto">
-            <FileText className="mr-2 h-4 w-4" /> Relatório / Exportar
+          <Button variant="outline" size="sm" onClick={onOpenReport} className="rounded-full">
+            <FileText className="mr-2 h-3.5 w-3.5" /> Relatório
           </Button>
         </div>
       </div>
 
-      <div className="rounded-md border bg-card overflow-hidden">
+      {/* Table Section */}
+      <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-muted/30">
               <TableRow>
-                <TableHead className="w-10">
+                <TableHead className="w-12 text-center">
                   <Checkbox 
                     checked={filtered.length > 0 && selectedIds.length === filtered.length}
                     onCheckedChange={toggleSelectAll}
                   />
                 </TableHead>
                 <TableHead className="w-10"></TableHead>
-                <TableHead>Funcionário / CPF</TableHead>
-                <TableHead>Empresa</TableHead>
-                <TableHead>Lotação Atual</TableHead>
-                <TableHead>Função</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="font-bold text-xs uppercase tracking-wider">Funcionário / CPF</TableHead>
+                <TableHead className="font-bold text-xs uppercase tracking-wider">Empresa / Lotação</TableHead>
+                <TableHead className="font-bold text-xs uppercase tracking-wider">Função</TableHead>
+                <TableHead className="font-bold text-xs uppercase tracking-wider">Status</TableHead>
+                <TableHead className="text-right font-bold text-xs uppercase tracking-wider">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedItems.length > 0 ? paginatedItems.map((emp) => (
                 <React.Fragment key={emp.id}>
                   <TableRow className={cn(
+                    "hover:bg-muted/20 transition-colors",
                     expandedId === emp.id && "bg-muted/30 border-b-0",
                     selectedIds.includes(emp.id) && "bg-primary/5"
                   )}>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <Checkbox 
                         checked={selectedIds.includes(emp.id)}
                         onCheckedChange={() => toggleSelect(emp.id)}
                       />
                     </TableCell>
                     <TableCell>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleExpand(emp.id)}>
-                            {expandedId === emp.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => toggleExpand(emp.id)}>
+                            {expandedId === emp.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                         </Button>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-bold text-primary">{emp.name}</span>
-                        <span className="text-[10px] text-muted-foreground font-mono">CPF: {formatCPF(emp.cpf)}</span>
+                        <span className="font-semibold text-foreground">{emp.name}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">{formatCPF(emp.cpf)}</span>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={emp.company === 'CONFIANÇA' ? 'default' : 'secondary'} className="text-[10px]">
-                        {emp.company}
-                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium">{emp.schoolName}</span>
-                        <span className="text-[10px] uppercase text-muted-foreground">{emp.municipio || 'Não Informado'} - {emp.nte}</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium">{emp.schoolName}</span>
+                            <Badge variant={emp.company === 'CONFIANÇA' ? 'default' : 'secondary'} className="text-[9px] h-4 px-1 leading-none">
+                                {emp.company}
+                            </Badge>
+                        </div>
+                        <span className="text-[9px] uppercase text-muted-foreground">{emp.municipio || 'N/A'} - {emp.nte}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm">{emp.role}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{emp.role}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-[10px] uppercase">{emp.status}</Badge>
+                      <Badge variant="outline" className="text-[9px] uppercase font-bold py-0">{emp.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => onEdit(emp)}><Edit className="h-4 w-4 text-blue-600" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => onDelete(emp.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-blue-600" onClick={() => onEdit(emp)}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-destructive" onClick={() => onDelete(emp.id)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
                   
                   {expandedId === emp.id && (
                     <TableRow className="bg-muted/30 border-t-0">
-                      <TableCell colSpan={8} className="pb-4 px-12">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-lg bg-background border shadow-inner">
+                      <TableCell colSpan={7} className="pb-4 px-12">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl bg-background border shadow-inner">
                             <div className="space-y-4">
-                                <h4 className="text-[10px] font-bold uppercase text-primary border-b pb-1 flex items-center gap-2">
-                                    <Info className="h-3 w-3" /> Detalhes Gerais
+                                <h4 className="text-[10px] font-bold uppercase text-primary/70 border-b pb-1 flex items-center gap-2">
+                                    <Info className="h-3 w-3" /> Informações do Contrato
                                 </h4>
                                 <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs">
                                     <div>
                                       <p className="text-muted-foreground font-bold uppercase text-[9px]">Admissão</p>
-                                      <p>{emp.admissionDate ? format(parseISO(emp.admissionDate), 'dd/MM/yyyy') : '—'}</p>
+                                      <p className="font-medium">{emp.admissionDate ? format(parseISO(emp.admissionDate), 'dd/MM/yyyy') : '—'}</p>
                                     </div>
                                     <div>
-                                      <p className="text-muted-foreground font-bold uppercase text-[9px]">Contato Atual</p>
-                                      <p>{emp.contact}</p>
+                                      <p className="text-muted-foreground font-bold uppercase text-[9px]">Contato</p>
+                                      <p className="font-medium">{emp.contact}</p>
                                     </div>
                                     <div>
                                       <p className="text-muted-foreground font-bold uppercase text-[9px]">COD.sec</p>
-                                      <p>{emp.codSec}</p>
+                                      <p className="font-medium">{emp.codSec}</p>
                                     </div>
                                     <div>
                                       <p className="text-muted-foreground font-bold uppercase text-[9px]">Contrato</p>
-                                      <p>{emp.contractType || '—'}</p>
+                                      <p className="font-medium">{emp.contractType || '—'}</p>
                                     </div>
                                 </div>
                                 
                                 {emp.observation && (
                                     <div className="mt-2">
-                                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Observação:</p>
-                                        <p className="text-xs bg-primary/5 p-2 rounded italic">"{emp.observation}"</p>
+                                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Observações:</p>
+                                        <p className="text-xs bg-muted/50 p-2 rounded-lg italic text-muted-foreground">"{emp.observation}"</p>
                                     </div>
                                 )}
                             </div>
                             
                             <div className="space-y-4">
-                                <h4 className="text-[10px] font-bold uppercase text-amber-600 border-b pb-1 flex items-center gap-2">
-                                    <History className="h-3 w-3" /> Histórico de Alterações
+                                <h4 className="text-[10px] font-bold uppercase text-amber-600/80 border-b pb-1 flex items-center gap-2">
+                                    <History className="h-3 w-3" /> Histórico Recente
                                 </h4>
-                                <div className="max-h-40 overflow-y-auto space-y-2">
+                                <div className="max-h-40 overflow-y-auto space-y-2 pr-2">
                                     {emp.history && emp.history.length > 0 ? emp.history.map((h, i) => (
-                                        <div key={i} className="text-[10px] p-2 rounded border border-dashed bg-amber-50/50">
+                                        <div key={i} className="text-[10px] p-2 rounded-lg border border-dashed bg-amber-50/30">
                                             <div className="flex justify-between items-center mb-1">
                                                 <span className="font-bold text-amber-700">{h.field}</span>
                                                 <span className="text-muted-foreground">{format(parseISO(h.date), 'dd/MM/yy HH:mm')}</span>
                                             </div>
-                                            <p><span className="text-muted-foreground">De:</span> <span className="line-through">{h.oldValue}</span></p>
-                                            <p><span className="text-muted-foreground">Para:</span> <span className="font-medium">{h.newValue}</span></p>
+                                            <p className="text-muted-foreground">De: <span className="line-through">{h.oldValue}</span></p>
+                                            <p className="font-medium text-foreground">Para: {h.newValue}</p>
                                         </div>
                                     )) : (
-                                        <p className="text-[10px] text-muted-foreground italic py-2">Sem alterações registradas no sistema.</p>
+                                        <p className="text-[10px] text-muted-foreground italic py-2">Sem alterações registradas.</p>
                                     )}
                                 </div>
                             </div>
@@ -311,8 +312,8 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
                 </React.Fragment>
               )) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
-                    {search ? "Nenhum funcionário encontrado para esta busca." : "Nenhum funcionário cadastrado."}
+                  <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                    {search ? "Nenhum resultado encontrado." : "Nenhum funcionário cadastrado."}
                   </TableCell>
                 </TableRow>
               )}
@@ -321,20 +322,18 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
         </div>
       </div>
 
+      {/* Pagination Section - Minimalist */}
       {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between bg-card p-4 rounded-lg border shadow-sm gap-4">
-          <div className="text-sm text-muted-foreground">
-            {search ? (
-              <>Encontrados <strong>{filtered.length}</strong> resultados</>
-            ) : (
-              <>Mostrando <strong>{paginatedItems.length}</strong> de <strong>{filtered.length}</strong> funcionários</>
-            )}
+        <div className="flex flex-col sm:flex-row items-center justify-between px-2 gap-4">
+          <div className="text-[11px] text-muted-foreground uppercase font-bold tracking-tight">
+             Mostrando <span className="text-foreground">{paginatedItems.length}</span> de <span className="text-foreground">{filtered.length}</span> registros
           </div>
-          <div className="flex items-center gap-1 sm:gap-2">
+          
+          <div className="flex items-center gap-1">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 rounded-full"
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
               title="Primeira página"
@@ -343,23 +342,25 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
             </Button>
 
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 rounded-full"
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              title="Anterior"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center px-2">
               {getVisiblePages().map(page => (
                 <Button
                   key={page}
                   variant={currentPage === page ? "default" : "ghost"}
                   size="sm"
-                  className="w-8 h-8 p-0"
+                  className={cn(
+                    "w-8 h-8 rounded-full text-xs font-bold transition-all",
+                    currentPage === page ? "shadow-md scale-110" : "text-muted-foreground hover:text-foreground"
+                  )}
                   onClick={() => setCurrentPage(page)}
                 >
                   {page}
@@ -368,20 +369,19 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
             </div>
 
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 rounded-full"
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              title="Próxima"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
 
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 rounded-full"
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage === totalPages}
               title="Última página"
@@ -392,22 +392,22 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
         </div>
       )}
 
+      {/* Confirmation Dialog */}
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Confirmar Exclusão em Massa
+              Remover Funcionários
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Você está prestes a excluir <strong>{selectedIds.length}</strong> funcionário(s). 
-              Esta ação não pode ser desfeita.
+              Você selecionou <strong>{selectedIds.length}</strong> registro(s). Esta ação é permanente. Deseja continuar?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-              Sim, Excluir Tudo
+            <AlertDialogCancel className="rounded-full">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive hover:bg-destructive/90 rounded-full">
+              Confirmar Exclusão
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
