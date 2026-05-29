@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -20,7 +21,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  X
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -54,10 +56,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search]);
-
+  // Filtra os funcionários com base na busca
   const filtered = useMemo(() => {
     const term = search.toLowerCase().trim();
     if (!term) return employees;
@@ -80,6 +79,12 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
              company.includes(term);
     });
   }, [employees, search]);
+
+  // Sempre que a busca mudar, voltamos para a página 1 para não "perder" os resultados
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedItems = useMemo(() => {
@@ -124,7 +129,6 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
     }
   };
 
-  // Lógica para mostrar apenas um intervalo de páginas (max 5)
   const getVisiblePages = () => {
     const maxVisible = 5;
     let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
@@ -148,10 +152,20 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Buscar por nome, escola, CPF ou função..." 
-            className="pl-10"
+            className="pl-10 pr-10"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
+          {search && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+              onClick={() => handleSearchChange('')}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {selectedIds.length > 0 && (
@@ -307,14 +321,16 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
         </div>
       </div>
 
-      {/* Controles de Paginação Aprimorados */}
       {totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-center justify-between bg-card p-4 rounded-lg border shadow-sm gap-4">
           <div className="text-sm text-muted-foreground">
-            Mostrando <strong>{paginatedItems.length}</strong> de <strong>{filtered.length}</strong> funcionários
+            {search ? (
+              <>Encontrados <strong>{filtered.length}</strong> resultados</>
+            ) : (
+              <>Mostrando <strong>{paginatedItems.length}</strong> de <strong>{filtered.length}</strong> funcionários</>
+            )}
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Primeira Página */}
             <Button
               variant="outline"
               size="icon"
@@ -326,7 +342,6 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
               <ChevronsLeft className="h-4 w-4" />
             </Button>
 
-            {/* Anterior */}
             <Button
               variant="outline"
               size="icon"
@@ -338,7 +353,6 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            {/* Números das Páginas (Máximo 5) */}
             <div className="flex items-center gap-1">
               {getVisiblePages().map(page => (
                 <Button
@@ -353,7 +367,6 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
               ))}
             </div>
 
-            {/* Próximo */}
             <Button
               variant="outline"
               size="icon"
@@ -365,7 +378,6 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
               <ChevronRight className="h-4 w-4" />
             </Button>
 
-            {/* Última Página */}
             <Button
               variant="outline"
               size="icon"
