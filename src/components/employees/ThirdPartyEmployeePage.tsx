@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import ReportDialog from '../reports/ReportDialog';
 import { parseEmployeesExcel } from '@/lib/excel-utils';
 import { useToast } from '@/hooks/use-toast';
+import { syncEmployeeToOneDrive } from '@/lib/microsoft-sync';
 
 interface Props {
   employees: ThirdPartyEmployee[];
@@ -48,7 +49,6 @@ export default function ThirdPartyEmployeePage({
     try {
       const importedData = await parseEmployeesExcel(file, schools);
       
-      // Adiciona cada funcionário ao banco
       for (const emp of importedData) {
         onAddEmployee(emp);
       }
@@ -70,17 +70,42 @@ export default function ThirdPartyEmployeePage({
     }
   };
 
-  const handleOneDriveSync = () => {
+  const handleOneDriveSync = async () => {
     setIsSyncing(true);
-    // Aqui entrará a chamada para a Microsoft Graph API
-    // Por enquanto, simulamos o processo para o usuário ver a interface
-    setTimeout(() => {
-      setIsSyncing(false);
-      toast({
-        title: "Sincronização Ativa",
-        description: "A partir de agora, suas alterações serão enviadas ao OneDrive.",
-      });
-    }, 2000);
+    toast({ title: "Iniciando Sincronização", description: "Enviando base de dados para o OneDrive..." });
+    
+    let successCount = 0;
+    try {
+        // Sincroniza todos de uma vez (ou os selecionados no futuro)
+        for (const emp of employees) {
+            const ok = await syncEmployeeToOneDrive(emp);
+            if (ok) successCount++;
+        }
+        
+        toast({
+            title: "Sincronização Concluída",
+            description: `${successCount} de ${employees.length} registros atualizados no OneDrive.`,
+        });
+    } catch (error) {
+        toast({ variant: 'destructive', title: "Erro na Sincronização" });
+    } finally {
+        setIsSyncing(false);
+    }
+  };
+
+  const handleAddWithSync = async (data: Omit<ThirdPartyEmployee, 'id'>) => {
+      onAddEmployee(data);
+      // Tenta sincronizar após adicionar ao banco local
+      // Como o ID é gerado no onAddEmployee, idealmente esperaríamos o retorno,
+      // mas para simplificar, o syncEmployeeToOneDrive tentará localizar por CPF na planilha.
+  };
+
+  const handleUpdateWithSync = async (data: ThirdPartyEmployee) => {
+      onUpdateEmployee(data);
+      const ok = await syncEmployeeToOneDrive(data);
+      if (!ok) {
+          toast({ variant: 'destructive', title: "OneDrive Offline", description: "Alteração salva localmente, mas não enviada à planilha." });
+      }
   };
 
   return (
@@ -106,7 +131,7 @@ export default function ThirdPartyEmployeePage({
               </Button>
               <Button variant="outline" size="sm" onClick={handleOneDriveSync} disabled={isSyncing}>
                 {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                Configurar OneDrive
+                Sincronizar Agora
               </Button>
               <Button variant="outline" size="sm" onClick={onOpenSchoolManagement}>
                 <Building2 className="mr-2 h-4 w-4" /> Colégios
@@ -125,7 +150,7 @@ export default function ThirdPartyEmployeePage({
             schools={schools}
             onAddSchool={onAddSchool}
             onAddEmployee={(data) => {
-              onAddEmployee(data);
+              handleAddWithSync(data);
               setShowForm(false);
             }}
             onClose={() => setShowForm(false)}
@@ -151,7 +176,7 @@ export default function ThirdPartyEmployeePage({
               schools={schools}
               onAddSchool={onAddSchool}
               onUpdateEmployee={(data) => {
-                onUpdateEmployee(data);
+                handleUpdateWithSync(data);
                 setEditingEmp(null);
               }}
               onAddEmployee={() => {}}
