@@ -1,3 +1,4 @@
+
 import * as XLSX from 'xlsx';
 import type { ThirdPartyEmployee, School, ThirdPartyHistoryEntry } from './types';
 import { normalizeForComparison } from './utils';
@@ -90,11 +91,14 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
           const extraData: Record<string, any> = {};
           Object.keys(normalizedRow).forEach(key => {
             if (!standardKeys.includes(key)) {
-              extraData[key] = normalizedRow[key];
+              const val = normalizedRow[key];
+              if (val !== undefined && val !== null) {
+                extraData[key] = val;
+              }
             }
           });
 
-          return {
+          const employeeData: any = {
             nte: String(normalizedRow['NTE'] || 'NTE 20'),
             municipio: String(municipio).trim(),
             schoolId: school?.id || 'importado',
@@ -110,8 +114,13 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
             observation: String(normalizedRow['OBSERVACAO'] || ''),
             contractType: String(normalizedRow['CONTRATO ATUAL'] || ''),
             history: history,
-            extraData: Object.keys(extraData).length > 0 ? extraData : undefined
           };
+
+          if (Object.keys(extraData).length > 0) {
+            employeeData.extraData = extraData;
+          }
+
+          return employeeData;
         });
 
         // Filtra linhas vazias ou inválidas

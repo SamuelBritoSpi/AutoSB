@@ -17,6 +17,15 @@ const STORES = {
   schools: 'schools',
 };
 
+/**
+ * Remove recursivamente campos com valor 'undefined' para evitar erros no Firestore.
+ */
+function cleanData(obj: any): any {
+    return JSON.parse(JSON.stringify(obj, (key, value) => {
+        return value === undefined ? null : value;
+    }));
+}
+
 // --- Operações CRUD Genéricas para o Firestore ---
 
 async function getAll<T>(storeName: string, orderField?: string): Promise<T[]> {
@@ -38,14 +47,16 @@ async function getAll<T>(storeName: string, orderField?: string): Promise<T[]> {
 async function add<T extends object>(storeName: string, item: T): Promise<string> {
    const db = getDbInstance();
    if (!db) { throw new Error("Firestore não está disponível."); }
-  const docRef = await addDoc(collection(db, storeName), item);
+  const cleanedItem = cleanData(item);
+  const docRef = await addDoc(collection(db, storeName), cleanedItem);
   return docRef.id;
 }
 
 async function update<T extends { id: string }>(storeName: string, item: T): Promise<void> {
    const db = getDbInstance();
    if (!db) { throw new Error("Firestore não está disponível."); }
-  const { id, ...data } = item;
+  const cleanedItem = cleanData(item);
+  const { id, ...data } = cleanedItem;
   const docRef = doc(db, storeName, id);
   await updateDoc(docRef, data);
 }
@@ -266,7 +277,7 @@ export async function importData(data: AllData): Promise<void> {
     const batch = writeBatch(db);
 
     data.demands.forEach(item => {
-        const { id, ...rest } = item;
+        const { id, ...rest } = cleanData(item);
         const docRef = doc(db, STORES.demands, id);
         batch.set(docRef, rest);
     });
