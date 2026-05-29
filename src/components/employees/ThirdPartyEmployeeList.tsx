@@ -18,7 +18,9 @@ import {
   Info, 
   AlertTriangle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -49,16 +51,13 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   
-  // Estados para Paginação
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // Reseta para a primeira página quando a busca mudar
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
 
-  // Lógica de Busca Corrigida e Aprimorada
   const filtered = useMemo(() => {
     const term = search.toLowerCase().trim();
     if (!term) return employees;
@@ -82,7 +81,6 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
     });
   }, [employees, search]);
 
-  // Cálculo da Paginação
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedItems = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -124,6 +122,23 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
         title: "Erro na Exclusão",
       });
     }
+  };
+
+  // Lógica para mostrar apenas um intervalo de páginas (max 5)
+  const getVisiblePages = () => {
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   };
 
   return (
@@ -292,23 +307,40 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
         </div>
       </div>
 
-      {/* Controles de Paginação */}
+      {/* Controles de Paginação Aprimorados */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-card p-4 rounded-lg border shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-card p-4 rounded-lg border shadow-sm gap-4">
           <div className="text-sm text-muted-foreground">
             Mostrando <strong>{paginatedItems.length}</strong> de <strong>{filtered.length}</strong> funcionários
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Primeira Página */}
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              title="Primeira página"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+
+            {/* Anterior */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
+              title="Anterior"
             >
-              <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+              <ChevronLeft className="h-4 w-4" />
             </Button>
+
+            {/* Números das Páginas (Máximo 5) */}
             <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              {getVisiblePages().map(page => (
                 <Button
                   key={page}
                   variant={currentPage === page ? "default" : "ghost"}
@@ -320,13 +352,29 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
                 </Button>
               ))}
             </div>
+
+            {/* Próximo */}
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
+              className="h-8 w-8"
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
+              title="Próxima"
             >
-              Próximo <ChevronRight className="h-4 w-4 ml-1" />
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+
+            {/* Última Página */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              title="Última página"
+            >
+              <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
