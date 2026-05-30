@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import ReportDialog from '../reports/ReportDialog';
 import { parseEmployeesExcel } from '@/lib/excel-utils';
 import { useToast } from '@/hooks/use-toast';
-import { syncEmployeeToOneDrive } from '@/lib/microsoft-sync';
+import { syncEmployeeToGoogleSheets } from '@/lib/google-sync';
 
 interface Props {
   employees: ThirdPartyEmployee[];
@@ -70,21 +70,20 @@ export default function ThirdPartyEmployeePage({
     }
   };
 
-  const handleOneDriveSync = async () => {
+  const handleGoogleSheetsSync = async () => {
     setIsSyncing(true);
-    toast({ title: "Iniciando Sincronização", description: "Enviando base de dados para o OneDrive..." });
+    toast({ title: "Iniciando Sincronização", description: "Enviando base de dados para o Google Sheets..." });
     
     let successCount = 0;
     try {
-        // Sincroniza todos de uma vez (ou os selecionados no futuro)
         for (const emp of employees) {
-            const ok = await syncEmployeeToOneDrive(emp);
+            const ok = await syncEmployeeToGoogleSheets(emp);
             if (ok) successCount++;
         }
         
         toast({
             title: "Sincronização Concluída",
-            description: `${successCount} de ${employees.length} registros atualizados no OneDrive.`,
+            description: `${successCount} de ${employees.length} registros atualizados no Google Sheets.`,
         });
     } catch (error) {
         toast({ variant: 'destructive', title: "Erro na Sincronização" });
@@ -95,16 +94,18 @@ export default function ThirdPartyEmployeePage({
 
   const handleAddWithSync = async (data: Omit<ThirdPartyEmployee, 'id'>) => {
       onAddEmployee(data);
-      // Tenta sincronizar após adicionar ao banco local
-      // Como o ID é gerado no onAddEmployee, idealmente esperaríamos o retorno,
-      // mas para simplificar, o syncEmployeeToOneDrive tentará localizar por CPF na planilha.
+      const empWithDummyId: ThirdPartyEmployee = { ...data, id: `temp-${Date.now()}` };
+      const ok = await syncEmployeeToGoogleSheets(empWithDummyId);
+      if (!ok) {
+          toast({ variant: 'destructive', title: "Google Sheets Offline", description: "Salvo localmente, mas falhou ao sincronizar com o Drive." });
+      }
   };
 
   const handleUpdateWithSync = async (data: ThirdPartyEmployee) => {
       onUpdateEmployee(data);
-      const ok = await syncEmployeeToOneDrive(data);
+      const ok = await syncEmployeeToGoogleSheets(data);
       if (!ok) {
-          toast({ variant: 'destructive', title: "OneDrive Offline", description: "Alteração salva localmente, mas não enviada à planilha." });
+          toast({ variant: 'destructive', title: "Google Sheets Offline", description: "Alteração salva localmente, mas não enviada à planilha." });
       }
   };
 
@@ -129,9 +130,9 @@ export default function ThirdPartyEmployeePage({
                 {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
                 Importar Planilha Inicial
               </Button>
-              <Button variant="outline" size="sm" onClick={handleOneDriveSync} disabled={isSyncing}>
+              <Button variant="outline" size="sm" onClick={handleGoogleSheetsSync} disabled={isSyncing}>
                 {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                Sincronizar Agora
+                Sincronizar Google Sheets
               </Button>
               <Button variant="outline" size="sm" onClick={onOpenSchoolManagement}>
                 <Building2 className="mr-2 h-4 w-4" /> Colégios

@@ -3,38 +3,33 @@
 
 ## Sobre o Projeto
 
-O AutoSB é uma aplicação web moderna e inteligente, projetada para otimizar a gestão de tarefas, organizar afastamentos de funcionários e controlar funcionários terceirizados com sincronização em nuvem.
+O AutoSB é uma aplicação web moderna e inteligente, projetada para otimizar a gestão de tarefas (demandas), organizar férias/afastamentos de funcionários, faltas justificadas, fardamento, cartões e controlar funcionários terceirizados com sincronização automática no Google Sheets (Google Drive).
 
-## Configuração da Sincronização OneDrive (Terceirizados)
+## Configuração da Sincronização Google Sheets (Terceirizados)
 
-Para que a aba de Terceirizados atualize automaticamente sua planilha no Excel Online, siga estes passos:
+Para que a aba de Terceirizados atualize automaticamente sua planilha no Google Drive, siga estes passos resumidos:
 
-### 1. Criar um Diretório no Microsoft Entra (Azure AD)
-Se você vir o erro "A capacidade de criar aplicativos fora de um diretório foi preterida":
-1. Acesse o [Programa de Desenvolvedor M365](https://developer.microsoft.com/pt-br/microsoft-365/dev-program).
-2. Clique em **Join Now** e siga as instruções para criar um "Sandbox configurável".
-3. Isso criará um domínio `@onmicrosoft.com` gratuito e um diretório onde você poderá registrar seu app.
+### 1. Criar o Google Apps Script na Planilha
+1. Abra sua planilha do Google Sheets.
+2. Acesse **Extensões** > **Apps Script**.
+3. Substitua o código padrão pelo script disponibilizado em [google_sheets_integration.md](file:///C:/Users/Usuario/.gemini/antigravity/brain/796226bd-9324-461e-bff6-863bf0ca8548/google_sheets_integration.md).
+4. Salve o script.
 
-### 2. Portal Azure (Microsoft Entra ID)
-1. Acesse [Azure Portal - App Registrations](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) usando a conta do desenvolvedor criada no passo anterior.
-2. **Novo Registro**: Nome `AutoSB-Sync`, Contas `Multilocatário e Pessoais`.
-3. **Redirecionamento**: Web -> `https://seu-dominio.vercel.app/api/auth/callback/microsoft`.
-4. Copie o **ID do cliente (Application ID)**.
+### 2. Implantar como Aplicativo da Web
+1. Clique em **Implantar** > **Nova implantação**.
+2. Selecione o tipo **Aplicativo da Web**.
+3. Configure para executar como **"Eu"** e defina o acesso para **"Qualquer pessoa"**.
+4. Clique em **Implantar**, conceda as permissões de segurança e copie a **URL do aplicativo da Web** gerada.
 
-### 3. Segredo do Cliente
-1. Em `Certificados e Segredos`, crie um novo segredo.
-2. Copie o **Valor** (não o ID do segredo).
+### 3. Configurar Variáveis de Ambiente
+Adicione no seu arquivo `.env` ou nas configurações da Vercel:
+- `NEXT_PUBLIC_GOOGLE_SHEETS_API_URL`: (A URL que você copiou no passo 2)
 
-### 4. Permissões
-1. Em `Permissões de API`, adicione `Microsoft Graph` -> `Permissões Delegadas`.
-2. Marque `Files.ReadWrite` e `offline_access`.
-3. Clique em `Conceder consentimento do administrador` (se disponível).
-
-### 5. Variáveis de Ambiente
-Add to Vercel Settings or `.env`:
-- `NEXT_PUBLIC_MS_CLIENT_ID`: (O ID que você copiou no passo 2)
-- `MS_CLIENT_SECRET`: (O Valor que você copiou no passo 3)
-- `NEXT_PUBLIC_MS_SPREADSHEET_ID`: (O ID da planilha que fica na URL do OneDrive)
+Para um guia passo a passo detalhado com o código completo do Apps Script e exemplos de uso, leia o documento [google_sheets_integration.md](file:///C:/Users/Usuario/.gemini/antigravity/brain/796226bd-9324-461e-bff6-863bf0ca8548/google_sheets_integration.md).
 
 ## Tecnologias
-- **Next.js 15**, **Firebase**, **Microsoft Graph API**, **Tailwind CSS**.
+- **Next.js 15** (App Router)
+- **Firebase** (FCM - Push Notifications)
+- **Google Genkit & Gemini API** (Melhoria de texto por IA)
+- **IndexedDB** (Local-First Offline database)
+- **Tailwind CSS & Shadcn UI**
