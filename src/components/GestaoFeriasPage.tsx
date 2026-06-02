@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import DemandForm from '@/components/demands/DemandForm';
 import DemandList from '@/components/demands/DemandList';
 import VacationForm from '@/components/vacations/VacationForm';
@@ -17,12 +17,14 @@ import SchoolManagementDialog from '@/components/schools/SchoolManagementDialog'
 import ThirdPartyEmployeePage from '@/components/employees/ThirdPartyEmployeePage';
 import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, Card, Uniform, School, ThirdPartyEmployee } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Menu, Loader2, ListPlus, UserPlus, ClipboardList, FileText, CreditCard, Shirt, UserCircle2 } from 'lucide-react';
+import { ListChecks, CalendarCheck, PlusCircle, Users, LayoutDashboard, Menu, Loader2, ListPlus, UserPlus, ClipboardList, FileText, CreditCard, Shirt, UserCircle2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { 
@@ -154,16 +156,42 @@ export default function GestaoFeriasPage() {
   }, [toast]);
 
 
-  const tabOptions = [
-    { value: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="mr-2 h-5 w-5" /> },
-    { value: "demands", label: "Demandas", icon: <ListChecks className="mr-2 h-5 w-5" /> },
-    { value: "vacations", label: "Férias/Afastamento", icon: <CalendarCheck className="mr-2 h-5 w-5" /> },
-    { value: "absences", label: "Faltas Justificadas", icon: <FileText className="mr-2 h-5 w-5" /> },
-    { value: "employees", label: "Funcionários/Atestados", icon: <Users className="mr-2 h-5 w-5" /> },
-    { value: "third-party", label: "Terceirizados", icon: <UserCircle2 className="mr-2 h-5 w-5" /> },
-    { value: "cards", label: "Cartões", icon: <CreditCard className="mr-2 h-5 w-5" /> },
-    { value: "uniforms", label: "Fardamento", icon: <Shirt className="mr-2 h-5 w-5" /> },
+  // Tabs individuais
+  const soloTabs = [
+    { value: "dashboard",  label: "Dashboard",          icon: <LayoutDashboard className="h-4 w-4" /> },
+    { value: "demands",    label: "Demandas",            icon: <ListChecks       className="h-4 w-4" /> },
+    { value: "vacations",  label: "Férias/Afastamento",  icon: <CalendarCheck    className="h-4 w-4" /> },
   ];
+
+  // Grupos de dropdown no desktop
+  const navGroups = [
+    {
+      label: "Funcionários",
+      icon: <Users className="h-4 w-4" />,
+      items: [
+        { value: "employees",   label: "Funcionários/Atestados", icon: <Users        className="h-4 w-4" /> },
+        { value: "absences",    label: "Faltas Justificadas",     icon: <FileText     className="h-4 w-4" /> },
+        { value: "third-party", label: "Terceirizados",           icon: <UserCircle2  className="h-4 w-4" /> },
+      ],
+    },
+    {
+      label: "Patrimônio",
+      icon: <CreditCard className="h-4 w-4" />,
+      items: [
+        { value: "cards",    label: "Cartões",    icon: <CreditCard className="h-4 w-4" /> },
+        { value: "uniforms", label: "Fardamento", icon: <Shirt      className="h-4 w-4" /> },
+      ],
+    },
+  ];
+
+  // Lista plana usada apenas no mobile
+  const allTabOptions = [
+    ...soloTabs,
+    ...navGroups.flatMap(g => g.items),
+  ];
+
+  // Label atual para o botão do mobile
+  const activeLabel = allTabOptions.find(t => t.value === activeTab)?.label ?? 'Menu';
 
   const handleAddDemand = (demandData: Omit<Demand, 'id'>) => {
     const tempId = `temp-${Date.now()}`;
@@ -647,36 +675,102 @@ export default function GestaoFeriasPage() {
   return (
     <div className="w-full space-y-8 mt-0">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex justify-center border-b">
-            <div className="container mx-auto">
-                <TabsList className="grid w-full grid-cols-8 bg-transparent">
-                    {tabOptions.map(tab => (
-                        <TabsTrigger key={tab.value} value={tab.value} className="bg-transparent shadow-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none">
-                            {tab.icon} {tab.label}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-            </div>
+
+        {/* ── Desktop Navigation ── */}
+        <div className="hidden md:flex justify-center border-b bg-background/95 backdrop-blur sticky top-0 z-30">
+          <div className="container mx-auto">
+            <nav className="flex items-end h-12">
+
+              {/* Tabs individuais */}
+              {soloTabs.map(tab => (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveTab(tab.value)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 h-full text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                    activeTab === tab.value
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
+                  )}
+                >
+                  {tab.icon} {tab.label}
+                </button>
+              ))}
+
+              {/* Grupos com dropdown no hover */}
+              {navGroups.map(group => {
+                const groupActive = group.items.some(i => i.value === activeTab);
+                const activeItem  = group.items.find(i => i.value === activeTab);
+                return (
+                  <DropdownMenu key={group.label}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className={cn(
+                          "flex items-center gap-2 px-4 h-full text-sm font-medium border-b-2 transition-colors whitespace-nowrap outline-none",
+                          groupActive
+                            ? "border-primary text-primary"
+                            : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
+                        )}
+                      >
+                        {groupActive ? activeItem!.icon : group.icon}
+                        {groupActive ? activeItem!.label : group.label}
+                        <ChevronDown className="h-3 w-3 opacity-60" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-52">
+                      <DropdownMenuLabel className="text-xs text-muted-foreground">{group.label}</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {group.items.map(item => (
+                        <DropdownMenuItem
+                          key={item.value}
+                          onSelect={() => setActiveTab(item.value)}
+                          className={cn(
+                            "flex items-center gap-2 cursor-pointer",
+                            activeTab === item.value && "bg-accent text-accent-foreground font-medium"
+                          )}
+                        >
+                          {item.icon} {item.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              })}
+
+            </nav>
+          </div>
         </div>
 
-        {/* Mobile Navigation */}
-        <div className="md:hidden flex justify-center px-4">
-             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                        <Menu className="mr-2 h-5 w-5" />
-                        {tabOptions.find(t => t.value === activeTab)?.label || 'Menu'}
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-[--radix-dropdown-menu-trigger-width]]">
-                    {tabOptions.map(tab => (
-                         <DropdownMenuItem key={tab.value} onSelect={() => setActiveTab(tab.value)}>
-                            {tab.icon} {tab.label}
-                         </DropdownMenuItem>
-                    ))}
-                </DropdownMenuContent>
-             </DropdownMenu>
+        {/* ── Mobile Navigation ── */}
+        <div className="md:hidden flex justify-center px-4 pt-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full">
+                <Menu className="mr-2 h-5 w-5" />
+                {activeLabel}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-[--radix-dropdown-menu-trigger-width]">
+              {soloTabs.map(tab => (
+                <DropdownMenuItem key={tab.value} onSelect={() => setActiveTab(tab.value)}
+                  className={cn(activeTab === tab.value && "bg-accent font-medium")}>
+                  {tab.icon} {tab.label}
+                </DropdownMenuItem>
+              ))}
+              {navGroups.map(group => (
+                <>
+                  <DropdownMenuSeparator key={`sep-${group.label}`} />
+                  <DropdownMenuLabel key={`lbl-${group.label}`} className="text-xs text-muted-foreground">{group.label}</DropdownMenuLabel>
+                  {group.items.map(item => (
+                    <DropdownMenuItem key={item.value} onSelect={() => setActiveTab(item.value)}
+                      className={cn("pl-6", activeTab === item.value && "bg-accent font-medium")}>
+                      {item.icon} {item.label}
+                    </DropdownMenuItem>
+                  ))}
+                </>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         <TabsContent value="dashboard" className={cn(containerClass, "space-y-6 mt-6")}>
