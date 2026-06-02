@@ -88,7 +88,7 @@ export default function DashboardTab({ demands, employees, certificates, demandS
           ...analysis
         };
       })
-      .filter(e => e.status !== 'Normal')
+      .filter(e => e.status !== 'Normal' && e.totalDaysInWindow > 0)
       .sort((a,b) => b.totalDaysInWindow - a.totalDaysInWindow);
   }, [employees, certificates]);
 
