@@ -2,6 +2,7 @@
 import * as XLSX from 'xlsx';
 import type { ThirdPartyEmployee, School, ThirdPartyHistoryEntry } from './types';
 import { normalizeForComparison } from './utils';
+import { getCodSecForSchool } from './school-codsec-map';
 
 /**
  * Processa um arquivo Excel de Terceirizados conforme as colunas específicas do usuário.
@@ -42,7 +43,10 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
 
           const codSecAntigo = String(normalizedRow['COD SEC'] || '').trim();
           const codSecNovo = String(normalizedRow['COD SEC2'] || '').trim();
-          const finalCodSec = codSecNovo || codSecAntigo || '';
+          let finalCodSec = codSecNovo || codSecAntigo || '';
+          if (!finalCodSec && finalSchoolName && finalSchoolName !== 'Não Informado') {
+            finalCodSec = getCodSecForSchool(finalSchoolName);
+          }
 
           const contatoAntigo = String(normalizedRow['CONTATO'] || '').trim();
           const contatoNovo = String(normalizedRow['CONTATO ATUALIZADO'] || '').trim();

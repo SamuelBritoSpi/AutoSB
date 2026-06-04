@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -19,19 +19,20 @@ import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, PlusCircle, X, Search, Check, Plus, Loader2 } from 'lucide-react';
 import type { ThirdPartyEmployee, School, ThirdPartyHistoryEntry } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { getCodSecForSchool } from '@/lib/school-codsec-map';
 
 const employeeSchema = z.object({
-  nte: z.string().min(1, "NTE é obrigatório"),
-  municipio: z.string().min(1, "Município é obrigatório"),
-  schoolId: z.string().min(1, "Lotação é obrigatória"),
-  codSec: z.string().min(1, "COD.sec é obrigatório"),
+  nte: z.string().optional(),
+  municipio: z.string().optional(),
+  schoolId: z.string().optional(),
+  codSec: z.string().optional(),
   name: z.string().min(3, "Nome completo é obrigatório"),
   cpf: z.string().min(11, "CPF deve ter 11 dígitos"),
-  role: z.string().min(1, "Função é obrigatória"),
-  contact: z.string().min(1, "Contato é obrigatório"),
-  company: z.enum(['CONFIANÇA', 'CSH']),
-  status: z.string().default("Ativo"),
-  admissionDate: z.date({ required_error: "Data de admissão é obrigatória" }),
+  role: z.string().optional(),
+  contact: z.string().optional(),
+  company: z.enum(['CONFIANÇA', 'CSH']).optional(),
+  status: z.string().optional().default("Ativo"),
+  admissionDate: z.date().optional(),
   observation: z.string().optional(),
   contractType: z.string().optional(),
 });
@@ -64,13 +65,32 @@ export default function ThirdPartyEmployeeForm({
     resolver: zodResolver(employeeSchema),
     defaultValues: existingEmployee ? {
       ...existingEmployee,
-      admissionDate: parseISO(existingEmployee.admissionDate),
+      admissionDate: (existingEmployee.admissionDate && existingEmployee.admissionDate !== '') 
+        ? parseISO(existingEmployee.admissionDate) 
+        : undefined,
     } : {
       nte: 'NTE 20',
       company: 'CONFIANÇA',
       status: 'Ativo',
     },
   });
+
+  const selectedSchoolId = form.watch('schoolId');
+
+  useEffect(() => {
+    if (selectedSchoolId) {
+      const school = schools.find(s => s.id === selectedSchoolId);
+      if (school) {
+        const autoCodSec = getCodSecForSchool(school.name);
+        if (autoCodSec) {
+          const currentCodSec = form.getValues('codSec');
+          if (!currentCodSec || !existingEmployee || selectedSchoolId !== existingEmployee.schoolId) {
+            form.setValue('codSec', autoCodSec, { shouldValidate: true });
+          }
+        }
+      }
+    }
+  }, [selectedSchoolId, schools, form, existingEmployee]);
 
   const handleCreateSchool = async () => {
     const trimmedName = newSchoolName.trim();
@@ -95,22 +115,31 @@ export default function ThirdPartyEmployeeForm({
     
     if (existingEmployee) {
       if (values.contact !== existingEmployee.contact) {
-        history = [{ date: now, field: 'Contato', oldValue: existingEmployee.contact, newValue: values.contact }, ...history].slice(0, 5);
+        history = [{ date: now, field: 'Contato', oldValue: existingEmployee.contact || '', newValue: values.contact || '' }, ...history].slice(0, 5);
       }
       if (school?.name !== existingEmployee.schoolName) {
         history = [{ date: now, field: 'Lotação', oldValue: existingEmployee.schoolName, newValue: school?.name || 'Não Informado' }, ...history].slice(0, 5);
       }
       if (values.codSec !== existingEmployee.codSec) {
-        history = [{ date: now, field: 'COD SEC', oldValue: existingEmployee.codSec, newValue: values.codSec }, ...history].slice(0, 5);
+        history = [{ date: now, field: 'COD SEC', oldValue: existingEmployee.codSec || '', newValue: values.codSec || '' }, ...history].slice(0, 5);
       }
     }
 
     const empData: Omit<ThirdPartyEmployee, 'id'> = {
-      ...values,
+      nte: values.nte || '',
+      municipio: values.municipio || '',
+      schoolId: values.schoolId || '',
+      codSec: values.codSec || '',
+      name: values.name,
       cpf: values.cpf.padStart(11, '0'),
+      role: values.role || '',
+      contact: values.contact || '',
+      company: values.company || 'CONFIANÇA',
+      status: values.status || 'Ativo',
       schoolName: school?.name || 'Não Informado',
-      admissionDate: values.admissionDate.toISOString(),
+      admissionDate: values.admissionDate ? values.admissionDate.toISOString() : '',
       observation: values.observation || '',
+      contractType: values.contractType || '',
       history: history,
     };
 
