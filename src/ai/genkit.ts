@@ -7,7 +7,7 @@ export const ai = genkit({
     googleAI({
       // A chave da API será obtida da variável de ambiente GOOGLE_API_KEY
       // Certifique-se de configurar essa variável no seu ambiente de produção
-      apiKey: process.env.GOOGLE_API_KEY
+      apiKey: process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
     })
   ]
 });
