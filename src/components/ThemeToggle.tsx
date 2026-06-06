@@ -31,9 +31,6 @@ export function ThemeToggle() {
         <DropdownMenuItem onClick={() => setTheme("dark")}>
           Escuro
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("sao-joao")}>
-          🎉 São João
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("system")}>
           Sistema
         </DropdownMenuItem>
