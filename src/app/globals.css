@@ -107,6 +107,57 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  .sao-joao {
+    --background: 33 50% 96%; /* Warm cream/straw background */
+    --foreground: 24 60% 12%; /* Deep rustic dark brown for text */
+  
+    --card: 33 60% 98%; /* Lighter cream card */
+    --card-foreground: 24 60% 12%;
+  
+    --popover: 33 60% 98%;
+    --popover-foreground: 24 60% 12%;
+  
+    --primary: 24 95% 50%; /* Festive bonfire orange */
+    --primary-foreground: 0 0% 100%;
+  
+    --secondary: 38 95% 90%; /* Soft straw yellow */
+    --secondary-foreground: 24 80% 30%; /* Dark warm brown */
+  
+    --muted: 33 30% 90%;
+    --muted-foreground: 24 20% 45%;
+  
+    --accent: 14 90% 55%; /* Bonfire red-orange */
+    --accent-foreground: 0 0% 100%;
+  
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+  
+    --border: 33 30% 85%;
+    --input: 33 30% 85%;
+    --ring: 24 95% 50%;
+  
+    --radius: 0.5rem;
+    
+    --chart-1: 24 95% 50%; /* Orange */
+    --chart-2: 38 92% 50%; /* Gold */
+    --chart-3: 14 90% 55%; /* Red-Orange */
+    --chart-4: 142 70% 45%; /* Green */
+    --chart-5: 195 85% 45%; /* Blue */
+
+    --status-success: 142 70% 40%;
+    --status-warning: 38 92% 45%;
+    --status-info: 195 85% 45%;
+
+    --sidebar-background: 33 40% 94%;
+    --sidebar-foreground: 24 40% 20%;
+    --sidebar-primary: 24 95% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 38 90% 88%;
+    --sidebar-accent-foreground: 24 80% 25%;
+    --sidebar-border: 33 25% 85%;
+    --sidebar-ring: 24 95% 50%;
+  }
 }
 
 @layer base {

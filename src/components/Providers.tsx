@@ -8,6 +8,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     <ThemeProvider
       attribute="class"
       defaultTheme="light"
+      themes={['light', 'dark', 'sao-joao']}
       enableSystem={false}
       disableTransitionOnChange
     >
