@@ -2,12 +2,15 @@ import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 // Configuração do GenKit com suporte a chave de API do Google AI (Gemini)
+// Suporta tanto GEMINI_API_KEY (recomendado) quanto GOOGLE_API_KEY (retrocompatibilidade)
+const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
 export const ai = genkit({
   plugins: [
     googleAI({
-      // A chave da API será obtida da variável de ambiente GOOGLE_API_KEY
-      // Certifique-se de configurar essa variável no seu ambiente de produção
-      apiKey: process.env.GOOGLE_API_KEY
+      // A chave da API será obtida da variável de ambiente GEMINI_API_KEY ou GOOGLE_API_KEY
+      // Certifique-se de configurar essa variável no painel da Vercel
+      apiKey,
     })
   ]
 });

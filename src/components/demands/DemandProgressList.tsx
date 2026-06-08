@@ -12,8 +12,6 @@ import { History, MoreVertical, Pencil, Save, Trash2, X, Loader2, Sparkles } fro
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { DemandProgress } from '@/lib/types';
 import { getDemandProgressByDemandId, updateDemandProgress, deleteDemandProgress } from '@/lib/idb';
-import { enhanceText } from '@/ai/flows/enhance-text-flow';
-
 interface DemandProgressListProps {
   demandId: string;
   newProgress?: DemandProgress;
@@ -64,7 +62,17 @@ export default function DemandProgressList({ demandId, newProgress }: DemandProg
     if (!editingText) return;
     setIsEnhancing(true);
     try {
-      const { enhancedText } = await enhanceText({ text: editingText });
+      const response = await fetch('/api/enhance-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: editingText }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao aprimorar o texto');
+      }
+
+      const { enhancedText } = await response.json();
       setEditingText(enhancedText);
       toast({ title: 'Texto Aprimorado!' });
     } catch (error) {

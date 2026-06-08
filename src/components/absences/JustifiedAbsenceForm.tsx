@@ -16,7 +16,6 @@ import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, PlusCircle, X, Sparkles, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
-import { enhanceText } from '@/ai/flows/enhance-text-flow';
 import { useToast } from '@/hooks/use-toast';
 
 const absenceSchema = z.object({

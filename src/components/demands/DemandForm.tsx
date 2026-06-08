@@ -18,7 +18,6 @@ import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, PlusCircle, X, Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { enhanceText } from '@/ai/flows/enhance-text-flow';
 
 const demandSchema = z.object({
   title: z.string().min(1, { message: "Título é obrigatório." }),

@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, PlusCircle, X, Sparkles, Loader2 } from 'lucide-react';
-import { enhanceText } from '@/ai/flows/enhance-text-flow';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Textarea } from '../ui/textarea';

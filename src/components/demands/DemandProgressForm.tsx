@@ -13,7 +13,6 @@ import { useAuth } from '../AuthProvider';
 import type { DemandProgress } from '@/lib/types';
 import { addDemandProgress } from '@/lib/idb';
 import { PlusCircle, Sparkles, Loader2 } from 'lucide-react';
-import { enhanceText } from '@/ai/flows/enhance-text-flow';
 
 const progressSchema = z.object({
   description: z.string().min(1, { message: "Descrição é obrigatória." }),
