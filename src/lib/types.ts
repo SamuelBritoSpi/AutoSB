@@ -1,33 +1,20 @@
 
 export type DemandPriority = 'alta' | 'media' | 'baixa';
 
-// O DemandStatus agora é uma string simples, já que os valores virão do banco.
-export type OldDemandStatus = 
-  | 'recebido'
-  | 'em-analise'
-  | 'aguardando-sec'
-  | 'aguardando-csh'
-  | 'aguardando-confianca'
-  | 'aguardando-gestor'
-  | 'resposta-recebida'
-  | 'finalizado';
-
-// Nova interface para os documentos de status
 export interface DemandStatus {
   id: string;
   label: string;
-  order: number; // Para manter uma ordem consistente
-  icon: string; // Nome do ícone Lucide
-  color: string; // Classe CSS do Tailwind, ex: 'text-blue-500'
+  order: number; 
+  icon: string; 
+  color: string; 
 }
 
-// Interface para o histórico de andamento das demandas
 export interface DemandProgress {
   id: string;
-  demandId: string; // ID da demanda relacionada
-  description: string; // Descrição da atualização
-  date: string; // String ISO para data
-  createdBy?: string | null; // ID do usuário que criou a atualização
+  demandId: string; 
+  description: string;
+  date: string; 
+  createdBy?: string | null;
 }
 
 export interface Demand {
@@ -35,24 +22,23 @@ export interface Demand {
   title: string; 
   description: string;
   priority: DemandPriority;
-  dueDate: string; // String ISO para data
-  status: string; // Armazena o 'label' do status
-  ownerId?: string | null; // ID do funcionário responsável pela demanda
+  dueDate: string; 
+  status: string; 
+  ownerId?: string | null;
 }
 
 export type AbsenceType = 'ferias' | 'licenca_premio' | 'licenca_medica' | 'licenca_maternidade';
 export type AbsenceStatus = 'planejado' | 'confirmado' | 'cancelado';
 
-
 export interface Vacation {
   id:string;
-  employeeId: string; // Vínculo com o Funcionário
-  employeeName: string; // Denormalizado para fácil exibição
-  startDate: string; // String ISO para data
-  endDate: string; // String ISO para data
+  employeeId: string; 
+  employeeName: string; 
+  startDate: string; 
+  endDate: string; 
   type: AbsenceType;
-  status: AbsenceStatus; // 'planejado', 'confirmado', 'cancelado'
-  notes?: string; // Observações/detalhes sobre o agendamento
+  status: AbsenceStatus; 
+  notes?: string;
 }
 
 export type ContractType = 'efetivo' | 'reda' | 'terceirizado';
@@ -61,28 +47,57 @@ export interface Employee {
   id: string;
   name: string;
   contractType: ContractType;
-  fcmTokens?: string[]; // Para notificações push
+  fcmTokens?: string[];
+}
+
+export type ThirdPartyCompany = 'CONFIANÇA' | 'CSH';
+
+export interface ThirdPartyHistoryEntry {
+  date: string;
+  field: string;
+  oldValue: string;
+  newValue: string;
+}
+
+export interface ThirdPartyEmployee {
+  id: string;
+  nte: string;
+  municipio: string;
+  schoolId: string; 
+  schoolName: string; 
+  codSec: string;
+  name: string;
+  cpf: string;
+  role: string;
+  contact: string;
+  company: ThirdPartyCompany;
+  status: string;
+  admissionDate: string;
+  observation: string;
+  contractType?: string; // Coluna "CONTRATO ATUAL"
+  history: ThirdPartyHistoryEntry[];
+  extraData?: Record<string, any>;
 }
 
 export interface MedicalCertificate {
   id: string;
   employeeId: string;
-  certificateDate: string; // String ISO para data
+  certificateDate: string; 
   days: number;
-  isHalfDay: boolean; // para atestados de meio turno
-  originalReceived: boolean; // para controle do recebimento do atestado original
-  fileURL: string | null; // URL do Firebase Storage
-  cid?: string; // Código da Classificação Internacional de Doenças
+  isHalfDay: boolean; 
+  originalReceived: boolean; 
+  fileURL: string | null; 
+  cid?: string; 
 }
 
 export interface JustifiedAbsence {
   id: string;
   employeeId: string;
-  employeeName: string; // Denormalizado para fácil exibição
-  startDate: string; // String ISO para data
-  endDate: string; // String ISO para data
-  reason: string; // Motivo da falta justificada
-  status: 'active' | 'cancelled'; // Status da falta
+  employeeName: string; 
+  startDate: string; 
+  endDate: string; 
+  reason: string; 
+  status: 'active' | 'cancelled';
 }
 
 export type CardStatus = 'pending' | 'delivered';
@@ -90,14 +105,12 @@ export type CardStatus = 'pending' | 'delivered';
 export interface Card {
   id: string;
   recipientName: string;
-  schoolId?: string; // ID do colégio onde trabalha
-  schoolName?: string; // Nome denormalizado para relatórios
+  schoolId?: string; 
+  schoolName?: string; 
   status: CardStatus;
-  arrivalDate: string; // Data de chegada do cartão
-  deliveryDate?: string | null; // Data de entrega ao destinatário
+  arrivalDate: string; 
+  deliveryDate?: string | null;
 }
-
-// --- Fardamento ---
 
 export interface School {
   id: string;
@@ -114,25 +127,23 @@ export interface Uniform {
   id: string;
   employeeName: string;
   schoolId: string;
-  schoolName: string; // Denormalizado
+  schoolName: string; 
   arrivalDate: string;
   deliveryDate?: string | null;
   status: 'pending' | 'delivered';
   items: UniformItem[];
 }
 
-
-// Tipos para Folha de Ponto
 export interface TimeSheetEntry {
   employeeName: string;
-  date: string; // "dd/MM/yyyy"
+  date: string; 
   entries: {
-    entry1: string; // "HH:mm"
+    entry1: string; 
     exit1: string;
     entry2: string;
     exit2: string;
   };
-  situation: string; // Ex: 'P', 'F', 'FE'
+  situation: string; 
   justification?: string;
-  totalHours: string; // "HH:mm"
+  totalHours: string; 
 }

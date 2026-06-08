@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -20,16 +19,16 @@ import { getAuthInstance } from '@/lib/firebase-client';
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [email, setEmail] = useState('samuel.brito@example.com');
-  const [password, setPassword] = useState('Sam1421,');
+  const [email, setEmail] = useState('samuelbritosr@gmail.com');
+  const [password, setPassword] = useState('140821');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
     setIsLoading(true);
     const auth = getAuthInstance();
+    
     try {
-      // Define a persistência da autenticação para a sessão atual do navegador  .
-      // Isso garante que o usuário seja desconectado ao fechar o navegador.
+      // Define a persistência da autenticação para a sessão atual do navegador.
       await setPersistence(auth, browserSessionPersistence);
       
       await signInWithEmailAndPassword(auth, email, password);
@@ -39,6 +38,8 @@ export default function LoginPage() {
       });
       router.push('/');
     } catch (error: any) {
+      console.error("Erro na autenticação:", error.code);
+      
       let errorMessage = 'Ocorreu um erro desconhecido.';
       switch (error.code) {
         case 'auth/user-not-found':
@@ -48,6 +49,9 @@ export default function LoginPage() {
           break;
         case 'auth/invalid-email':
            errorMessage = 'O formato do email é inválido.';
+           break;
+        case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
+           errorMessage = 'Configuração do Firebase inválida. Verifique as chaves de API.';
            break;
         default:
            errorMessage = 'Não foi possível fazer login. Verifique sua conexão ou tente mais tarde.';

@@ -1,13 +1,14 @@
 
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query, where } from 'firebase/firestore';
 import { getDbInstance } from './firebase-client'; // Usa o db específico do cliente
-import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, DemandProgress, Card, Uniform, School } from './types';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, DemandProgress, Card, Uniform, School, ThirdPartyEmployee } from './types';
 
 const STORES = {
   demands: 'demands',
   vacations: 'vacations',
   justifiedAbsences: 'justifiedAbsences',
   employees: 'employees',
+  thirdPartyEmployees: 'thirdPartyEmployees',
   certificates: 'certificates',
   demandStatuses: 'demandStatuses',
   demandProgress: 'demandProgress',
@@ -15,6 +16,16 @@ const STORES = {
   uniforms: 'uniforms',
   schools: 'schools',
 };
+
+/**
+ * Remove recursivamente campos com valor 'undefined' para evitar erros no Firestore.
+ */
+function cleanData(obj: any): any {
+    if (obj === null || obj === undefined) return null;
+    return JSON.parse(JSON.stringify(obj, (key, value) => {
+        return value === undefined ? null : value;
+    }));
+}
 
 // --- Operações CRUD Genéricas para o Firestore ---
 
@@ -37,14 +48,16 @@ async function getAll<T>(storeName: string, orderField?: string): Promise<T[]> {
 async function add<T extends object>(storeName: string, item: T): Promise<string> {
    const db = getDbInstance();
    if (!db) { throw new Error("Firestore não está disponível."); }
-  const docRef = await addDoc(collection(db, storeName), item);
+  const cleanedItem = cleanData(item);
+  const docRef = await addDoc(collection(db, storeName), cleanedItem);
   return docRef.id;
 }
 
 async function update<T extends { id: string }>(storeName: string, item: T): Promise<void> {
    const db = getDbInstance();
    if (!db) { throw new Error("Firestore não está disponível."); }
-  const { id, ...data } = item;
+  const cleanedItem = cleanData(item);
+  const { id, ...data } = cleanedItem;
   const docRef = doc(db, storeName, id);
   await updateDoc(docRef, data);
 }
@@ -73,36 +86,17 @@ export const deleteDemand = (id: string) => remove(STORES.demands, id);
 export const getDemandProgressByDemandId = async (demandId: string): Promise<DemandProgress[]> => {
   try {
     const db = getDbInstance();
-    if (!db) {
-      console.warn("Firestore não está disponível. Retornando array vazio.");
-      return [];
-    }
-    
+    if (!db) return [];
     const collRef = collection(db, STORES.demandProgress);
-    
-    try {
-      const q = query(collRef, where('demandId', '==', demandId), orderBy('date', 'desc'));
-      const querySnapshot = await getDocs(q);
-      const data: DemandProgress[] = [];
-      querySnapshot.forEach((doc) => {
-        const progress = { ...doc.data(), id: doc.id } as DemandProgress;
-        data.push(progress);
-      });
-      return data;
-    } catch (queryError) {
-      const q = query(collRef, orderBy('date', 'desc'));
-      const querySnapshot = await getDocs(q);
-      const data: DemandProgress[] = [];
-      querySnapshot.forEach((doc) => {
-        const progress = { ...doc.data(), id: doc.id } as DemandProgress;
-        if (progress.demandId === demandId) {
-          data.push(progress);
-        }
-      });
-      return data;
-    }
+    const q = query(collRef, where('demandId', '==', demandId), orderBy('date', 'desc'));
+    const querySnapshot = await getDocs(q);
+    const data: DemandProgress[] = [];
+    querySnapshot.forEach((doc) => {
+      data.push({ ...doc.data(), id: doc.id } as DemandProgress);
+    });
+    return data;
   } catch (error) {
-    console.error(`Erro geral ao buscar progresso para demanda ${demandId}:`, error);
+    console.error(`Erro ao buscar progresso para demanda ${demandId}:`, error);
     return [];
   }
 };
@@ -121,26 +115,7 @@ export const updateDemandProgress = (progress: DemandProgress) => {
 export const deleteDemandProgress = (id: string) => remove(STORES.demandProgress, id);
 
 export const getAllDemandProgress = async (): Promise<DemandProgress[]> => {
-  try {
-    const db = getDbInstance();
-    if (!db) {
-      console.warn("Firestore não está disponível. Retornando array vazio.");
-      return [];
-    }
-    
-    const collRef = collection(db, STORES.demandProgress);
-    const q = query(collRef, orderBy('date', 'desc'));
-    const querySnapshot = await getDocs(q);
-    const data: DemandProgress[] = [];
-    querySnapshot.forEach((doc) => {
-      const progress = { ...doc.data(), id: doc.id } as DemandProgress;
-      data.push(progress);
-    });
-    return data;
-  } catch (error) {
-    console.error('Erro ao buscar todo o progresso das demandas:', error);
-    return [];
-  }
+  return getAll<DemandProgress>(STORES.demandProgress, 'date');
 };
 
 // --- Status de Demanda ---
@@ -180,15 +155,26 @@ export const addEmployee = async (employee: Omit<Employee, 'id'>) => {
 export const updateEmployee = (employee: Employee) => update(STORES.employees, employee);
 export const deleteEmployee = (id: string) => remove(STORES.employees, id);
 
+// --- Funcionários Terceirizados ---
+export const getThirdPartyEmployees = () => getAll<ThirdPartyEmployee>(STORES.thirdPartyEmployees, 'name');
+export const addThirdPartyEmployee = async (emp: Omit<ThirdPartyEmployee, 'id'>) => {
+    const cleaned = cleanData(emp);
+    const newId = await add(STORES.thirdPartyEmployees, cleaned);
+    return { ...cleaned, id: newId } as ThirdPartyEmployee;
+};
+export const updateThirdPartyEmployee = (emp: ThirdPartyEmployee) => {
+    const cleaned = cleanData(emp);
+    return update(STORES.thirdPartyEmployees, cleaned);
+};
+export const deleteThirdPartyEmployee = (id: string) => remove(STORES.thirdPartyEmployees, id);
+
+
 // --- Atestados Médicos ---
 export const getCertificates = () => getAll<MedicalCertificate>(STORES.certificates);
 export const addCertificate = async (certificate: Omit<MedicalCertificate, 'id'>) => {
-    const dataToSave = { ...certificate };
-    if (dataToSave.cid === undefined) {
-      delete (dataToSave as any).cid;
-    }
-    const newId = await add(STORES.certificates, dataToSave);
-    return { ...dataToSave, id: newId } as MedicalCertificate;
+    const cleaned = cleanData(certificate);
+    const newId = await add(STORES.certificates, cleaned);
+    return { ...cleaned, id: newId } as MedicalCertificate;
 };
 export const updateCertificate = (certificate: MedicalCertificate) => update(STORES.certificates, certificate);
 export const deleteCertificate = (id: string) => remove(STORES.certificates, id);
@@ -225,6 +211,7 @@ interface AllData {
     vacations: Vacation[];
     justifiedAbsences: JustifiedAbsence[];
     employees: Employee[];
+    thirdPartyEmployees?: ThirdPartyEmployee[];
     certificates: MedicalCertificate[];
     demandStatuses: DemandStatus[];
     cards: Card[];
@@ -233,18 +220,19 @@ interface AllData {
 }
 
 export async function getAllData(): Promise<AllData> {
-    const [demands, vacations, justifiedAbsences, employees, certificates, demandStatuses, cards, uniforms, schools] = await Promise.all([
+    const [demands, vacations, justifiedAbsences, employees, thirdPartyEmployees, certificates, demandStatuses, cards, uniforms, schools] = await Promise.all([
         getDemands(),
         getVacations(),
         getJustifiedAbsences(),
         getEmployees(),
+        getThirdPartyEmployees(),
         getCertificates(),
         getDemandStatuses(),
         getCards(),
         getUniforms(),
         getSchools(),
     ]);
-    return { demands, vacations, justifiedAbsences, employees, certificates, demandStatuses, cards, uniforms, schools };
+    return { demands, vacations, justifiedAbsences, employees, thirdPartyEmployees, certificates, demandStatuses, cards, uniforms, schools };
 }
 
 export async function importData(data: AllData): Promise<void> {
@@ -253,7 +241,7 @@ export async function importData(data: AllData): Promise<void> {
     const batch = writeBatch(db);
 
     data.demands.forEach(item => {
-        const { id, ...rest } = item;
+        const { id, ...rest } = cleanData(item);
         const docRef = doc(db, STORES.demands, id);
         batch.set(docRef, rest);
     });

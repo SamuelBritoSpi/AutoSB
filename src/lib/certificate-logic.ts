@@ -1,5 +1,14 @@
-import { addDays, parseISO } from 'date-fns';
 import type { MedicalCertificate, ContractType } from './types';
+
+function parseLocalDate(dateStr: string): Date {
+  if (!dateStr) return new Date();
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const [year, month, day] = parts.map(Number);
+    return new Date(year, month - 1, day);
+  }
+  return new Date(dateStr);
+}
 
 export interface CertificateAnalysis {
   totalDaysInWindow: number;
@@ -74,11 +83,14 @@ export function analyzeCertificates(
   }
 
   const today = new Date();
-  const sixtyDaysAgo = addDays(today, -60);
+  today.setHours(23, 59, 59, 999);
+  const sixtyDaysAgo = new Date(today);
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+  sixtyDaysAgo.setHours(0, 0, 0, 0);
 
   // Filtra por atestados nos últimos 60 dias
   const certsInWindow = certificates.filter(cert => {
-    const certDate = parseISO(cert.certificateDate);
+    const certDate = parseLocalDate(cert.certificateDate);
     return certDate >= sixtyDaysAgo && certDate <= today;
   });
 

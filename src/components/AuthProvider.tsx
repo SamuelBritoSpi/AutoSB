@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useEffect, useState, type ReactNode, useContext, createContext } from 'react';
+import React, { useEffect, useState, useContext, createContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { getAuthInstance, getMessagingObject } from '@/lib/firebase-client';
@@ -10,7 +9,7 @@ import { onMessage } from 'firebase/messaging';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
-    user: User | null;
+    user: Partial<User> | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { toast } = useToast();
 
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<Partial<User> | null>(null);
     const [authChecked, setAuthChecked] = useState(false);
     
     // Foreground notification handler
@@ -37,23 +36,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const messaging = getMessagingObject();
         if (typeof window !== 'undefined' && messaging) {
           const unsubscribe = onMessage(messaging, (payload) => {
-            console.log('Foreground message received. ', payload);
             toast({
-              title: payload.notification?.title,
+              title: payload.notification?.title || 'Nova Notificação',
               description: payload.notification?.body,
             });
           });
           return unsubscribe;
         }
       } catch (error) {
-        console.warn('Firebase messaging not available:', error);
+        // Silencioso
       }
     }, [toast]);
     
     useEffect(() => {
         const auth = getAuthInstance();
+        
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
+            if (currentUser) {
+                setUser(currentUser);
+            } else {
+                setUser(null);
+            }
             setAuthChecked(true);
         });
 
@@ -72,20 +75,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [user, authChecked, pathname, router]);
 
-    // Determine what to render
-    const isLoading = !authChecked;
     const isAuthPage = pathname === '/login';
 
     if (isAuthPage) {
         return <>{children}</>;
     }
     
-    if (isLoading) {
+    if (!authChecked) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
+            <div className="flex justify-center items-center min-h-screen bg-background">
                 <div className="text-center flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-lg font-semibold">Verificando autenticação...</p>
+                    <p className="text-lg font-semibold">Verificando acesso...</p>
                 </div>
             </div>
         );
@@ -99,9 +100,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
     }
 
-    // This case handles the brief moment of redirection if not on /login
     return (
-       <div className="flex justify-center items-center min-h-screen">
+       <div className="flex justify-center items-center min-h-screen bg-background">
          <div className="text-center flex flex-col items-center gap-2">
            <Loader2 className="h-8 w-8 animate-spin text-primary" />
            <p className="text-lg font-semibold">Redirecionando...</p>

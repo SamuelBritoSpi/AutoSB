@@ -8,9 +8,9 @@ const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 export const ai = genkit({
   plugins: [
     googleAI({
-      // A chave da API será obtida da variável de ambiente GEMINI_API_KEY ou GOOGLE_API_KEY
-      // Certifique-se de configurar essa variável no painel da Vercel
-      apiKey,
+      // A chave da API será obtida da variável de ambiente GOOGLE_API_KEY
+      // Certifique-se de configurar essa variável no seu ambiente de produção
+      apiKey: process.env.GOOGLE_API_KEY
     })
   ]
 });
