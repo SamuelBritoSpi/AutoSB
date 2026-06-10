@@ -92,21 +92,39 @@ export default function ThirdPartyEmployeePage({
     }
   };
 
-  const handleAddWithSync = async (data: Omit<ThirdPartyEmployee, 'id'>) => {
+  const handleAddWithSync = (data: Omit<ThirdPartyEmployee, 'id'>) => {
+      // Fecha o form imediatamente
+      setShowForm(false);
+      // Salva localmente
       onAddEmployee(data);
+      
+      // Sincroniza em background
       const empWithDummyId: ThirdPartyEmployee = { ...data, id: `temp-${Date.now()}` };
-      const ok = await syncEmployeeToGoogleSheets(empWithDummyId);
-      if (!ok) {
-          toast({ variant: 'destructive', title: "Google Sheets Offline", description: "Salvo localmente, mas falhou ao sincronizar com o Drive." });
-      }
+      syncEmployeeToGoogleSheets(empWithDummyId).then(ok => {
+          if (!ok) {
+              console.warn("Google Sheets Offline ou sem permissão.");
+          }
+      });
   };
 
-  const handleUpdateWithSync = async (data: ThirdPartyEmployee) => {
+  const handleUpdateWithSync = (data: ThirdPartyEmployee) => {
+      // Fecha o modal imediatamente para evitar travamento da UI
+      setEditingEmp(null);
+      // Salva localmente
       onUpdateEmployee(data);
-      const ok = await syncEmployeeToGoogleSheets(data);
-      if (!ok) {
-          toast({ variant: 'destructive', title: "Google Sheets Offline", description: "Alteração salva localmente, mas não enviada à planilha." });
-      }
+      
+      // Tenta sincronizar em background
+      syncEmployeeToGoogleSheets(data).then(ok => {
+          if (!ok) {
+              toast({ 
+                  variant: 'destructive', 
+                  title: "Atenção na Sincronização", 
+                  description: "Alteração salva localmente, mas falhou ao enviar para a planilha online." 
+              });
+          }
+      }).catch(err => {
+          console.error("Erro silencioso na sincronização:", err);
+      });
   };
 
   return (
@@ -150,10 +168,7 @@ export default function ThirdPartyEmployeePage({
           <ThirdPartyEmployeeForm
             schools={schools}
             onAddSchool={onAddSchool}
-            onAddEmployee={(data) => {
-              handleAddWithSync(data);
-              setShowForm(false);
-            }}
+            onAddEmployee={handleAddWithSync}
             onClose={() => setShowForm(false)}
           />
         </div>
@@ -176,10 +191,7 @@ export default function ThirdPartyEmployeePage({
               existingEmployee={editingEmp}
               schools={schools}
               onAddSchool={onAddSchool}
-              onUpdateEmployee={(data) => {
-                handleUpdateWithSync(data);
-                setEditingEmp(null);
-              }}
+              onUpdateEmployee={handleUpdateWithSync}
               onAddEmployee={() => {}}
               onClose={() => setEditingEmp(null)}
             />
