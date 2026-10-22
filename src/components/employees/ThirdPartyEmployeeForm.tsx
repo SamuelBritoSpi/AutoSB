@@ -88,6 +88,23 @@ export default function ThirdPartyEmployeeForm({
     if (!open) setNewSchoolName("");
   };
 
+  // Esc fecha apenas a lista de colégios (o Dialog de edição continua aberto).
+  // O listener no window em fase de captura roda antes dos listeners do Radix.
+  useEffect(() => {
+    if (!isSchoolPopoverOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      setIsSchoolPopoverOpen(false);
+      setNewSchoolName("");
+    };
+
+    window.addEventListener("keydown", handleEscape, true);
+    return () => window.removeEventListener("keydown", handleEscape, true);
+  }, [isSchoolPopoverOpen]);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(employeeSchema),
     defaultValues: existingEmployee ? {
@@ -313,7 +330,11 @@ export default function ThirdPartyEmployeeForm({
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent portal={false} className="w-[--radix-popover-trigger-width] min-w-[320px] p-0" align="start">
+                    <PopoverContent
+                      portal={false}
+                      className="w-[--radix-popover-trigger-width] min-w-[320px] p-0"
+                      align="start"
+                    >
                       <Command shouldFilter={false}>
                         <CommandInput
                           placeholder="Digite para buscar o colégio..."
