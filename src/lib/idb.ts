@@ -1,7 +1,8 @@
 
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, orderBy, query, where } from 'firebase/firestore';
 import { getDbInstance } from './firebase-client'; // Usa o db específico do cliente
-import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, DemandProgress, Card, Uniform, School, ThirdPartyEmployee } from './types';
+import type { Demand, Vacation, Employee, MedicalCertificate, DemandStatus, JustifiedAbsence, DemandProgress, Card, Uniform, School, ThirdPartyEmployee, ThirdPartyStatus } from './types';
+import { normalizeThirdPartyStatus } from './third-party-status';
 
 const STORES = {
   demands: 'demands',
@@ -156,14 +157,44 @@ export const updateEmployee = (employee: Employee) => update(STORES.employees, e
 export const deleteEmployee = (id: string) => remove(STORES.employees, id);
 
 // --- Funcionários Terceirizados ---
-export const getThirdPartyEmployees = () => getAll<ThirdPartyEmployee>(STORES.thirdPartyEmployees, 'name');
+
+/**
+ * Garante que o status salvo/retornado seja sempre "Ativo" ou "Inativo".
+ * Também é usado para migrar registros legados automaticamente.
+ */
+function normalizeThirdPartyEmployee<T extends { status: unknown }>(
+    emp: T
+): T & { status: ThirdPartyStatus } {
+    return { ...emp, status: normalizeThirdPartyStatus(emp.status) };
+}
+
+export const getThirdPartyEmployees = async (): Promise<ThirdPartyEmployee[]> => {
+    const employees = await getAll<ThirdPartyEmployee>(STORES.thirdPartyEmployees, 'name');
+    const normalized = employees.map(normalizeThirdPartyEmployee);
+
+    // Migra automaticamente registros antigos com status fora do padrão.
+    const outdated = normalized.filter((emp, index) => emp.status !== employees[index].status);
+    if (outdated.length > 0) {
+        try {
+            await Promise.all(outdated.map(emp => update(STORES.thirdPartyEmployees, emp)));
+        } catch (error) {
+            console.warn("Não foi possível migrar todos os status legados de terceirizados:", error);
+        }
+    }
+
+    return normalized;
+};
+
 export const addThirdPartyEmployee = async (emp: Omit<ThirdPartyEmployee, 'id'>) => {
-    const cleaned = cleanData(emp);
+    const normalized = normalizeThirdPartyEmployee(emp);
+    const cleaned = cleanData(normalized);
     const newId = await add(STORES.thirdPartyEmployees, cleaned);
     return { ...cleaned, id: newId } as ThirdPartyEmployee;
 };
+
 export const updateThirdPartyEmployee = (emp: ThirdPartyEmployee) => {
-    const cleaned = cleanData(emp);
+    const normalized = normalizeThirdPartyEmployee(emp);
+    const cleaned = cleanData(normalized);
     return update(STORES.thirdPartyEmployees, cleaned);
 };
 export const deleteThirdPartyEmployee = (id: string) => remove(STORES.thirdPartyEmployees, id);

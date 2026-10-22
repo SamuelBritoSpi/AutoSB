@@ -1,4 +1,5 @@
 import type { ThirdPartyEmployee } from './types';
+import { normalizeThirdPartyStatus } from './third-party-status';
 
 /**
  * Envia um funcionário para ser adicionado ou atualizado no Google Sheets.
@@ -19,7 +20,10 @@ export async function syncEmployeeToGoogleSheets(employee: ThirdPartyEmployee): 
         'Content-Type': 'text/plain',
       },
       body: JSON.stringify({
-        employee,
+        employee: {
+          ...employee,
+          status: normalizeThirdPartyStatus(employee.status),
+        },
         action: 'update_row'
       })
     });

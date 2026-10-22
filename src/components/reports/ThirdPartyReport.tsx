@@ -4,6 +4,7 @@ import ReportLayout from './ReportLayout';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatCPF } from '@/lib/utils';
+import { isThirdPartyActive, normalizeThirdPartyStatus } from '@/lib/third-party-status';
 
 export interface ThirdPartyReportFilters {
   company: string;
@@ -20,23 +21,10 @@ interface ThirdPartyReportProps {
   filters: ThirdPartyReportFilters;
 }
 
-const isActiveStatus = (status: string) => {
-  const value = (status || '').trim().toLowerCase();
-  return value === 'ativo' || value === 'active' || (value.includes('ativ') && !value.includes('inativ'));
-};
-
 const getStatusStyle = (status: string): CSSProperties => {
-  const value = (status || '').trim().toLowerCase();
-  if (value.includes('inativ') || value.includes('deslig')) {
-    return { color: '#c62828', fontWeight: 700 };
-  }
-  if (value.includes('afast') || value.includes('licen') || value.includes('férias') || value.includes('ferias')) {
-    return { color: '#ef6c00', fontWeight: 700 };
-  }
-  if (isActiveStatus(status)) {
-    return { color: '#2e7d32', fontWeight: 700 };
-  }
-  return {};
+  return normalizeThirdPartyStatus(status) === 'Inativo'
+    ? { color: '#c62828', fontWeight: 700 }
+    : { color: '#2e7d32', fontWeight: 700 };
 };
 
 const formatDate = (value?: string) => {
@@ -64,7 +52,7 @@ export default function ThirdPartyReport({ employees, filters }: ThirdPartyRepor
     new Set(sortedEmployees.map(emp => emp.company).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
-  const totalActive = sortedEmployees.filter(emp => isActiveStatus(emp.status)).length;
+  const totalActive = sortedEmployees.filter(emp => isThirdPartyActive(emp.status)).length;
   const totalSchools = new Set(
     sortedEmployees.map(emp => emp.schoolId || emp.schoolName || '').filter(Boolean)
   ).size;
@@ -96,6 +84,10 @@ export default function ThirdPartyReport({ employees, filters }: ThirdPartyRepor
         <div className="report-summary-item">
           <span>Ativos</span>
           <strong>{totalActive}</strong>
+        </div>
+        <div className="report-summary-item">
+          <span>Inativos</span>
+          <strong>{sortedEmployees.length - totalActive}</strong>
         </div>
         <div className="report-summary-item">
           <span>Lotações</span>
@@ -144,7 +136,7 @@ export default function ThirdPartyReport({ employees, filters }: ThirdPartyRepor
                 <td>{emp.contact}</td>
                 <td>{emp.contractType || '—'}</td>
                 <td>{emp.company}</td>
-                <td style={getStatusStyle(emp.status)}>{emp.status || '—'}</td>
+                <td style={getStatusStyle(emp.status)}>{normalizeThirdPartyStatus(emp.status)}</td>
                 <td>{formatDate(emp.admissionDate)}</td>
                 {/* Dados Dinâmicos */}
                 {allExtraKeys.map(key => (

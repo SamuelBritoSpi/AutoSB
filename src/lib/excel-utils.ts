@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import type { ThirdPartyEmployee, School, ThirdPartyHistoryEntry } from './types';
 import { normalizeForComparison } from './utils';
 import { getCodSecForSchool } from './school-codsec-map';
+import { normalizeThirdPartyStatus } from './third-party-status';
 
 /**
  * Processa um arquivo Excel de Terceirizados conforme as colunas específicas do usuário.
@@ -113,7 +114,7 @@ export async function parseEmployeesExcel(file: File, schools: School[]): Promis
             role: String(normalizedRow['FUNCAO'] || ''),
             contact: finalContact,
             company: String(normalizedRow['EMPRESA'] || '').toUpperCase().includes('CSH') ? 'CSH' : 'CONFIANÇA',
-            status: String(normalizedRow['STATUS'] || 'Ativo'),
+            status: normalizeThirdPartyStatus(normalizedRow['STATUS']),
             admissionDate: admissionDate,
             observation: String(normalizedRow['OBSERVACAO'] || ''),
             contractType: String(normalizedRow['CONTRATO ATUAL'] || ''),

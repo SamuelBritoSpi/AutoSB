@@ -52,6 +52,8 @@ export interface Employee {
 
 export type ThirdPartyCompany = 'CONFIANÇA' | 'CSH';
 
+export type ThirdPartyStatus = 'Ativo' | 'Inativo';
+
 export interface ThirdPartyHistoryEntry {
   date: string;
   field: string;
@@ -71,7 +73,7 @@ export interface ThirdPartyEmployee {
   role: string;
   contact: string;
   company: ThirdPartyCompany;
-  status: string;
+  status: ThirdPartyStatus;
   admissionDate: string;
   observation: string;
   contractType?: string; // Coluna "CONTRATO ATUAL"

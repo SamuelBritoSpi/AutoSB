@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { renderReport } from '@/lib/print-utils';
+import { THIRD_PARTY_STATUSES, normalizeThirdPartyStatus } from '@/lib/third-party-status';
 import ThirdPartyReport from '../reports/ThirdPartyReport';
 
 interface Props {
@@ -83,10 +84,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete }: 
       .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
   }, [employees]);
 
-  const statusOptions = useMemo(() => (
-    Array.from(new Set(employees.map(e => e.status).filter(Boolean)))
-      .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-  ), [employees]);
+  const statusOptions = THIRD_PARTY_STATUSES;
 
   const roleOptions = useMemo(() => (
     Array.from(new Set(employees.map(e => e.role || 'sem-funcao').filter(Boolean)))
@@ -102,7 +100,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete }: 
       .filter(e => {
         if (companyFilter !== 'all' && e.company !== companyFilter) return false;
         if (schoolFilter !== 'all' && getSchoolKey(e) !== schoolFilter) return false;
-        if (statusFilter !== 'all' && e.status !== statusFilter) return false;
+        if (statusFilter !== 'all' && normalizeThirdPartyStatus(e.status) !== statusFilter) return false;
         if (roleFilter !== 'all' && (e.role || 'sem-funcao') !== roleFilter) return false;
         if (!term) return true;
 
@@ -427,7 +425,17 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete }: 
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{emp.role}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-[9px] uppercase font-bold py-0">{emp.status}</Badge>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[9px] uppercase font-bold py-0",
+                          normalizeThirdPartyStatus(emp.status) === 'Ativo'
+                            ? "border-green-600/40 text-green-700"
+                            : "border-red-600/40 text-red-700"
+                        )}
+                      >
+                        {normalizeThirdPartyStatus(emp.status)}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">

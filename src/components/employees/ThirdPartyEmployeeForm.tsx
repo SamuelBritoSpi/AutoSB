@@ -20,6 +20,11 @@ import { CalendarIcon, PlusCircle, X, Search, Check, Plus, Loader2 } from 'lucid
 import type { ThirdPartyEmployee, School, ThirdPartyHistoryEntry } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { getCodSecForSchool } from '@/lib/school-codsec-map';
+import {
+  DEFAULT_THIRD_PARTY_STATUS,
+  THIRD_PARTY_STATUSES,
+  normalizeThirdPartyStatus,
+} from '@/lib/third-party-status';
 
 const employeeSchema = z.object({
   nte: z.string().optional(),
@@ -31,7 +36,7 @@ const employeeSchema = z.object({
   role: z.string().optional(),
   contact: z.string().optional(),
   company: z.enum(['CONFIANÇA', 'CSH']).optional(),
-  status: z.string().optional().default("Ativo"),
+  status: z.enum(THIRD_PARTY_STATUSES).default(DEFAULT_THIRD_PARTY_STATUS),
   admissionDate: z.date().optional(),
   observation: z.string().optional(),
   contractType: z.string().optional(),
@@ -109,13 +114,14 @@ export default function ThirdPartyEmployeeForm({
     resolver: zodResolver(employeeSchema),
     defaultValues: existingEmployee ? {
       ...existingEmployee,
+      status: normalizeThirdPartyStatus(existingEmployee.status),
       admissionDate: (existingEmployee.admissionDate && existingEmployee.admissionDate !== '') 
         ? parseISO(existingEmployee.admissionDate) 
         : undefined,
     } : {
       nte: 'NTE 20',
       company: 'CONFIANÇA',
-      status: 'Ativo',
+      status: DEFAULT_THIRD_PARTY_STATUS,
     },
   });
 
@@ -166,6 +172,12 @@ export default function ThirdPartyEmployeeForm({
       if (values.codSec !== existingEmployee.codSec) {
         history = [{ date: now, field: 'COD SEC', oldValue: existingEmployee.codSec || '', newValue: values.codSec || '' }, ...history].slice(0, 5);
       }
+
+      const previousStatus = normalizeThirdPartyStatus(existingEmployee.status);
+      const nextStatus = normalizeThirdPartyStatus(values.status);
+      if (nextStatus !== previousStatus) {
+        history = [{ date: now, field: 'Status', oldValue: previousStatus, newValue: nextStatus }, ...history].slice(0, 5);
+      }
     }
 
     const empData: Omit<ThirdPartyEmployee, 'id'> = {
@@ -178,7 +190,7 @@ export default function ThirdPartyEmployeeForm({
       role: values.role || '',
       contact: values.contact || '',
       company: values.company || 'CONFIANÇA',
-      status: values.status || 'Ativo',
+      status: normalizeThirdPartyStatus(values.status),
       schoolName: school?.name || 'Não Informado',
       admissionDate: values.admissionDate ? values.admissionDate.toISOString() : '',
       observation: values.observation || '',
@@ -445,7 +457,18 @@ export default function ThirdPartyEmployeeForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <Input {...field} />
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {THIRD_PARTY_STATUSES.map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
