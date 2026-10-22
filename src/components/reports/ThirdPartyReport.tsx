@@ -1,16 +1,52 @@
+import type { CSSProperties } from 'react';
 import type { ThirdPartyEmployee } from '@/lib/types';
 import ReportLayout from './ReportLayout';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatCPF } from '@/lib/utils';
 
+export interface ThirdPartyReportFilters {
+  company: string;
+  schoolId: string;
+  schoolName?: string;
+  status?: string;
+  role?: string;
+  search?: string;
+  scope?: 'filtered' | 'selected';
+}
+
 interface ThirdPartyReportProps {
   employees: ThirdPartyEmployee[];
-  filters: {
-    company: string;
-    schoolId: string;
-  };
+  filters: ThirdPartyReportFilters;
 }
+
+const isActiveStatus = (status: string) => {
+  const value = (status || '').trim().toLowerCase();
+  return value === 'ativo' || value === 'active' || (value.includes('ativ') && !value.includes('inativ'));
+};
+
+const getStatusStyle = (status: string): CSSProperties => {
+  const value = (status || '').trim().toLowerCase();
+  if (value.includes('inativ') || value.includes('deslig')) {
+    return { color: '#c62828', fontWeight: 700 };
+  }
+  if (value.includes('afast') || value.includes('licen') || value.includes('férias') || value.includes('ferias')) {
+    return { color: '#ef6c00', fontWeight: 700 };
+  }
+  if (isActiveStatus(status)) {
+    return { color: '#2e7d32', fontWeight: 700 };
+  }
+  return {};
+};
+
+const formatDate = (value?: string) => {
+  if (!value) return '—';
+  try {
+    return format(parseISO(value), 'dd/MM/yyyy', { locale: ptBR });
+  } catch {
+    return '—';
+  }
+};
 
 export default function ThirdPartyReport({ employees, filters }: ThirdPartyReportProps) {
   // Identificar todas as colunas extras presentes em pelo menos um funcionário
@@ -20,15 +56,59 @@ export default function ThirdPartyReport({ employees, filters }: ThirdPartyRepor
     )
   );
 
+  const sortedEmployees = [...employees].sort((a, b) =>
+    (a.name || '').localeCompare(b.name || '', 'pt-BR')
+  );
+
+  const companies = Array.from(
+    new Set(sortedEmployees.map(emp => emp.company).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  const totalActive = sortedEmployees.filter(emp => isActiveStatus(emp.status)).length;
+  const totalSchools = new Set(
+    sortedEmployees.map(emp => emp.schoolId || emp.schoolName || '').filter(Boolean)
+  ).size;
+
+  const companyLabel = filters.company === 'all' ? 'Todas' : filters.company;
+  const schoolLabel = filters.schoolId === 'all'
+    ? 'Todas'
+    : (filters.schoolName || 'Selecionada');
+  const statusLabel = !filters.status || filters.status === 'all' ? 'Todos' : filters.status;
+  const roleLabel = !filters.role || filters.role === 'all' ? 'Todas' : filters.role;
+  const searchLabel = filters.search?.trim() ? `"${filters.search.trim()}"` : 'Não aplicada';
+
   return (
-    <ReportLayout title="Base de Dados de Funcionários Terceirizados">
-      <div style={{ marginBottom: '1.5rem', fontSize: '0.85rem', color: '#666' }}>
-        <strong>Filtros:</strong> {filters.company === 'all' ? 'Todas Empresas' : `Empresa: ${filters.company}`} 
-        {filters.schoolId !== 'all' && ` | Lotação Específica`}
-        <br />
-        <strong>Total de Registros:</strong> {employees.length}
+    <ReportLayout title="Funcionários Terceirizados" orientation="landscape">
+      <div className="report-filters">
+        <span><strong>Empresa:</strong> {companyLabel}</span>
+        <span><strong>Lotação:</strong> {schoolLabel}</span>
+        <span><strong>Status:</strong> {statusLabel}</span>
+        <span><strong>Função:</strong> {roleLabel}</span>
+        <span><strong>Busca:</strong> {searchLabel}</span>
+        <span><strong>Abrangência:</strong> {filters.scope === 'selected' ? 'Somente selecionados' : 'Todos os registros filtrados'}</span>
       </div>
-      
+
+      <div className="report-summary">
+        <div className="report-summary-item">
+          <span>Total de Registros</span>
+          <strong>{sortedEmployees.length}</strong>
+        </div>
+        <div className="report-summary-item">
+          <span>Ativos</span>
+          <strong>{totalActive}</strong>
+        </div>
+        <div className="report-summary-item">
+          <span>Lotações</span>
+          <strong>{totalSchools}</strong>
+        </div>
+        {companies.map(company => (
+          <div className="report-summary-item" key={company}>
+            <span>Empresa {company}</span>
+            <strong>{sortedEmployees.filter(emp => emp.company === company).length}</strong>
+          </div>
+        ))}
+      </div>
+
       <table style={{ fontSize: '0.65rem' }}>
         <thead>
           <tr>
@@ -46,14 +126,14 @@ export default function ThirdPartyReport({ employees, filters }: ThirdPartyRepor
             <th>ADMISSÃO</th>
             {/* Colunas Dinâmicas */}
             {allExtraKeys.map(key => (
-                <th key={key} style={{ backgroundColor: '#fff9c4', color: '#827717' }}>{key}</th>
+              <th key={key} style={{ backgroundColor: '#fff9c4', color: '#827717' }}>{key}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {employees.length > 0 ? (
-            employees.map(emp => (
-              <tr key={emp.id}>
+          {sortedEmployees.length > 0 ? (
+            sortedEmployees.map(emp => (
+              <tr key={emp.id} style={{ pageBreakInside: 'avoid' }}>
                 <td>{emp.nte}</td>
                 <td>{emp.municipio}</td>
                 <td style={{ fontWeight: 'bold' }}>{emp.schoolName}</td>
@@ -64,28 +144,29 @@ export default function ThirdPartyReport({ employees, filters }: ThirdPartyRepor
                 <td>{emp.contact}</td>
                 <td>{emp.contractType || '—'}</td>
                 <td>{emp.company}</td>
-                <td>{emp.status}</td>
-                <td>{format(parseISO(emp.admissionDate), 'dd/MM/yyyy')}</td>
+                <td style={getStatusStyle(emp.status)}>{emp.status || '—'}</td>
+                <td>{formatDate(emp.admissionDate)}</td>
                 {/* Dados Dinâmicos */}
                 {allExtraKeys.map(key => (
-                    <td key={key} style={{ fontStyle: 'italic' }}>
-                        {emp.extraData?.[key] || '—'}
-                    </td>
+                  <td key={key} style={{ fontStyle: 'italic' }}>
+                    {emp.extraData?.[key] || '—'}
+                  </td>
                 ))}
               </tr>
             ))
           ) : (
             <tr>
               <td colSpan={12 + allExtraKeys.length} style={{ textAlign: 'center', padding: '2rem' }}>
-                Nenhum funcionário encontrado.
+                Nenhum funcionário encontrado para os filtros selecionados.
               </td>
             </tr>
           )}
         </tbody>
       </table>
-      
+
       <div style={{ marginTop: '2rem', fontSize: '0.75rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
         <p><strong>Nota:</strong> Este relatório exibe as informações mais atualizadas de cada colaborador. Colunas destacadas em amarelo foram detectadas automaticamente na planilha de origem.</p>
+        <p><strong>Total de registros impressos:</strong> {sortedEmployees.length}</p>
       </div>
     </ReportLayout>
   );

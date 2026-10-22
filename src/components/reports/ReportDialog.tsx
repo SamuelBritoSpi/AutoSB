@@ -19,25 +19,22 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import type { Demand, Vacation, Employee, DemandStatus, MedicalCertificate, DemandProgress, ThirdPartyEmployee, School } from '@/lib/types';
+import type { Demand, Vacation, Employee, DemandStatus, MedicalCertificate } from '@/lib/types';
 import { renderReport } from '@/lib/print-utils';
 import DemandsReport from './DemandsReport';
 import VacationsReport from './VacationsReport';
 import CertificatesReport from './CertificatesReport';
-import ThirdPartyReport from './ThirdPartyReport';
 import { getAllDemandProgress } from '@/lib/idb';
 
 interface ReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  reportType: 'demands' | 'vacations' | 'certificates' | 'third-party';
+  reportType: 'demands' | 'vacations' | 'certificates';
   demands?: Demand[];
   demandStatuses?: DemandStatus[];
   vacations?: Vacation[];
   employees?: Employee[];
   certificates?: MedicalCertificate[];
-  thirdPartyEmployees?: ThirdPartyEmployee[];
-  schools?: School[];
 }
 
 export default function ReportDialog({
@@ -48,17 +45,13 @@ export default function ReportDialog({
   demandStatuses = [],
   vacations = [],
   employees = [],
-  certificates = [],
-  thirdPartyEmployees = [],
-  schools = []
+  certificates = []
 }: ReportDialogProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [dateRange, setDateRange] = useState<{ from: Date | undefined, to: Date | undefined }>({ from: undefined, to: undefined });
   const [selectedDemandId, setSelectedDemandId] = useState('all');
   const [employeeFilter, setEmployeeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [companyFilter, setCompanyFilter] = useState('all');
-  const [schoolFilter, setSchoolFilter] = useState('all');
 
   const handleGenerateReport = async () => {
     setIsGenerating(true);
@@ -102,14 +95,6 @@ export default function ReportDialog({
         renderReport(<CertificatesReport certificates={filtered} employees={employees} filters={{dateRange, employeeId: employeeFilter}} />, title);
     }
 
-    if (reportType === 'third-party') {
-        title = "Base de Dados Terceirizados";
-        let filtered = [...thirdPartyEmployees];
-        if (companyFilter !== 'all') filtered = filtered.filter(e => e.company === companyFilter);
-        if (schoolFilter !== 'all') filtered = filtered.filter(e => e.schoolId === schoolFilter);
-        renderReport(<ThirdPartyReport employees={filtered} filters={{company: companyFilter, schoolId: schoolFilter}} />, title);
-    }
-
     setIsGenerating(false);
     onOpenChange(false);
   };
@@ -119,7 +104,6 @@ export default function ReportDialog({
         case 'demands': return 'Gerar Relatório de Demandas';
         case 'vacations': return 'Gerar Relatório de Afastamentos';
         case 'certificates': return 'Gerar Relatório de Atestados';
-        case 'third-party': return 'Exportar Base Terceirizados';
         default: return 'Gerar Relatório';
     }
   }
@@ -134,56 +118,22 @@ export default function ReportDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-            {reportType !== 'third-party' && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="date-range" className="text-right">Período</Label>
-                  <div className="col-span-3">
-                      <Popover>
-                          <PopoverTrigger asChild>
-                          <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !dateRange.from && !dateRange.to && "text-muted-foreground")}>
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {dateRange.from ? (dateRange.to ? <>{format(dateRange.from, "P", {locale: ptBR})} - {format(dateRange.to, "P", {locale: ptBR})}</> : format(dateRange.from, "P", {locale: ptBR})) : <span>Selecione o período</span>}
-                          </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="range" selected={{ from: dateRange.from, to: dateRange.to }} onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })} numberOfMonths={2} locale={ptBR} />
-                          </PopoverContent>
-                      </Popover>
-                  </div>
-              </div>
-            )}
-
-            {reportType === 'third-party' && (
-                <>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Empresa</Label>
-                        <Select value={companyFilter} onValueChange={setCompanyFilter}>
-                            <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Todas as empresas" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todas as empresas</SelectItem>
-                                <SelectItem value="CONFIANÇA">CONFIANÇA</SelectItem>
-                                <SelectItem value="CSH">CSH</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Escola</Label>
-                        <Select value={schoolFilter} onValueChange={setSchoolFilter}>
-                            <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Todas as escolas" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-[200px]">
-                                <SelectItem value="all">Todas as escolas</SelectItem>
-                                {schools.sort((a,b) => a.name.localeCompare(b.name)).map(s => (
-                                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </>
-            )}
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="date-range" className="text-right">Período</Label>
+                <div className="col-span-3">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !dateRange.from && !dateRange.to && "text-muted-foreground")}>
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateRange.from ? (dateRange.to ? <>{format(dateRange.from, "P", {locale: ptBR})} - {format(dateRange.to, "P", {locale: ptBR})}</> : format(dateRange.from, "P", {locale: ptBR})) : <span>Selecione o período</span>}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="range" selected={{ from: dateRange.from, to: dateRange.to }} onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })} numberOfMonths={2} locale={ptBR} />
+                        </PopoverContent>
+                    </Popover>
+                </div>
+            </div>
 
             {reportType === 'demands' && (
                 <>

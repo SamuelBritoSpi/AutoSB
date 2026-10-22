@@ -2,12 +2,13 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
-import type { ThirdPartyEmployee, ThirdPartyHistoryEntry } from '@/lib/types';
+import type { ThirdPartyEmployee } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Search, 
   Edit, 
@@ -22,7 +23,9 @@ import {
   ChevronsLeft,
   ChevronsRight,
   X,
-  FileText
+  Printer,
+  Filter,
+  RotateCcw
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn, formatCPF } from '@/lib/utils';
@@ -37,17 +40,25 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { renderReport } from '@/lib/print-utils';
+import ThirdPartyReport from '../reports/ThirdPartyReport';
 
 interface Props {
   employees: ThirdPartyEmployee[];
   onEdit: (emp: ThirdPartyEmployee) => void;
   onDelete: (id: string) => void;
-  onOpenReport: () => void;
 }
 
-export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, onOpenReport }: Props) {
+const getSchoolKey = (employee: ThirdPartyEmployee) =>
+  employee.schoolId || employee.schoolName || 'sem-escola';
+
+export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete }: Props) {
   const { toast } = useToast();
   const [search, setSearch] = useState('');
+  const [companyFilter, setCompanyFilter] = useState('all');
+  const [schoolFilter, setSchoolFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -55,37 +66,83 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // Filtra os funcionários com base na busca
+  const companyOptions = useMemo(() => (
+    Array.from(new Set(employees.map(e => e.company).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  ), [employees]);
+
+  const schoolOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    employees.forEach(e => {
+      const key = getSchoolKey(e);
+      if (!map.has(key)) {
+        map.set(key, e.schoolName || (key === 'sem-escola' ? 'Sem lotação' : key));
+      }
+    });
+    return Array.from(map, ([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+  }, [employees]);
+
+  const statusOptions = useMemo(() => (
+    Array.from(new Set(employees.map(e => e.status).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  ), [employees]);
+
+  const roleOptions = useMemo(() => (
+    Array.from(new Set(employees.map(e => e.role || 'sem-funcao').filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  ), [employees]);
+
+  // Filtra os funcionários com base na busca e nos filtros selecionados
   const filtered = useMemo(() => {
     const term = search.toLowerCase().trim();
-    if (!term) return employees;
-
     const cpfTerm = term.replace(/\D/g, '');
 
-    return employees.filter(e => {
-      const name = (e.name || '').toLowerCase();
-      const school = (e.schoolName || '').toLowerCase();
-      const cpf = (e.cpf || '').replace(/\D/g, '');
-      const role = (e.role || '').toLowerCase();
-      const municipio = (e.municipio || '').toLowerCase();
-      const company = (e.company || '').toLowerCase();
+    return employees
+      .filter(e => {
+        if (companyFilter !== 'all' && e.company !== companyFilter) return false;
+        if (schoolFilter !== 'all' && getSchoolKey(e) !== schoolFilter) return false;
+        if (statusFilter !== 'all' && e.status !== statusFilter) return false;
+        if (roleFilter !== 'all' && (e.role || 'sem-funcao') !== roleFilter) return false;
+        if (!term) return true;
 
-      return name.includes(term) || 
-             school.includes(term) || 
-             (cpfTerm && cpf.includes(cpfTerm)) ||
-             role.includes(term) ||
-             municipio.includes(term) ||
-             company.includes(term);
-    });
-  }, [employees, search]);
+        const name = (e.name || '').toLowerCase();
+        const school = (e.schoolName || '').toLowerCase();
+        const cpf = (e.cpf || '').replace(/\D/g, '');
+        const role = (e.role || '').toLowerCase();
+        const municipio = (e.municipio || '').toLowerCase();
+        const company = (e.company || '').toLowerCase();
 
-  // Sempre que a busca mudar, voltamos para a página 1
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
+        return name.includes(term) || 
+               school.includes(term) || 
+               (cpfTerm && cpf.includes(cpfTerm)) ||
+               role.includes(term) ||
+               municipio.includes(term) ||
+               company.includes(term);
+      })
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+  }, [employees, search, companyFilter, schoolFilter, statusFilter, roleFilter]);
+
+  const hasActiveFilters =
+    search.trim() !== '' ||
+    companyFilter !== 'all' ||
+    schoolFilter !== 'all' ||
+    statusFilter !== 'all' ||
+    roleFilter !== 'all';
+
+  // Sempre que um filtro mudar, voltamos para a página 1
+  useEffect(() => {
     setCurrentPage(1);
-  };
+  }, [search, companyFilter, schoolFilter, statusFilter, roleFilter]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+  // Garante que a página atual continue válida após filtrar
+  useEffect(() => {
+    if (currentPage > Math.max(1, totalPages)) {
+      setCurrentPage(Math.max(1, totalPages));
+    }
+  }, [currentPage, totalPages]);
   
   const paginatedItems = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -108,6 +165,50 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
     } else {
       setSelectedIds(filtered.map(e => e.id));
     }
+  };
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setCompanyFilter('all');
+    setSchoolFilter('all');
+    setStatusFilter('all');
+    setRoleFilter('all');
+  };
+
+  const handleGenerateReport = () => {
+    const reportEmployees = selectedIds.length > 0
+      ? employees.filter(e => selectedIds.includes(e.id))
+      : filtered;
+
+    if (reportEmployees.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Nenhum registro',
+        description: 'Ajuste os filtros ou selecione funcionários para gerar o relatório.',
+      });
+      return;
+    }
+
+    const isManualSelection = selectedIds.length > 0;
+
+    renderReport(
+      <ThirdPartyReport
+        employees={reportEmployees}
+        filters={{
+          company: isManualSelection ? 'all' : companyFilter,
+          schoolId: isManualSelection ? 'all' : schoolFilter,
+          schoolName: isManualSelection
+            ? undefined
+            : schoolOptions.find(o => o.value === schoolFilter)?.label,
+          status: isManualSelection ? 'all' : statusFilter,
+          role: isManualSelection ? 'all' : roleFilter,
+          search: isManualSelection ? '' : search,
+          scope: isManualSelection ? 'selected' : 'filtered',
+        }}
+      />,
+      'Relatório de Funcionários Terceirizados'
+    );
+    setSelectedIds([]);
   };
 
   const handleBulkDelete = async () => {
@@ -145,41 +246,126 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
 
   return (
     <div className="space-y-4">
-      {/* Top Bar: Search & Actions */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-card p-4 rounded-xl border shadow-sm">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Pesquisar..." 
-            className="pl-10 pr-10 border-none bg-muted/50 focus-visible:ring-1 focus-visible:ring-primary/30"
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
-          {search && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:bg-transparent"
-              onClick={() => handleSearchChange('')}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          {selectedIds.length > 0 && (
-            <Button 
-              variant="destructive" 
+      {/* Top Bar: Search, Filters & Actions */}
+      <div className="flex flex-col gap-4 bg-card p-4 rounded-xl border shadow-sm">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Pesquisar por nome, CPF, função..." 
+              className="pl-10 pr-10 border-none bg-muted/50 focus-visible:ring-1 focus-visible:ring-primary/30"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:bg-transparent"
+                onClick={() => setSearch('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            {selectedIds.length > 0 && (
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => setIsConfirmOpen(true)}
+                className="rounded-full px-4"
+              >
+                <Trash2 className="mr-2 h-3.5 w-3.5" /> Excluir ({selectedIds.length})
+              </Button>
+            )}
+            <Button
+              variant="outline"
               size="sm"
-              onClick={() => setIsConfirmOpen(true)}
-              className="rounded-full px-4"
+              onClick={handleGenerateReport}
+              className="rounded-full"
+              title={selectedIds.length > 0
+                ? 'Imprimir somente os funcionários selecionados'
+                : 'Imprimir todos os funcionários filtrados'}
             >
-              <Trash2 className="mr-2 h-3.5 w-3.5" /> Excluir ({selectedIds.length})
+              <Printer className="mr-2 h-3.5 w-3.5" />
+              {selectedIds.length > 0 ? `Imprimir (${selectedIds.length})` : 'Gerar Relatório'}
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 border-t pt-4">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <Filter className="h-3.5 w-3.5" /> Filtros
+          </span>
+          <Select value={companyFilter} onValueChange={setCompanyFilter}>
+            <SelectTrigger className="w-full sm:w-[170px] bg-muted/50 border-none">
+              <SelectValue placeholder="Empresa" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as empresas</SelectItem>
+              {companyOptions.map(company => (
+                <SelectItem key={company} value={company}>{company}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={schoolFilter} onValueChange={setSchoolFilter}>
+            <SelectTrigger className="w-full sm:w-[210px] bg-muted/50 border-none">
+              <SelectValue placeholder="Lotação" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[240px]">
+              <SelectItem value="all">Todas as lotações</SelectItem>
+              {schoolOptions.map(school => (
+                <SelectItem key={school.value} value={school.value}>{school.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[150px] bg-muted/50 border-none">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              {statusOptions.map(status => (
+                <SelectItem key={status} value={status}>{status}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-full sm:w-[190px] bg-muted/50 border-none">
+              <SelectValue placeholder="Função" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[240px]">
+              <SelectItem value="all">Todas as funções</SelectItem>
+              {roleOptions.map(role => (
+                <SelectItem key={role} value={role}>
+                  {role === 'sem-funcao' ? 'Sem função' : role}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={handleClearFilters}
+            >
+              <RotateCcw className="mr-2 h-3.5 w-3.5" /> Limpar filtros
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={onOpenReport} className="rounded-full">
-            <FileText className="mr-2 h-3.5 w-3.5" /> Relatório
-          </Button>
+
+          <span className="text-[11px] text-muted-foreground lg:ml-auto">
+            Exibindo <strong className="text-foreground">{filtered.length}</strong> de{' '}
+            <strong className="text-foreground">{employees.length}</strong> registros
+            {selectedIds.length > 0 && (
+              <> · <strong className="text-primary">{selectedIds.length}</strong> selecionado(s)</>
+            )}
+          </span>
         </div>
       </div>
 
@@ -313,7 +499,7 @@ export default function ThirdPartyEmployeeList({ employees, onEdit, onDelete, on
               )) : (
                 <TableRow>
                   <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                    {search ? "Nenhum resultado encontrado." : "Nenhum funcionário cadastrado."}
+                    {hasActiveFilters ? "Nenhum resultado encontrado para os filtros selecionados." : "Nenhum funcionário cadastrado."}
                   </TableCell>
                 </TableRow>
               )}

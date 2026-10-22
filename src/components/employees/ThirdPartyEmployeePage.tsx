@@ -8,8 +8,7 @@ import { Card as ShadCnCard, CardHeader, CardTitle } from '@/components/ui/card'
 import { UserCircle2, PlusCircle, Building2, FileUp, Loader2, RefreshCw } from 'lucide-react';
 import ThirdPartyEmployeeForm from './ThirdPartyEmployeeForm';
 import ThirdPartyEmployeeList from './ThirdPartyEmployeeList';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import ReportDialog from '../reports/ReportDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { parseEmployeesExcel } from '@/lib/excel-utils';
 import { useToast } from '@/hooks/use-toast';
 import { syncEmployeeToGoogleSheets } from '@/lib/google-sync';
@@ -37,7 +36,6 @@ export default function ThirdPartyEmployeePage({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingEmp, setEditingEmp] = useState<ThirdPartyEmployee | null>(null);
-  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -178,7 +176,6 @@ export default function ThirdPartyEmployeePage({
         employees={employees}
         onEdit={setEditingEmp}
         onDelete={onDeleteEmployee}
-        onOpenReport={() => setIsReportDialogOpen(true)}
       />
 
       <Dialog open={!!editingEmp} onOpenChange={(open) => !open && setEditingEmp(null)}>
@@ -198,14 +195,6 @@ export default function ThirdPartyEmployeePage({
           )}
         </DialogContent>
       </Dialog>
-
-      <ReportDialog 
-        open={isReportDialogOpen}
-        onOpenChange={setIsReportDialogOpen}
-        reportType="third-party"
-        thirdPartyEmployees={employees}
-        schools={schools}
-      />
     </div>
   );
 }

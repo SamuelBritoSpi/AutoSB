@@ -7,9 +7,10 @@ import { Briefcase } from 'lucide-react';
 interface ReportLayoutProps {
   title: string;
   children: React.ReactNode;
+  orientation?: 'portrait' | 'landscape';
 }
 
-export default function ReportLayout({ title, children }: ReportLayoutProps) {
+export default function ReportLayout({ title, children, orientation = 'portrait' }: ReportLayoutProps) {
   return (
     <html lang="pt-BR">
       <head>
@@ -36,6 +37,46 @@ export default function ReportLayout({ title, children }: ReportLayoutProps) {
             padding: 2rem;
             border: 1px solid #eee;
             box-shadow: 0 0 10px rgba(0,0,0,0.05);
+          }
+          .report-container.landscape {
+            max-width: 1120px;
+          }
+          .report-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem 1.25rem;
+            font-size: 0.8rem;
+            color: #555;
+            margin-bottom: 1rem;
+          }
+          .report-filters strong {
+            color: #333;
+          }
+          .report-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+          }
+          .report-summary-item {
+            flex: 1 1 140px;
+            border: 1px solid #e0e0e0;
+            border-left: 4px solid #3F51B5;
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            background-color: #fafafa;
+          }
+          .report-summary-item span {
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #777;
+          }
+          .report-summary-item strong {
+            display: block;
+            font-size: 1.25rem;
+            color: #3F51B5;
           }
           .report-header {
             display: flex;
@@ -98,16 +139,28 @@ export default function ReportLayout({ title, children }: ReportLayoutProps) {
             margin-bottom: 1rem;
           }
 
+          @page {
+            size: ${orientation === 'landscape' ? 'A4 landscape' : 'A4 portrait'};
+            margin: 10mm;
+          }
+
           @media print {
             body {
               background-color: #fff;
             }
-            .report-container {
+            .report-container, .report-container.landscape {
               border: none;
               box-shadow: none;
               margin: 0;
               padding: 0;
               max-width: 100%;
+            }
+            thead {
+              display: table-header-group;
+            }
+            .report-summary, .report-filters {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
              h2 {
                 page-break-before: auto;
@@ -124,7 +177,7 @@ export default function ReportLayout({ title, children }: ReportLayoutProps) {
         `}</style>
       </head>
       <body>
-        <div className="report-container">
+        <div className={`report-container${orientation === 'landscape' ? ' landscape' : ''}`}>
           <header className="report-header">
             <div className="logo">
                 <Briefcase />
