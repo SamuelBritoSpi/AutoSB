@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!authChecked) return;
 
-        const isAuthPage = pathname === '/login';
+        const isAuthPage = pathname === '/login' || pathname === '/test-form';
 
         if (!user && !isAuthPage) {
             router.replace('/login');
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [user, authChecked, pathname, router]);
 
-    const isAuthPage = pathname === '/login';
+    const isAuthPage = pathname === '/login' || pathname === '/test-form';
 
     if (isAuthPage) {
         return <>{children}</>;

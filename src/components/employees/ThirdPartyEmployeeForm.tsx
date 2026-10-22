@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -39,6 +39,14 @@ const employeeSchema = z.object({
 
 type FormValues = z.infer<typeof employeeSchema>;
 
+// Normaliza o texto da busca (minúsculas e sem acentos) para facilitar a pesquisa
+const normalizeSearch = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
 interface ThirdPartyEmployeeFormProps {
   schools: School[];
   onAddEmployee: (emp: Omit<ThirdPartyEmployee, 'id'>) => void;
@@ -60,6 +68,25 @@ export default function ThirdPartyEmployeeForm({
   const [isSchoolPopoverOpen, setIsSchoolPopoverOpen] = useState(false);
   const [isAddingSchool, setIsAddingSchool] = useState(false);
   const [newSchoolName, setNewSchoolName] = useState("");
+
+  // Filtra as escolas em tempo real conforme o usuário digita (ignora acentos e ordem das palavras)
+  const filteredSchools = useMemo(() => {
+    const sorted = [...schools].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    const tokens = normalizeSearch(newSchoolName).split(/\s+/).filter(Boolean);
+
+    if (tokens.length === 0) return sorted;
+
+    return sorted.filter((school) => {
+      const normalizedName = normalizeSearch(school.name);
+      return tokens.every((token) => normalizedName.includes(token));
+    });
+  }, [schools, newSchoolName]);
+
+  const handleSchoolPopoverChange = (open: boolean) => {
+    setIsSchoolPopoverOpen(open);
+    // Ao fechar, limpa a busca para que a próxima abertura mostre a lista completa
+    if (!open) setNewSchoolName("");
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(employeeSchema),
@@ -98,9 +125,8 @@ export default function ThirdPartyEmployeeForm({
     setIsAddingSchool(true);
     try {
       const created = await onAddSchool(trimmedName);
-      form.setValue('schoolId', created.id);
-      setIsSchoolPopoverOpen(false);
-      setNewSchoolName("");
+      form.setValue('schoolId', created.id, { shouldValidate: true });
+      handleSchoolPopoverChange(false);
     } finally {
       setIsAddingSchool(false);
     }
@@ -268,33 +294,69 @@ export default function ThirdPartyEmployeeForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Lotação Atual</FormLabel>
-                  <Popover open={isSchoolPopoverOpen} onOpenChange={setIsSchoolPopoverOpen}>
+                  <Popover open={isSchoolPopoverOpen} onOpenChange={handleSchoolPopoverChange}>
                     <PopoverTrigger asChild>
                       <FormControl>
-                        <Button variant="outline" className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
-                          {field.value ? schools.find(s => s.id === field.value)?.name : "Selecionar escola..."}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={isSchoolPopoverOpen}
+                          className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                        >
+                          <span className="truncate">
+                            {field.value
+                              ? schools.find(s => s.id === field.value)?.name ?? "Selecionar escola..."
+                              : "Selecionar escola..."}
+                          </span>
                           <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Buscar ou cadastrar..." value={newSchoolName} onValueChange={setNewSchoolName} />
-                        <CommandList>
-                          <CommandEmpty>
-                            <Button size="sm" className="w-full" onClick={handleCreateSchool} disabled={isAddingSchool}>
-                              {isAddingSchool ? <Loader2 className="animate-spin h-3 w-3 mr-2" /> : <Plus className="h-3 w-3 mr-2" />}
-                              Cadastrar "{newSchoolName}"
-                            </Button>
-                          </CommandEmpty>
-                          <CommandGroup>
-                            {schools.sort((a,b) => a.name.localeCompare(b.name)).map(s => (
-                              <CommandItem key={s.id} onSelect={() => { form.setValue('schoolId', s.id); setIsSchoolPopoverOpen(false); }}>
-                                <Check className={cn("mr-2 h-4 w-4", s.id === field.value ? "opacity-100" : "opacity-0")} />
-                                {s.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
+                    <PopoverContent portal={false} className="w-[--radix-popover-trigger-width] min-w-[320px] p-0" align="start">
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Digite para buscar o colégio..."
+                          value={newSchoolName}
+                          onValueChange={setNewSchoolName}
+                        />
+                        <CommandList className="max-h-[220px]">
+                          {filteredSchools.length === 0 && (
+                            <div className="p-3 space-y-2">
+                              <p className="text-center text-xs text-muted-foreground">
+                                {newSchoolName.trim()
+                                  ? "Nenhum colégio encontrado."
+                                  : "Nenhum colégio cadastrado."}
+                              </p>
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="w-full"
+                                onClick={handleCreateSchool}
+                                disabled={isAddingSchool || !newSchoolName.trim()}
+                              >
+                                {isAddingSchool ? <Loader2 className="animate-spin h-3 w-3 mr-2" /> : <Plus className="h-3 w-3 mr-2" />}
+                                Cadastrar "{newSchoolName.trim()}"
+                              </Button>
+                            </div>
+                          )}
+                          {filteredSchools.length > 0 && (
+                            <CommandGroup>
+                              {filteredSchools.map(s => (
+                                <CommandItem
+                                  key={s.id}
+                                  value={s.id}
+                                  onSelect={() => {
+                                    form.setValue('schoolId', s.id, { shouldValidate: true });
+                                    handleSchoolPopoverChange(false);
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4 shrink-0", s.id === field.value ? "opacity-100" : "opacity-0")} />
+                                  <span className="truncate">{s.name}</span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          )}
                         </CommandList>
                       </Command>
                     </PopoverContent>
