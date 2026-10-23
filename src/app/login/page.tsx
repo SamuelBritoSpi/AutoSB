@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { Briefcase, LogIn, Loader2 } from 'lucide-react';
-import { SantaHat } from '@/components/christmas/SantaHat';
 import { 
   signInWithEmailAndPassword,
   setPersistence,
@@ -72,10 +71,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm shadow-2xl">
         <CardHeader className="text-center">
             <div className="flex justify-center items-center mb-4">
-                 <div className="relative">
-                   <Briefcase className="h-10 w-10 text-primary" />
-                   <SantaHat className="-top-4 left-5" />
-                 </div>
+                 <Briefcase className="h-10 w-10 text-primary" />
             </div>
           <CardTitle className="text-2xl font-bold">AutoSB</CardTitle>
           <CardDescription>Bem-vindo! Por favor, faça login para continuar.</CardDescription>

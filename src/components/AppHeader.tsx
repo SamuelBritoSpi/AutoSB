@@ -4,8 +4,6 @@
 import { Briefcase, Database, LogOut, Bell } from 'lucide-react';
 import { Button } from './ui/button';
 import { ThemeToggle } from './ThemeToggle';
-import { ChristmasGarland } from './christmas/ChristmasGarland';
-import { SantaHat } from './christmas/SantaHat';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { getAuthInstance } from '@/lib/firebase-client';
 import { signOut } from 'firebase/auth';
@@ -28,13 +26,10 @@ export default function AppHeader() {
   };
 
   return (
-    <header className="relative bg-primary text-primary-foreground shadow-md">
+    <header className="bg-primary text-primary-foreground shadow-md">
       <div className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
         <div className="flex items-center">
-          <div className="relative mr-2">
-            <Briefcase className="h-7 w-7" />
-            <SantaHat className="-top-3 left-3.5" />
-          </div>
+          <Briefcase className="h-7 w-7 mr-2" />
           <h1 className="text-xl font-headline font-bold">AutoSB</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -54,7 +49,6 @@ export default function AppHeader() {
            </TooltipProvider>
         </div>
       </div>
-      <ChristmasGarland />
     </header>
   );
 }
